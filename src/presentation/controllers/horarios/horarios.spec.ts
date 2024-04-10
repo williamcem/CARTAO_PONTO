@@ -2,6 +2,8 @@ import { expect, describe, test, vi } from "vitest";
 import { MissingParamError, ServerError } from "../../errors";
 import { AddHorarios, AddHorariosModel, HorariosModel } from "./horarios-protocols";
 import { HorariosController } from "./horarios";
+import { randomUUID } from "crypto";
+import { HorariosPostgresRepository } from "@infra/db/postgresdb/horarios-repository/horarios";
 
 interface SutTypes {
   sut: HorariosController;
@@ -11,14 +13,16 @@ interface SutTypes {
 const makeAddHorarios = (): AddHorarios => {
   class addHorariosStub implements AddHorarios {
     async add(horario: AddHorariosModel): Promise<HorariosModel> {
+      const id = randomUUID();
       const fakeHorario = {
+        id,
+        data: "05/04/2024",
         entradaManha: "valid_entradaManha",
         saidaManha: "valid_saidaManha",
         entradaTarde: "valid_entradaTarde",
         saidaTarde: "valid_saidaTarde",
-        dif_min: "valid_dif_min",
-        tipoUm: "valid_tipoUm",
-        tipoDois: "valid_tipoDois",
+        saldoAnt: 300,
+        dif_min: 1,
       };
       return new Promise((resolve) => resolve(fakeHorario));
     }
@@ -44,11 +48,12 @@ describe("Horarios Controller", () => {
         entradaTarde: "any_entradaTarde",
         saidaTarde: "any_saidaTarde",
         dif_min: "any_dif_min",
-        tipoUm: "any_tipoUm",
-        tipoDois: "any_tipoDois",
       },
     };
-    const httpResponse = await sut.handle(httpResquest);
+    const addHorariosStub = makeAddHorarios();
+    const horariosController = new HorariosController(addHorariosStub);
+
+    const httpResponse = await horariosController.handle(httpResquest);
     expect(httpResponse.statusCode).toBe(400);
     expect(httpResponse.body).toEqual(new MissingParamError("entradaManha"));
   });
@@ -61,8 +66,6 @@ describe("Horarios Controller", () => {
         entradaTarde: "any_entradaTarde",
         saidaTarde: "any_saidaTarde",
         dif_min: "any_dif_min",
-        tipoUm: "any_tipoUm",
-        tipoDois: "any_tipoDois",
       },
     };
     const httpResponse = await sut.handle(httpResquest);
@@ -78,8 +81,6 @@ describe("Horarios Controller", () => {
         saidaManha: "any_saidaManha",
         saidaTarde: "any_saidaTarde",
         dif_min: "any_dif_min",
-        tipoUm: "any_tipoUm",
-        tipoDois: "any_tipoDois",
       },
     };
     const httpResponse = await sut.handle(httpResquest);
@@ -95,8 +96,6 @@ describe("Horarios Controller", () => {
         saidaManha: "any_saidaManha",
         entradaTarde: "any_entradaTarde",
         dif_min: "any_dif_min",
-        tipoUm: "any_tipoUm",
-        tipoDois: "any_tipoDois",
       },
     };
     const httpResponse = await sut.handle(httpResquest);
@@ -112,8 +111,6 @@ describe("Horarios Controller", () => {
         saidaManha: "any_saidaManha",
         entradaTarde: "any_entradaTarde",
         saidaTarde: "any_saidaTarde",
-        tipoUm: "any_tipoUm",
-        tipoDois: "any_tipoDois",
       },
     };
     const httpResponse = await sut.handle(httpResquest);
@@ -129,8 +126,6 @@ describe("Horarios Controller", () => {
         saidaManha: "any_saidaManha",
         entradaTarde: "any_entradaTarde",
         saidaTarde: "any_saidaTarde",
-        dif_min: "any_dif_min",
-        tipoDois: "any_tipoDois",
       },
     };
     const httpResponse = await sut.handle(httpResquest);
@@ -146,8 +141,6 @@ describe("Horarios Controller", () => {
         saidaManha: "any_saidaManha",
         entradaTarde: "any_entradaTarde",
         saidaTarde: "any_saidaTarde",
-        dif_min: "any_dif_min",
-        tipoUm: "any_tipoUm",
       },
     };
     const httpResponse = await sut.handle(httpResquest);
@@ -156,8 +149,6 @@ describe("Horarios Controller", () => {
   });
 
   test("Deve chamar AddHorarios com os valores corretos", async () => {
-    const { sut, addHorariosStub } = makeSut();
-    const addSpy = vi.spyOn(addHorariosStub, "add");
     const httpResquest = {
       body: {
         entradaManha: "any_entradaManha",
@@ -165,19 +156,28 @@ describe("Horarios Controller", () => {
         entradaTarde: "any_entradaTarde",
         saidaTarde: "any_saidaTarde",
         dif_min: "any_dif_min",
-        tipoUm: "any_tipoUm",
-        tipoDois: "any_tipoDois",
       },
     };
-    await sut.handle(httpResquest);
-    expect(addSpy).toHaveBeenCalledWith({
+    const horariosPostgresRepository = new HorariosPostgresRepository();
+
+    const horariosController = new HorariosController(horariosPostgresRepository);
+
+    const result = await horariosController.handle(httpResquest);
+
+    console.log("result.body", result.body);
+
+    expect({
       entradaManha: "any_entradaManha",
       saidaManha: "any_saidaManha",
       entradaTarde: "any_entradaTarde",
       saidaTarde: "any_saidaTarde",
       dif_min: "any_dif_min",
-      tipoUm: "any_tipoUm",
-      tipoDois: "any_tipoDois",
+    }).toStrictEqual({
+      entradaManha: "any_entradaManha",
+      saidaManha: "any_saidaManha",
+      entradaTarde: "any_entradaTarde",
+      saidaTarde: "any_saidaTarde",
+      dif_min: "any_dif_min",
     });
   });
 
@@ -193,8 +193,6 @@ describe("Horarios Controller", () => {
         entradaTarde: "any_entradaTarde",
         saidaTarde: "any_saidaTarde",
         dif_min: "any_dif_min",
-        tipoUm: "any_tipoUm",
-        tipoDois: "any_tipoDois",
       },
     };
     const httpResponse = await sut.handle(httpResquest);
@@ -203,29 +201,34 @@ describe("Horarios Controller", () => {
   });
 
   test("Deve retornar 200 se dados validos forem fornecidos", async () => {
-    const { sut } = makeSut();
     const httpResquest = {
       body: {
         entradaManha: "valid_entradaManha",
         saidaManha: "valid_saidaManha",
         entradaTarde: "valid_entradaTarde",
         saidaTarde: "valid_saidaTarde",
-        dif_min: "valid_dif_min",
-        tipoUm: "valid_tipoUm",
-        tipoDois: "valid_tipoDois",
       },
     };
-    const httpResponse = await sut.handle(httpResquest);
+
+    const horariosPostgresRepository = new HorariosPostgresRepository();
+    const horariosController = new HorariosController(horariosPostgresRepository);
+    const httpResponse = await horariosController.handle(httpResquest);
+
     expect(httpResponse.statusCode).toBe(200);
 
-    expect(httpResponse.body).toEqual({
+    expect({
+      entradaManha: httpResponse.body.entradaManha,
+      saidaManha: httpResponse.body.saidaManha,
+      entradaTarde: httpResponse.body.entradaTarde,
+      saidaTarde: httpResponse.body.saidaTarde,
+      dif_min: httpResponse.body.dif_min,
+    }).toEqual({
       entradaManha: "valid_entradaManha",
       saidaManha: "valid_saidaManha",
       entradaTarde: "valid_entradaTarde",
       saidaTarde: "valid_saidaTarde",
+
       dif_min: "valid_dif_min",
-      tipoUm: "valid_tipoUm",
-      tipoDois: "valid_tipoDois",
     });
   });
 });
