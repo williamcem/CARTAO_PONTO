@@ -1,4 +1,4 @@
 import "dotenv/config";
 import app from "./main/config/app";
 
-app.listen(3000, () => console.log("Server rodando em http://localhost:3000"));
+app.listen(64000, () => console.log("Server rodando em http://localhost:64000"));
