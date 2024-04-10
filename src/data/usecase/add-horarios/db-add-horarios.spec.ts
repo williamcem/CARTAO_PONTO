@@ -2,18 +2,22 @@ import { describe, expect, test, vi } from "vitest";
 import { HorariosModel, AddHorarios, AddHorariosModel } from "../../../presentation/controllers/horarios/horarios-protocols";
 import { DbAddHorarios } from "./db-add-horarios";
 import { AddHorariosRepository } from "../protocols/add-horarios-repository";
+import { randomUUID } from "crypto";
 
 const makeAddHorariosRepository = (): AddHorariosRepository => {
   class AddHorariosRepositoryStub implements AddHorariosRepository {
     async add(horariosData: AddHorariosModel): Promise<HorariosModel> {
       const fakeHorarios = {
+        id: "valid_id",
+        data: "valid_data",
         entradaManha: "valid_entradaManha",
         saidaManha: "valid_saidaTarde",
         entradaTarde: "valid_entradaTarde",
         saidaTarde: "valid_saidaTarde",
-        dif_min: "valid_difmin",
+        saldoAnt: 300,
+        dif_min: 1,
         tipoUm: "valid_tipoUm",
-        tipoDois: "tipoDois",
+        tipoDois: "valid_tipoDois",
       };
       return new Promise((resolve) => resolve(fakeHorarios));
     }
@@ -41,47 +45,60 @@ describe("DbaHorarios usecase", () => {
     const { sut, addHorariosRepositoryStub } = makeSut();
     const addSpy = vi.spyOn(addHorariosRepositoryStub, "add");
     const horariosData = {
+      id: "valid_id",
+      data: "valid_data",
       entradaManha: "valid_entradaManha",
       saidaManha: "valid_saidaTarde",
       entradaTarde: "valid_entradaTarde",
       saidaTarde: "valid_saidaTarde",
-      dif_min: "valid_difmin",
+      saldoAnt: 300,
+      dif_min: 1,
       tipoUm: "valid_tipoUm",
-      tipoDois: "tipoDois",
+      tipoDois: "valid_tipoDois",
     };
     await sut.add(horariosData);
+
     expect(addSpy).toHaveBeenCalledWith({
+      id: "valid_id",
+      data: "valid_data",
       entradaManha: "valid_entradaManha",
       saidaManha: "valid_saidaTarde",
       entradaTarde: "valid_entradaTarde",
       saidaTarde: "valid_saidaTarde",
-      dif_min: "valid_difmin",
+      saldoAnt: 300,
+      dif_min: 1,
       tipoUm: "valid_tipoUm",
-      tipoDois: "tipoDois",
+      tipoDois: "valid_tipoDois",
     });
   });
 
   test("Deve retornar uma semana de trabalho em caso de sucesso", async () => {
     const { sut } = makeSut();
     const hoarariosData = {
+      id: "valid_id",
+      data: "valid_data",
       entradaManha: "valid_entradaManha",
       saidaManha: "valid_saidaTarde",
       entradaTarde: "valid_entradaTarde",
       saidaTarde: "valid_saidaTarde",
-      dif_min: "valid_difmin",
+      saldoAnt: 300,
+      dif_min: 1,
       tipoUm: "valid_tipoUm",
-      tipoDois: "tipoDois",
+      tipoDois: "valid_tipoDois",
     };
 
     const horarios = await sut.add(hoarariosData);
     expect(horarios).toEqual({
+      id: "valid_id",
+      data: "valid_data",
       entradaManha: "valid_entradaManha",
       saidaManha: "valid_saidaTarde",
       entradaTarde: "valid_entradaTarde",
       saidaTarde: "valid_saidaTarde",
-      dif_min: "valid_difmin",
+      saldoAnt: 300,
+      dif_min: 1,
       tipoUm: "valid_tipoUm",
-      tipoDois: "tipoDois",
+      tipoDois: "valid_tipoDois",
     });
   });
 });
