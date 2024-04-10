@@ -14,11 +14,39 @@ datasource db {
 }
 
 model dia {
-  entradaManha String @unique @db.VarChar
-  saidaManha   String @db.VarChar
-  entradaTarde String @db.VarChar
-  saidaTarde   String @db.VarChar
-  dif_min      String @db.VarChar
-  tipoUm       String @db.VarChar
-  tipoDois     String @db.VarChar
+  id           String @id @unique
+  data         String
+  entradaManha String
+  saidaManha   String
+  entradaTarde String
+  saidaTarde   String
+  entradaExtra String?
+  saidaExtra   String?
+  dif_min      Int
+  saldoAnt     Int
 }
+
+//model usuario {
+//id          String        @id @unique
+//nome        String
+//matricula   String
+//dia_usuario dia_usuario[]
+//}
+
+//model dia {
+//id          String        @id @unique
+// date        DateTime
+//dia_usuario dia_usuario[]
+//}
+
+//model dia_usuario {
+//id        String @id @unique
+//entrada   String
+//saida     String
+//minutos   Int
+//diaId     String
+//usuarioId String
+
+//diateste diateste @relation(fields: [diaId], references: [id])
+//usuario  usuario  @relation(fields: [usuarioId], references: [id])
+//}
