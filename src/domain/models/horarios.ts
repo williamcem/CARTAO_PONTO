@@ -1,9 +1,12 @@
 export interface HorariosModel {
+  id: string;
+  data: string;
   entradaManha: string;
   saidaManha: string;
   entradaTarde: string;
   saidaTarde: string;
-  dif_min: string;
-  tipoUm: string;
-  tipoDois: string;
+  entradaExtra?: string;
+  saidaExtra?: string;
+  dif_min: number;
+  saldoAnt: number;
 }
