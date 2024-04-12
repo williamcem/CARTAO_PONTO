@@ -1,9 +1,3 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
-// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
-// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
-
 generator client {
   provider = "prisma-client-js"
 }
@@ -14,7 +8,7 @@ datasource db {
 }
 
 model dia {
-  id           String @id @unique
+  id           String  @id @unique
   data         String
   entradaManha String
   saidaManha   String
@@ -26,27 +20,12 @@ model dia {
   saldoAnt     Int
 }
 
-//model usuario {
-//id          String        @id @unique
-//nome        String
-//matricula   String
-//dia_usuario dia_usuario[]
-//}
-
-//model dia {
-//id          String        @id @unique
-// date        DateTime
-//dia_usuario dia_usuario[]
-//}
-
-//model dia_usuario {
-//id        String @id @unique
-//entrada   String
-//saida     String
-//minutos   Int
-//diaId     String
-//usuarioId String
-
-//diateste diateste @relation(fields: [diaId], references: [id])
-//usuario  usuario  @relation(fields: [usuarioId], references: [id])
-//}
+model receberdados {
+  id    String @id @unique
+  dado1 String
+  dado2 String
+  dado3 String
+  dado4 String
+  dado5 String
+  dado6 String
+}
