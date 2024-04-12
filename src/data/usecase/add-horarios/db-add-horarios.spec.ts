@@ -1,7 +1,7 @@
 import { describe, expect, test, vi } from "vitest";
 import { HorariosModel, AddHorarios, AddHorariosModel } from "../../../presentation/controllers/horarios/horarios-protocols";
 import { DbAddHorarios } from "./db-add-horarios";
-import { AddHorariosRepository } from "../protocols/add-horarios-repository";
+import { AddHorariosRepository } from "./add-horarios-repository";
 import { randomUUID } from "crypto";
 
 const makeAddHorariosRepository = (): AddHorariosRepository => {
