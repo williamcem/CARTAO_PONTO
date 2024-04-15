@@ -1,6 +1,5 @@
-import { HttpResponse, HttpRequest, Controller, AddHorarios } from "../horarios/horarios-protocols";
+import { HttpResponse, Controller } from "../horarios/horarios-protocols";
 import { serverError, ok } from "../../helpers/http-helpers";
-import { randomUUID } from "crypto";
 import { ListaPostgresRepository } from "@infra/db/postgresdb/lista-repository/lista-horarios";
 
 export class ListaHorariosController implements Controller {
