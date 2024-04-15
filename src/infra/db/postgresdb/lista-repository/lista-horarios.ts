@@ -1,5 +1,5 @@
 import { PrismaClient } from "@prisma/client";
-import { ListarListaRepository } from "../../../../data/usecase/protocols/find-listarhorarios-repository";
+import { ListarListaRepository } from "../../../../data/usecase/find-listar/find-listarhorarios-repository";
 import { ListarListaModel } from "../../../../domain/usecases/lista-horarios";
 import { ListaModel } from "../../../../domain/models/lista";
 

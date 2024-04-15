@@ -1,5 +1,5 @@
 import { PrismaClient } from "@prisma/client";
-import { AddHorariosRepository } from "../../../../data/usecase/protocols/add-horarios-repository";
+import { AddHorariosRepository } from "../../../../data/usecase/add-horarios/add-horarios-repository";
 import { AddHorariosModel } from "../../../../domain/usecases/add-horarios";
 import { HorariosModel } from "../../../../domain/models/horarios";
 
