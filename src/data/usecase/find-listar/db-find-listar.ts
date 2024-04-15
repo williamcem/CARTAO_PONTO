@@ -1,6 +1,6 @@
 import { ListarLista, ListarListaModel } from "../../../domain/usecases/lista-horarios";
 import { ListaModel } from "../../../domain/models/lista";
-import { ListarListaRepository } from "../protocols/find-listarhorarios-repository";
+import { ListarListaRepository } from "./find-listarhorarios-repository";
 
 export class DbaListar implements ListarLista {
   private readonly findListarRepository: ListarListaRepository;

@@ -1,6 +1,6 @@
 import { AddHorarios, AddHorariosModel } from "../../../domain/usecases/add-horarios";
 import { HorariosModel } from "../../../domain/models/horarios";
-import { AddHorariosRepository } from "../protocols/add-horarios-repository";
+import { AddHorariosRepository } from "./add-horarios-repository";
 
 export class DbAddHorarios implements AddHorarios {
   private readonly addHorariosRepository: AddHorariosRepository;
