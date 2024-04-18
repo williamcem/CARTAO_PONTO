@@ -1,8 +1,8 @@
 import { HorariosModel } from "@domain/models/horarios";
+import { HorarioData } from "../../presentation/controllers/horarios/horarios";
 
 export interface AddHorariosModel {
   id: string;
-  data: string;
   entradaManha: string;
   saidaManha: string;
   entradaTarde: string;
@@ -14,5 +14,6 @@ export interface AddHorariosModel {
 }
 
 export interface AddHorarios {
-  add(horarios: AddHorariosModel): Promise<HorariosModel>;
+  add(data: HorarioData): Promise<HorariosModel>;
+  getLastHorario(): Promise<HorarioData | null>;
 }
