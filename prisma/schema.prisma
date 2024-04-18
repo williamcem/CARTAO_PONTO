@@ -8,24 +8,30 @@ datasource db {
 }
 
 model dia {
-  id           String  @id @unique
-  data         String
-  entradaManha String
-  saidaManha   String
-  entradaTarde String
-  saidaTarde   String
-  entradaExtra String?
-  saidaExtra   String?
-  dif_min      Int
-  saldoAnt     Int
+  id             String       @id @unique
+  receberDadosId String       @unique
+  entradaManha   String
+  saidaManha     String
+  entradaTarde   String
+  saidaTarde     String
+  entradaExtra   String?
+  saidaExtra     String?
+  dif_min        Int
+  saldoAnt       Int
+  dataInicio     DateTime     @default(now()) // Definindo o campo dataInicio como opcional e preenchido automaticamente
+  receberdados   receberdados @relation(fields: [receberDadosId], references: [id])
 }
 
 model receberdados {
-  id    String @id @unique
-  dado1 String
-  dado2 String
-  dado3 String
-  dado4 String
-  dado5 String
-  dado6 String
+  id            String   @id @unique
+  mes           String
+  data          DateTime
+  diaSemana     String
+  status        String
+  nome          String
+  matricula     String
+  setor         String
+  expediente    String
+  saldoanterior Int
+  dia           dia?
 }
