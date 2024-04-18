@@ -1,7 +1,7 @@
 import { ListaModel } from "@domain/models/lista";
 
 export interface ListarListaModel {
-  data: string;
+  entradaManha: string;
 }
 
 export interface ListarLista {
