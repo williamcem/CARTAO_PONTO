@@ -12,13 +12,19 @@ export class ListaPostgresRepository implements ListarListaRepository {
 
   public async list(horariosData: ListarListaModel): Promise<ListaModel[]> {
     try {
-      // Consulta todos os horários no banco de dados usando o Prisma
-      const horarios = await this.prisma.dia.findMany({ orderBy: { data: "asc" } });
+      // Consulta todos os horários no banco de dados usando o Prisma e inclui os dados relacionados da tabela receberdados
+      const horarios = await this.prisma.dia.findMany({
+        orderBy: {
+          receberdados: { data: "asc" },
+        },
+        include: {
+          receberdados: true,
+        },
+      });
 
       // Mapeia os horários recuperados do banco de dados para o formato desejado
       const listaHorarios: ListaModel[] = horarios.map((horario) => ({
         id: horario.id,
-        data: horario.data,
         entradaManha: horario.entradaManha,
         saidaManha: horario.saidaManha,
         entradaTarde: horario.entradaTarde,
@@ -27,6 +33,16 @@ export class ListaPostgresRepository implements ListarListaRepository {
         saidaExtra: horario.saidaExtra || undefined,
         dif_min: horario.dif_min,
         saldoAnt: horario.saldoAnt,
+        // Adiciona os dados relacionados da tabela receberdados
+        mes: horario.receberdados?.mes || "",
+        data: horario.receberdados?.data || "",
+        diaSemana: horario.receberdados?.diaSemana || "",
+        status: horario.receberdados?.status || "",
+        nome: horario.receberdados?.nome || "",
+        matricula: horario.receberdados?.matricula || "",
+        setor: horario.receberdados?.setor || "",
+        expediente: horario.receberdados?.expediente || "",
+        saldoanterior: horario.receberdados?.saldoanterior || "",
       }));
 
       return listaHorarios; // Retorna os horários recuperados e mapeados do banco de dados
