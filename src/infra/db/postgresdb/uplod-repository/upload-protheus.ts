@@ -2,6 +2,7 @@ import { PrismaClient } from "@prisma/client";
 import { AddUploadRepository } from "../../../../data/usecase/upload-protheus/add-upload-prothues-repository";
 import { AddUploadModel } from "../../../../domain/usecases/add-upload";
 import { Uploadmodel } from "../../../../domain/models/upload-protheus";
+import { randomUUID } from "crypto";
 
 export class UploadPostgresRepository implements AddUploadRepository {
   private prisma: PrismaClient;
@@ -12,27 +13,53 @@ export class UploadPostgresRepository implements AddUploadRepository {
 
   public async add(protheusData: AddUploadModel[]): Promise<Uploadmodel> {
     // Transformar protheusData em um array de objetos para inserção em lote
-    const dataToInsert = protheusData.map((item) => ({
-      id: item.id,
-      dado1: item.dado1,
-      dado2: item.dado2,
-      dado3: item.dado3,
-      dado4: item.dado4,
-      dado5: item.dado5,
-      dado6: item.dado6,
-    }));
+    const date = new Date();
+    date.setHours(date.getHours() - 3);
 
+    const dataToInsert = protheusData.map((item) => {
+      return {
+        id: item.id,
+        mes: item.mes,
+        data: item.data,
+        diaSemana: item.diaSemana,
+        status: item.status,
+        nome: item.nome,
+        matricula: item.matricula,
+        setor: item.setor,
+        expediente: item.expediente,
+        saldoanterior: item.saldoanterior,
+        dia: {
+          create: {
+            id: randomUUID(),
+            dif_min: 0,
+            entradaManha: "",
+            entradaTarde: "",
+            saidaManha: "",
+            saidaTarde: "",
+            saldoAnt: 0,
+            entradaExtra: "",
+            saidaExtra: "",
+            dataInicio: date,
+          },
+        },
+      };
+    });
+
+    console.log(dataToInsert);
     try {
       // Salvar os dados em lote
-      const saved = await this.prisma.receberdados.createMany({
-        data: dataToInsert,
+      const query = dataToInsert.map((dados) => {
+        return this.prisma.receberdados.create({
+          data: dados,
+        });
       });
+      const saved = await this.prisma.$transaction(query);
 
-      console.log(saved);
+      console.log(saved.length);
       console.log("Dados salvos no banco de dados com sucesso.");
 
       return {
-        saved: Boolean(saved.count),
+        saved: Boolean(saved.length),
       };
     } catch (error) {
       console.error("Erro ao salvar os dados no banco de dados:", error);
