@@ -1,11 +1,10 @@
 import { HttpResponse, HttpRequest, Controller, AddHorarios } from "./horarios-protocols";
 import { MissingParamError } from "../../errors";
 import { badRequest, serverError, ok } from "../../helpers/http-helpers";
-import { randomUUID } from "crypto";
 
 // Definindo uma interface para o objeto 'body'
 interface HorariosRequestBody {
-  data: string;
+  id: string;
   entradaManha: string;
   entradaTarde: string;
   saidaManha: string;
@@ -15,9 +14,8 @@ interface HorariosRequestBody {
   saldoAnt?: number;
 }
 
-interface HorarioData {
+export interface HorarioData {
   id: string;
-  data: string;
   entradaManha: string;
   saidaManha: string;
   entradaTarde: string;
@@ -30,42 +28,28 @@ interface HorarioData {
 
 export class HorariosController implements Controller {
   private readonly addHorarios: AddHorarios;
-  private saldoAnterior: number | undefined; // Variável para armazenar o saldo anterior
 
   constructor(addHorarios: AddHorarios) {
     this.addHorarios = addHorarios;
-    /* this.saldoAnterior = 0; // Definindo um valor padrão */
   }
 
   async handle(httRequest: HttpRequest): Promise<HttpResponse> {
     try {
-      const camposRequiridos: Array<string> = ["data", "entradaManha", "saidaManha", "entradaTarde", "saidaTarde"];
+      const camposRequiridos: Array<string> = ["id", "entradaManha", "saidaManha", "entradaTarde", "saidaTarde"];
+      const { id, entradaManha, entradaTarde, saidaManha, saidaTarde, entradaExtra, saidaExtra } =
+        httRequest.body as HorariosRequestBody;
 
-      if (httRequest.body.entradaExtra !== undefined) {
-        camposRequiridos.push("entradaExtra");
-      }
-      if (httRequest.body.saidaExtra !== undefined) {
-        camposRequiridos.push("saidaExtra");
-      }
-
+      // Verificação dos campos obrigatórios
       for (const campo of camposRequiridos) {
         if (!httRequest.body[campo as keyof HorariosRequestBody]) {
           return badRequest(new MissingParamError(campo));
         }
       }
 
-      const { data, entradaManha, entradaTarde, saidaManha, saidaTarde, entradaExtra, saidaExtra, saldoAnt } =
-        httRequest.body as HorariosRequestBody;
+      // Consultar o banco de dados para obter o saldoAnt do último registro
+      const lastHorario = await this.getLastHorario();
 
-      let saldoAntAtual: number; // Variável para armazenar o saldo atual
-
-      // Verificar se saldoAnt está presente no corpo da requisição
-      if (saldoAnt !== undefined) {
-        saldoAntAtual = saldoAnt; // Se estiver presente, usar o valor fornecido
-      } else {
-        // Se não estiver presente, recuperar do banco de dados (ou usar um valor padrão se não houver nenhum)
-        saldoAntAtual = this.saldoAnterior !== undefined ? this.saldoAnterior : 0;
-      }
+      let saldoAntAtual: number;
 
       let totalExtramin = 0;
 
@@ -80,14 +64,12 @@ export class HorariosController implements Controller {
       const saldoDiaMin = totalDiaMin - escalaDiariaMin;
       const saldoDiaMinInteiro = Math.round(saldoDiaMin);
 
-      // Verificar se a diferença é maior que 10 ou menor que -10 para ajustar o saldo anterior
-      if (saldoDiaMinInteiro > 10 || saldoDiaMinInteiro < -10) {
-        saldoAntAtual += saldoDiaMinInteiro;
-      }
+      saldoAntAtual = 0;
+
+      if (lastHorario) saldoAntAtual = lastHorario.saldoAnt + saldoDiaMinInteiro; // Usar o saldoAnt do último registro
 
       const horarioData: HorarioData = {
-        id: randomUUID(),
-        data,
+        id,
         entradaManha,
         saidaManha,
         entradaTarde,
@@ -98,20 +80,28 @@ export class HorariosController implements Controller {
         saldoAnt: saldoAntAtual,
       };
 
-      if (entradaExtra !== undefined && saidaExtra !== undefined) {
-        horarioData["entradaExtra"] = entradaExtra;
-        horarioData["saidaExtra"] = saidaExtra;
-      }
-
       const horario = await this.addHorarios.add(horarioData);
 
       // Atualizar o saldo anterior para o novo saldo após a adição do horário
-      this.saldoAnterior = saldoAntAtual;
 
       return ok(horario);
     } catch (error) {
       console.log(error);
       return serverError();
+    }
+  }
+
+  private async getLastHorario(): Promise<HorarioData | null> {
+    try {
+      const lastHorario = await this.addHorarios.getLastHorario();
+
+      if (lastHorario) {
+        return lastHorario;
+      }
+
+      return null;
+    } catch (error) {
+      throw new Error("Erro ao buscar o último horário");
     }
   }
 
@@ -122,7 +112,6 @@ export class HorariosController implements Controller {
     let totalMinutosEntrada = entradaHoras * 60 + entradaMinutos;
     let totalMinutosSaida = saidaHoras * 60 + saidaMinutos;
 
-    // Se houver entradaExtra e ela não for undefined, adicione-a aos minutos de saída
     if (extra !== undefined) {
       const [extraHoras, extraMinutos] = extra.split(":").map(Number);
       totalMinutosSaida += extraHoras * 60 + extraMinutos;
