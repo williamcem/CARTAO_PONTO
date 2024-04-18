@@ -2,6 +2,7 @@ import { PrismaClient } from "@prisma/client";
 import { AddHorariosRepository } from "../../../../data/usecase/add-horarios/add-horarios-repository";
 import { AddHorariosModel } from "../../../../domain/usecases/add-horarios";
 import { HorariosModel } from "../../../../domain/models/horarios";
+import { HorarioData } from "../../../../presentation/controllers/horarios/horarios";
 
 export class HorariosPostgresRepository implements AddHorariosRepository {
   private prisma: PrismaClient;
@@ -11,35 +12,68 @@ export class HorariosPostgresRepository implements AddHorariosRepository {
   }
 
   async add(horarioData: AddHorariosModel): Promise<HorariosModel> {
-    // Salvar dados do horário no banco de dados
-    const insertHorarios = await this.prisma.dia.create({
-      data: {
-        id: horarioData.id,
-        data: horarioData.data,
-        entradaManha: horarioData.entradaManha,
-        saidaManha: horarioData.saidaManha,
-        entradaTarde: horarioData.entradaTarde,
-        saidaTarde: horarioData.saidaTarde,
-        entradaExtra: horarioData.entradaExtra,
-        saidaExtra: horarioData.saidaExtra,
-        dif_min: horarioData.dif_min,
-        saldoAnt: horarioData.saldoAnt,
-      },
-    });
+    try {
+      const date = new Date();
+      date.setHours(date.getHours() - 3);
 
-    // Retornar modelo de horários
-    const HorariosModel: HorariosModel = {
-      id: insertHorarios.id,
-      data: insertHorarios.data,
-      entradaManha: insertHorarios.entradaManha,
-      saidaManha: insertHorarios.saidaManha,
-      entradaTarde: insertHorarios.entradaTarde,
-      saidaTarde: insertHorarios.saidaTarde,
-      entradaExtra: insertHorarios.entradaExtra || undefined,
-      saidaExtra: insertHorarios.saidaExtra || undefined,
-      dif_min: insertHorarios.dif_min,
-      saldoAnt: insertHorarios.saldoAnt,
-    };
-    return HorariosModel;
+      const updateHorarios = await this.prisma.dia.update({
+        where: { id: horarioData.id },
+        data: {
+          entradaManha: horarioData.entradaManha,
+          saidaManha: horarioData.saidaManha,
+          entradaTarde: horarioData.entradaTarde,
+          saidaTarde: horarioData.saidaTarde,
+          entradaExtra: horarioData.entradaExtra || undefined,
+          saidaExtra: horarioData.saidaExtra || undefined,
+          dif_min: horarioData.dif_min,
+          saldoAnt: horarioData.saldoAnt,
+          dataInicio: date,
+        },
+      });
+
+      const HorariosModel: HorariosModel = {
+        id: updateHorarios.id,
+        entradaManha: updateHorarios.entradaManha,
+        saidaManha: updateHorarios.saidaManha,
+        entradaTarde: updateHorarios.entradaTarde,
+        saidaTarde: updateHorarios.saidaTarde,
+        entradaExtra: updateHorarios.entradaExtra || undefined,
+        saidaExtra: updateHorarios.saidaExtra || undefined,
+        dif_min: updateHorarios.dif_min,
+        saldoAnt: updateHorarios.saldoAnt,
+      };
+
+      return HorariosModel;
+    } catch (error) {
+      console.error("Erro do Prisma:", error);
+      throw new Error("Erro ao atualizar o horário");
+    }
+  }
+
+  async getLastHorario(): Promise<HorarioData | null> {
+    try {
+      const lastHorario = await this.prisma.dia.findFirst({
+        orderBy: { dataInicio: "desc" }, // Ordenar pelo ID em ordem decrescente para obter o último registro
+      });
+
+      if (lastHorario) {
+        return {
+          id: lastHorario.id,
+          entradaManha: lastHorario.entradaManha,
+          saidaManha: lastHorario.saidaManha,
+          entradaTarde: lastHorario.entradaTarde,
+          saidaTarde: lastHorario.saidaTarde,
+          entradaExtra: lastHorario.entradaExtra || undefined,
+          saidaExtra: lastHorario.saidaExtra || undefined,
+          dif_min: lastHorario.dif_min,
+          saldoAnt: lastHorario.saldoAnt,
+        };
+      }
+
+      return null;
+    } catch (error) {
+      console.error("Erro do Prisma:", error);
+      throw new Error("Erro ao buscar o último horário");
+    }
   }
 }
