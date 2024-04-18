@@ -4,7 +4,7 @@ import { adaptRoute } from "../../adapters/express-route-adapter";
 
 // Rota para adicionar dados
 const route = (router: Router): void => {
-  router.post("/semana", adaptRoute(makeHorariosController()));
+  router.put("/semana", adaptRoute(makeHorariosController()));
 };
 
 export default route;
