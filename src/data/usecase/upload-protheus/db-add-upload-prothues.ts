@@ -9,8 +9,8 @@ export class DbAddUpload implements AddUpload {
     this.addUploadRepository = addUploadRepository;
   }
 
-  async add(protheusData: AddUploadModel): Promise<Uploadmodel> {
-    const prothues = await this.addUploadRepository.add(Object.assign({}, protheusData));
+  async add(protheusData: AddUploadModel[]): Promise<Uploadmodel> {
+    const prothues = await this.addUploadRepository.add(protheusData);
     return prothues;
   }
 }
