@@ -1,4 +1,3 @@
-import { ok } from "./../../presentation/helpers/http-helpers";
 import stream from "stream";
 import csv from "csv-parser";
 import { UploadPostgresRepository } from "@infra/db/postgresdb/uplod-repository/upload-protheus";
@@ -17,12 +16,14 @@ export async function processarArquivo(req: { file?: Express.Multer.File | undef
   bufferStream.end(arquivo);
 
   const dadosExtraidos: {
-    PRCOPRO: string;
-    PRGRUCOD: string;
-    PRDESCR: string;
-    PRUNID: string;
-    PRPROC: string;
-    PRUSANFAB: string;
+    MES: string;
+    DATA: string;
+    STATUS: string;
+    NOME: string;
+    MATRÍCULA: string;
+    SETOR: string;
+    EXPEDIENTE: string;
+    SALDOANTERIOR: string;
   }[] = []; // Define o tipo explícito para dadosExtraidos como um array de objetos
 
   bufferStream
@@ -47,23 +48,31 @@ export async function processarArquivo(req: { file?: Express.Multer.File | undef
 
       const novoDados: {
         id: string;
-        dado1: string;
-        dado2: string;
-        dado3: string;
-        dado4: string;
-        dado5: string;
-        dado6: string;
+        mes: string;
+        data: Date;
+        diaSemana: string;
+        status: string;
+        nome: string;
+        matricula: string;
+        setor: string;
+        expediente: string;
+        saldoanterior: number;
       }[] = [];
 
       dadosExtraidos.map((item, i, array) => {
         if (i !== array.length - 1) {
+          const [date, diaSemana] = item.DATA.split(" ");
+          const [dia, mes, ano] = date.split("/");
           novoDados.push({
-            dado1: item.PRCOPRO,
-            dado2: item.PRGRUCOD,
-            dado3: item.PRDESCR,
-            dado4: item.PRUNID,
-            dado5: item.PRPROC,
-            dado6: item.PRUSANFAB,
+            mes: item.MES,
+            data: new Date(`${ano}-${mes}-${dia}`),
+            diaSemana,
+            status: item.STATUS,
+            nome: item.NOME,
+            matricula: item.MATRÍCULA,
+            setor: item.SETOR,
+            expediente: item.EXPEDIENTE,
+            saldoanterior: Number(item.SALDOANTERIOR),
             id: randomUUID(),
           });
         }
