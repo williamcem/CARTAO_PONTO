@@ -12,8 +12,8 @@ model dia {
   receberDadosId String       @unique
   entradaManha   String
   saidaManha     String
-  entradaTarde   String
-  saidaTarde     String
+  entradaTarde   String?
+  saidaTarde     String?
   entradaExtra   String?
   saidaExtra     String?
   dif_min        Int
