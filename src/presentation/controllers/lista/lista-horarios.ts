@@ -6,7 +6,7 @@ export class ListaHorariosController implements Controller {
   constructor(private readonly listaPostgresRepository: ListaPostgresRepository) {}
   async handle(): Promise<HttpResponse> {
     try {
-      const horarios = await this.listaPostgresRepository.list({ data: "10/04/2024" }); // Chama o serviço de listagem
+      const horarios = await this.listaPostgresRepository.list({ entradaManha: "10/04/2024" }); // Chama o serviço de listagem
 
       return ok(horarios);
     } catch (error) {

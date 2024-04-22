@@ -42,7 +42,7 @@ export class ListaPostgresRepository implements ListarListaRepository {
         matricula: horario.receberdados?.matricula || "",
         setor: horario.receberdados?.setor || "",
         expediente: horario.receberdados?.expediente || "",
-        saldoanterior: horario.receberdados?.saldoanterior || "",
+        saldoanterior: horario.receberdados?.saldoanterior || 0,
       }));
 
       return listaHorarios; // Retorna os horários recuperados e mapeados do banco de dados
