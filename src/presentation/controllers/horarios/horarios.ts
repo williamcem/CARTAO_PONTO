@@ -2,13 +2,12 @@ import { HttpResponse, HttpRequest, Controller, AddHorarios } from "./horarios-p
 import { MissingParamError } from "../../errors";
 import { badRequest, serverError, ok } from "../../helpers/http-helpers";
 
-// Definindo uma interface para o objeto 'body'
 interface HorariosRequestBody {
   id: string;
   entradaManha: string;
-  entradaTarde: string;
   saidaManha: string;
-  saidaTarde: string;
+  entradaTarde?: string;
+  saidaTarde?: string;
   entradaExtra?: string;
   saidaExtra?: string;
   saldoAnt?: number;
@@ -18,8 +17,8 @@ export interface HorarioData {
   id: string;
   entradaManha: string;
   saidaManha: string;
-  entradaTarde: string;
-  saidaTarde: string;
+  entradaTarde?: string;
+  saidaTarde?: string;
   entradaExtra?: string;
   saidaExtra?: string;
   dif_min: number;
@@ -35,38 +34,39 @@ export class HorariosController implements Controller {
 
   async handle(httRequest: HttpRequest): Promise<HttpResponse> {
     try {
-      const camposRequiridos: Array<string> = ["id", "entradaManha", "saidaManha", "entradaTarde", "saidaTarde"];
+      const camposRequiridos: Array<string> = ["id", "entradaManha", "saidaManha"];
       const { id, entradaManha, entradaTarde, saidaManha, saidaTarde, entradaExtra, saidaExtra } =
         httRequest.body as HorariosRequestBody;
 
-      // Verificação dos campos obrigatórios
       for (const campo of camposRequiridos) {
         if (!httRequest.body[campo as keyof HorariosRequestBody]) {
           return badRequest(new MissingParamError(campo));
         }
       }
 
-      // Consultar o banco de dados para obter o saldoAnt do último registro
       const lastHorario = await this.getLastHorario();
 
-      let saldoAntAtual: number;
+      let totalManhaMin = this.calcularTotalMinutos(entradaManha, saidaManha);
+      let totalTardeMin = 0;
+
+      if (entradaTarde && saidaTarde) {
+        totalTardeMin = this.calcularTotalMinutos(entradaTarde, saidaTarde);
+      }
 
       let totalExtramin = 0;
 
-      if (entradaExtra !== undefined && saidaExtra !== undefined) {
+      if (entradaExtra && saidaExtra) {
         totalExtramin = this.calcularTotalMinutos(entradaExtra, saidaExtra);
       }
 
-      const totalManhaMin = this.calcularTotalMinutos(entradaManha, saidaManha);
-      const totalTardeMin = this.calcularTotalMinutos(entradaTarde, saidaTarde);
       const totalDiaMin = totalManhaMin + totalTardeMin + totalExtramin;
       const escalaDiariaMin = 8.8 * 60;
       const saldoDiaMin = totalDiaMin - escalaDiariaMin;
       const saldoDiaMinInteiro = Math.round(saldoDiaMin);
 
-      saldoAntAtual = 0;
+      let saldoAntAtual = 0;
 
-      if (lastHorario) saldoAntAtual = lastHorario.saldoAnt + saldoDiaMinInteiro; // Usar o saldoAnt do último registro
+      if (lastHorario) saldoAntAtual = lastHorario.saldoAnt + saldoDiaMinInteiro;
 
       const horarioData: HorarioData = {
         id,
@@ -81,8 +81,6 @@ export class HorariosController implements Controller {
       };
 
       const horario = await this.addHorarios.add(horarioData);
-
-      // Atualizar o saldo anterior para o novo saldo após a adição do horário
 
       return ok(horario);
     } catch (error) {
@@ -112,7 +110,7 @@ export class HorariosController implements Controller {
     let totalMinutosEntrada = entradaHoras * 60 + entradaMinutos;
     let totalMinutosSaida = saidaHoras * 60 + saidaMinutos;
 
-    if (extra !== undefined) {
+    if (extra) {
       const [extraHoras, extraMinutos] = extra.split(":").map(Number);
       totalMinutosSaida += extraHoras * 60 + extraMinutos;
     }
