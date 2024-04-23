@@ -1,6 +1,9 @@
+import { SaldoAntServico } from "./saldoAntServico";
+import { SaldoAntRepository } from "../../../infra/db/postgresdb/horarios-repository/saldoAnt";
 import { HttpResponse, HttpRequest, Controller, AddHorarios } from "./horarios-protocols";
 import { MissingParamError } from "../../errors";
 import { badRequest, serverError, ok } from "../../helpers/http-helpers";
+import { HorariosPostgresRepository } from "../../../infra/db/postgresdb/horarios-repository/horarios";
 
 interface HorariosRequestBody {
   id: string;
@@ -10,7 +13,6 @@ interface HorariosRequestBody {
   saidaTarde?: string;
   entradaExtra?: string;
   saidaExtra?: string;
-  saldoAnt?: number;
 }
 
 export interface HorarioData {
@@ -27,24 +29,30 @@ export interface HorarioData {
 
 export class HorariosController implements Controller {
   private readonly addHorarios: AddHorarios;
+  private readonly saldoAntService: SaldoAntServico;
+  private readonly saldoAntRepository: SaldoAntRepository;
+  private readonly horariosRepository: HorariosPostgresRepository;
 
   constructor(addHorarios: AddHorarios) {
     this.addHorarios = addHorarios;
+    this.saldoAntService = new SaldoAntServico();
+    this.saldoAntRepository = new SaldoAntRepository();
+    this.horariosRepository = new HorariosPostgresRepository();
   }
 
-  async handle(httRequest: HttpRequest): Promise<HttpResponse> {
+  async handle(httpRequest: HttpRequest): Promise<HttpResponse> {
     try {
       const camposRequiridos: Array<string> = ["id", "entradaManha", "saidaManha"];
       const { id, entradaManha, entradaTarde, saidaManha, saidaTarde, entradaExtra, saidaExtra } =
-        httRequest.body as HorariosRequestBody;
+        httpRequest.body as HorariosRequestBody;
 
       for (const campo of camposRequiridos) {
-        if (!httRequest.body[campo as keyof HorariosRequestBody]) {
+        if (!httpRequest.body[campo as keyof HorariosRequestBody]) {
           return badRequest(new MissingParamError(campo));
         }
       }
 
-      const lastHorario = await this.getLastHorario();
+      const lastHorario = await this.horariosRepository.getLastHorario();
 
       let totalManhaMin = this.calcularTotalMinutos(entradaManha, saidaManha);
       let totalTardeMin = 0;
@@ -53,20 +61,21 @@ export class HorariosController implements Controller {
         totalTardeMin = this.calcularTotalMinutos(entradaTarde, saidaTarde);
       }
 
-      let totalExtramin = 0;
+      let totalExtraMin = 0;
 
       if (entradaExtra && saidaExtra) {
-        totalExtramin = this.calcularTotalMinutos(entradaExtra, saidaExtra);
+        totalExtraMin = this.calcularTotalMinutos(entradaExtra, saidaExtra);
       }
 
-      const totalDiaMin = totalManhaMin + totalTardeMin + totalExtramin;
+      const totalDiaMin = totalManhaMin + totalTardeMin + totalExtraMin;
       const escalaDiariaMin = 8.8 * 60;
       const saldoDiaMin = totalDiaMin - escalaDiariaMin;
       const saldoDiaMinInteiro = Math.round(saldoDiaMin);
 
-      let saldoAntAtual = 0;
+      const saldoAntAtual = lastHorario ? lastHorario.saldoAnt : 0;
+      const novoSaldoAnt = this.saldoAntService.calcularSaldoAnt(saldoAntAtual || 0, saldoDiaMinInteiro);
 
-      if (lastHorario) saldoAntAtual = lastHorario.saldoAnt + saldoDiaMinInteiro;
+      await this.saldoAntRepository.updateSaldoAnt(id, novoSaldoAnt);
 
       const horarioData: HorarioData = {
         id,
@@ -77,7 +86,7 @@ export class HorariosController implements Controller {
         entradaExtra,
         saidaExtra,
         dif_min: saldoDiaMinInteiro,
-        saldoAnt: saldoAntAtual,
+        saldoAnt: novoSaldoAnt,
       };
 
       const horario = await this.addHorarios.add(horarioData);
@@ -86,20 +95,6 @@ export class HorariosController implements Controller {
     } catch (error) {
       console.log(error);
       return serverError();
-    }
-  }
-
-  private async getLastHorario(): Promise<HorarioData | null> {
-    try {
-      const lastHorario = await this.addHorarios.getLastHorario();
-
-      if (lastHorario) {
-        return lastHorario;
-      }
-
-      return null;
-    } catch (error) {
-      throw new Error("Erro ao buscar o último horário");
     }
   }
 
