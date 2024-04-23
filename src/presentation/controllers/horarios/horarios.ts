@@ -2,6 +2,7 @@ import { SaldoAntServico } from "./saldoAntServico";
 import { SaldoAntRepository } from "../../../infra/db/postgresdb/horarios-repository/saldoAnt";
 import { HttpResponse, HttpRequest, Controller, AddHorarios } from "./horarios-protocols";
 import { MissingParamError } from "../../errors";
+import { TardeParamError } from "../../errors/tarde-erro"
 import { badRequest, serverError, ok } from "../../helpers/http-helpers";
 import { HorariosPostgresRepository } from "../../../infra/db/postgresdb/horarios-repository/horarios";
 
@@ -50,6 +51,11 @@ export class HorariosController implements Controller {
         if (!httpRequest.body[campo as keyof HorariosRequestBody]) {
           return badRequest(new MissingParamError(campo));
         }
+      }
+
+      // Verificação para entradaTarde e saidaTarde
+      if ((entradaTarde && !saidaTarde) || (!entradaTarde && saidaTarde)) {
+        return badRequest(new TardeParamError("Se entradaTarde ou saidaTarde fornecido, ambos devem estar presentes."));
       }
 
       const lastHorario = await this.horariosRepository.getLastHorario();
