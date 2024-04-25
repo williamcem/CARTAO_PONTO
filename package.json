@@ -15,7 +15,7 @@
     "test:ui": "vitest --ui --coverage.enabled=true",
     "build": "tsup",
     "start:dev": "tsx watch src/main.ts",
-    "start:prod": "node ."
+    "start:prod": "pm2 start ./dist/main.cjs"
   },
   "devDependencies": {
     "@commitlint/cli": "^18.6.1",
