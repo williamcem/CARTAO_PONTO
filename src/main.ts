@@ -1,4 +1,4 @@
 import "dotenv/config";
 import app from "./main/config/app";
 
-app.listen(64000, () => console.log("Server rodando em http://localhost:64000"));
+app.listen(process.env.PORT, () => console.log(`Server rodando em http://localhost:${process.env.PORT}`));
