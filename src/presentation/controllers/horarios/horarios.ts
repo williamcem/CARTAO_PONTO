@@ -1,64 +1,29 @@
-import { SaldoAntServico } from "./saldoAntServico";
-import { SaldoAntRepository } from "../../../infra/db/postgresdb/horarios-repository/saldoAnt";
-import { HttpResponse, HttpRequest, Controller, AddHorarios } from "./horarios-protocols";
-import { MissingParamError } from "../../errors";
-import { TardeParamError } from "../../errors/tarde-erro"
-import { badRequest, serverError, ok } from "../../helpers/http-helpers";
-import { HorariosPostgresRepository } from "../../../infra/db/postgresdb/horarios-repository/horarios";
-
-interface HorariosRequestBody {
-  id: string;
-  entradaManha: string;
-  saidaManha: string;
-  entradaTarde?: string;
-  saidaTarde?: string;
-  entradaExtra?: string;
-  saidaExtra?: string;
-}
-
-export interface HorarioData {
-  id: string;
-  entradaManha: string;
-  saidaManha: string;
-  entradaTarde?: string;
-  saidaTarde?: string;
-  entradaExtra?: string;
-  saidaExtra?: string;
-  dif_min: number;
-  saldoAnt: number;
-}
+import { HttpRequest, HttpResponse, Controller } from "./horarios-protocols";
+import { AddHorarios } from "../../../domain/usecases/add-horarios";
+import { serverError, ok, badRequest } from "../../../presentation/helpers/http-helpers";
+import { ExtraParamError } from "../../errors/extra-erro";
+import { TardeParamError } from "../../errors/tarde-erro";
 
 export class HorariosController implements Controller {
   private readonly addHorarios: AddHorarios;
-  private readonly saldoAntService: SaldoAntServico;
-  private readonly saldoAntRepository: SaldoAntRepository;
-  private readonly horariosRepository: HorariosPostgresRepository;
 
   constructor(addHorarios: AddHorarios) {
     this.addHorarios = addHorarios;
-    this.saldoAntService = new SaldoAntServico();
-    this.saldoAntRepository = new SaldoAntRepository();
-    this.horariosRepository = new HorariosPostgresRepository();
   }
 
   async handle(httpRequest: HttpRequest): Promise<HttpResponse> {
     try {
-      const camposRequiridos: Array<string> = ["id", "entradaManha", "saidaManha"];
-      const { id, entradaManha, entradaTarde, saidaManha, saidaTarde, entradaExtra, saidaExtra } =
-        httpRequest.body as HorariosRequestBody;
-
-      for (const campo of camposRequiridos) {
-        if (!httpRequest.body[campo as keyof HorariosRequestBody]) {
-          return badRequest(new MissingParamError(campo));
-        }
-      }
+      const { id, entradaManha, entradaTarde, saidaManha, saidaTarde, entradaExtra, saidaExtra } = httpRequest.body;
 
       // Verificação para entradaTarde e saidaTarde
       if ((entradaTarde && !saidaTarde) || (!entradaTarde && saidaTarde)) {
-        return badRequest(new TardeParamError("Se entradaTarde ou saidaTarde fornecido, ambos devem estar presentes."));
+        return badRequest(new TardeParamError("Se entradaTarde ou saidaTarde for fornecido, ambos devem estar presentes."));
       }
 
-      const lastHorario = await this.horariosRepository.getLastHorario();
+      // Verificação para entradaExtra e saidaExtra
+      if ((entradaExtra && !saidaExtra) || (!entradaExtra && saidaExtra)) {
+        return badRequest(new ExtraParamError("Se entradaExtra ou saidaExtra for fornecido, ambos devem estar presentes."));
+      }
 
       let totalManhaMin = this.calcularTotalMinutos(entradaManha, saidaManha);
       let totalTardeMin = 0;
@@ -74,16 +39,10 @@ export class HorariosController implements Controller {
       }
 
       const totalDiaMin = totalManhaMin + totalTardeMin + totalExtraMin;
-      const escalaDiariaMin = 8.8 * 60;
-      const saldoDiaMin = totalDiaMin - escalaDiariaMin;
-      const saldoDiaMinInteiro = Math.round(saldoDiaMin);
+      const escalaDiariaMin = 8.8 * 60; // 8 horas e 48 minutos em minutos
+      const dif_min = totalDiaMin - escalaDiariaMin;
 
-      const saldoAntAtual = lastHorario ? lastHorario.saldoAnt : 0;
-      const novoSaldoAnt = this.saldoAntService.calcularSaldoAnt(saldoAntAtual || 0, saldoDiaMinInteiro);
-
-      await this.saldoAntRepository.updateSaldoAnt(id, novoSaldoAnt);
-
-      const horarioData: HorarioData = {
+      const horarioData = {
         id,
         entradaManha,
         saidaManha,
@@ -91,13 +50,12 @@ export class HorariosController implements Controller {
         saidaTarde,
         entradaExtra,
         saidaExtra,
-        dif_min: saldoDiaMinInteiro,
-        saldoAnt: novoSaldoAnt,
+        dif_min,
       };
 
       const horario = await this.addHorarios.add(horarioData);
 
-      return ok(horario);
+      return ok({ dif_min: horario.dif_min, horarioData });
     } catch (error) {
       console.log(error);
       return serverError();
