@@ -4,6 +4,17 @@ import { serverError, ok, badRequest } from "../../../presentation/helpers/http-
 import { ExtraParamError } from "../../errors/extra-erro";
 import { TardeParamError } from "../../errors/tarde-erro";
 
+export interface HorarioData {
+  id: string;
+  entradaManha: string;
+  saidaManha: string;
+  entradaTarde: string;
+  saidaTarde: string;
+  entradaExtra: string;
+  saidaExtra: string;
+  dif_min: number;
+}
+
 export class HorariosController implements Controller {
   private readonly addHorarios: AddHorarios;
 
