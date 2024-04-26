@@ -33,15 +33,12 @@ export class SaldoController implements Controller {
         }
         saldoAtual = saldoAtual + dif_min;
 
+        // Arredonda saldoAtual para o valor inteiro mais próximo
+        saldoAtual = Math.round(saldoAtual);
+
         const saved = await prismaClient.dia.update({ where: { id: dia.id }, data: { saldoAnt: saldoAtual } });
         console.log(saldoAtual);
       }
-
-      /*       const { id, dif_min } = httpRequest.body; */
-
-      /* console.log("saldoAntData:", { id, saldoAnt: dif_min }); // Log de depuração */
-
-      /* await this.dbAddSaldoAnt.addSaldoAnt({ id, saldoAnt: dif_min }); */
 
       return ok({ message: "Saldo anterior calculado e adicionado com sucesso" });
     } catch (error) {
