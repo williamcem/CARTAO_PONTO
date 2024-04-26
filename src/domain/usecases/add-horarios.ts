@@ -10,7 +10,6 @@ export interface AddHorariosModel {
   entradaExtra?: string;
   saidaExtra?: string;
   dif_min: number;
-  saldoAnt: number;
 }
 
 export interface AddHorarios {
