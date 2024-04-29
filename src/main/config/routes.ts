@@ -12,7 +12,4 @@ export const setupRoutes = (app: Express): void => {
   lista(router);
   saldo(router);
   upload(router);
-  // fg.sync("**/src/main/routes/*/**routes.ts").map(async (file) => {
-  //   (await import(`../../../${file}`)).default(router);
-  // });
 };
