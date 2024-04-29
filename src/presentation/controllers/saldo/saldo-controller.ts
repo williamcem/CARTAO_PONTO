@@ -20,21 +20,20 @@ export class SaldoController implements Controller {
 
       let saldoAtual = 0;
       for (const dia of dias) {
-        //190
         let dif_min = dia.dif_min;
-
-        // Verificar se dif_min está entre -10 e 10
-        if (dif_min >= -10 && dif_min <= 10) {
-          continue; // Pula para a próxima iteração do loop
-        }
 
         if (saldoAtual > 0) {
           if (dif_min < 0) dif_min = dif_min / 1.6;
         }
         saldoAtual = saldoAtual + dif_min;
 
-        // Arredonda saldoAtual para o valor inteiro mais próximo
-        saldoAtual = Math.round(saldoAtual);
+        // Arredonda a parte decimal de saldoAtual
+        saldoAtual = arredondarParteDecimal(saldoAtual);
+
+        // Verificar se dif_min está entre -10 e 10
+        if (dif_min >= -10 && dif_min <= 10) {
+          continue; // Pula para a próxima iteração do loop
+        }
 
         const saved = await prismaClient.dia.update({ where: { id: dia.id }, data: { saldoAnt: saldoAtual } });
         console.log(saldoAtual);
@@ -45,5 +44,18 @@ export class SaldoController implements Controller {
       console.log(error);
       return serverError();
     }
+  }
+}
+
+// Função para arredondar apenas a parte decimal de um número
+function arredondarParteDecimal(numero: number): number {
+  const inteiro = Math.floor(numero); // Obtém a parte inteira do número
+  const decimal = numero - inteiro; // Obtém a parte decimal do número
+
+  // Se a parte decimal for maior que 0.5, arredonde para cima
+  if (decimal > 0.5) {
+    return inteiro + 1; // Adiciona 1 para arredondar para cima
+  } else {
+    return inteiro; // Mantém o inteiro, arredondando para baixo
   }
 }
