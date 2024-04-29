@@ -6,7 +6,7 @@ const upload = multer();
 
 // Rota para fazer uplod de arquivos
 const route = (router: Router): void => {
-  router.patch("/upload", upload.single("arquivo"), (req, res) => processarArquivo(req, res));
+  router.post("/upload", upload.single("arquivo"), (req, res) => processarArquivo(req, res));
 };
 
 export default route;
