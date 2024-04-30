@@ -15,20 +15,44 @@ export class HorariosPostgresRepository implements AddHorariosRepository {
       const date = new Date();
       date.setHours(date.getHours() - 3);
 
+      // Verifica se os campos de entrada e saída extra estão presentes na requisição
+      const dataToUpdate: any = {
+        entradaManha: horarioData.entradaManha,
+        saidaManha: horarioData.saidaManha,
+        dif_min: horarioData.dif_min,
+        dataInicio: date,
+      };
+
+      if (horarioData.entradaTarde !== undefined) {
+        dataToUpdate.entradaTarde = horarioData.entradaTarde;
+      } else {
+        dataToUpdate.entradaTarde = ""; // Define como vazio se não estiver presente
+      }
+
+      if (horarioData.saidaTarde !== undefined) {
+        dataToUpdate.saidaTarde = horarioData.saidaTarde;
+      } else {
+        dataToUpdate.saidaTarde = ""; // Define como vazio se não estiver presente
+      }
+
+      if (horarioData.entradaExtra !== undefined) {
+        dataToUpdate.entradaExtra = horarioData.entradaExtra;
+      } else {
+        dataToUpdate.entradaExtra = ""; // Define como vazio se não estiver presente
+      }
+
+      if (horarioData.saidaExtra !== undefined) {
+        dataToUpdate.saidaExtra = horarioData.saidaExtra;
+      } else {
+        dataToUpdate.saidaExtra = ""; // Define como vazio se não estiver presente
+      }
+
       const updateHorarios = await this.prisma.dia.update({
         where: { id: horarioData.id },
-        data: {
-          entradaManha: horarioData.entradaManha,
-          saidaManha: horarioData.saidaManha,
-          entradaTarde: horarioData.entradaTarde || undefined,
-          saidaTarde: horarioData.saidaTarde || undefined,
-          entradaExtra: horarioData.entradaExtra || undefined,
-          saidaExtra: horarioData.saidaExtra || undefined,
-          dif_min: horarioData.dif_min,
-          dataInicio: date,
-        },
+        data: dataToUpdate,
       });
 
+      // Retornando o modelo atualizado
       const HorariosModel: HorariosModel = {
         id: updateHorarios.id,
         entradaManha: updateHorarios.entradaManha,
@@ -45,35 +69,6 @@ export class HorariosPostgresRepository implements AddHorariosRepository {
     } catch (error) {
       console.error("Erro do Prisma:", error);
       throw new Error("Erro ao atualizar o horário");
-    }
-  }
-
-  async getLastHorario(): Promise<HorariosModel | null> {
-    try {
-      const lastHorario = await this.prisma.dia.findFirst({
-        orderBy: { dataInicio: "desc" },
-      });
-
-      if (lastHorario) {
-        const HorariosModel: HorariosModel = {
-          id: lastHorario.id,
-          entradaManha: lastHorario.entradaManha,
-          saidaManha: lastHorario.saidaManha,
-          entradaTarde: lastHorario.entradaTarde || undefined,
-          saidaTarde: lastHorario.saidaTarde || undefined,
-          entradaExtra: lastHorario.entradaExtra || undefined,
-          saidaExtra: lastHorario.saidaExtra || undefined,
-          dif_min: lastHorario.dif_min,
-          saldoAnt: lastHorario.saldoAnt,
-        };
-
-        return HorariosModel;
-      }
-
-      return null;
-    } catch (error) {
-      console.error("Erro do Prisma:", error);
-      throw new Error("Erro ao buscar o último horário");
     }
   }
 }
