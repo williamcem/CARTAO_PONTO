@@ -14,5 +14,4 @@ export interface AddHorariosModel {
 
 export interface AddHorarios {
   add(data: HorarioData): Promise<HorariosModel>;
-  getLastHorario(): Promise<HorarioData | null>;
 }

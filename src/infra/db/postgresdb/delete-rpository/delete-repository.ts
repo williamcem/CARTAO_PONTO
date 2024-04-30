@@ -12,7 +12,6 @@ export class DeletePostgresRepository implements DelDeleteRepository {
   async deleteById(deleteData: DelDeleteModel): Promise<void> {
     try {
       const { id } = deleteData; // Extrair o ID do objeto deleteData
-      console.log("bateu");
       await this.prisma.dia.delete({
         where: {
           id: id, // Usar o ID fornecido
