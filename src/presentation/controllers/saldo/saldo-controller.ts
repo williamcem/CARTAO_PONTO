@@ -47,7 +47,6 @@ export class SaldoController implements Controller {
   }
 }
 
-// Função para arredondar apenas a parte decimal de um número
 function arredondarParteDecimal(numero: number): number {
   const inteiro = Math.floor(numero); // Obtém a parte inteira do número
   const decimal = numero - inteiro; // Obtém a parte decimal do número
