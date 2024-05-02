@@ -25,7 +25,6 @@ export class DeletePostgresRepository implements DelDeleteRepository {
           saidaExtra: "",
           dif_min: 0,
           saldoAnt: 0,
-          // Adicione outros campos que precisam ser definidos como vazios aqui
         },
       });
     } catch (error) {
