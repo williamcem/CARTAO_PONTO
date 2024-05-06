@@ -2,12 +2,13 @@ import { PrismaClient } from "@prisma/client";
 import { ListarListaRepository } from "../../../../data/usecase/find-listar/find-listarhorarios-repository";
 import { ListarListaModel } from "../../../../domain/usecases/lista-horarios";
 import { ListaModel } from "../../../../domain/models/lista";
+import { prisma } from "../../../database/Prisma"
 
 export class ListaPostgresRepository implements ListarListaRepository {
   private prisma: PrismaClient;
 
   constructor() {
-    this.prisma = new PrismaClient();
+    this.prisma = prisma;
   }
 
   public async list(horariosData: ListarListaModel): Promise<ListaModel[]> {

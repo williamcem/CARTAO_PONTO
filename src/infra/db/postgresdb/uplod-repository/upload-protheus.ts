@@ -3,12 +3,13 @@ import { AddUploadRepository } from "../../../../data/usecase/upload-protheus/ad
 import { AddUploadModel } from "../../../../domain/usecases/add-upload";
 import { Uploadmodel } from "../../../../domain/models/upload-protheus";
 import { randomUUID } from "crypto";
+import { prisma } from "../../../database/Prisma"
 
 export class UploadPostgresRepository implements AddUploadRepository {
   private prisma: PrismaClient;
 
   constructor() {
-    this.prisma = new PrismaClient();
+    this.prisma = prisma;
   }
 
   public async add(protheusData: AddUploadModel[]): Promise<Uploadmodel> {

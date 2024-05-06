@@ -1,12 +1,13 @@
 import { PrismaClient } from "@prisma/client";
 import { DelDeleteRepository } from "../../../../data/usecase/delete/add-delete-repository";
 import { DelDeleteModel } from "../../../../domain/usecases/delete-horarios";
+import { prisma } from "../../../database/Prisma";
 
 export class DeletePostgresRepository implements DelDeleteRepository {
   private readonly prisma: PrismaClient;
 
   constructor() {
-    this.prisma = new PrismaClient();
+    this.prisma = prisma;
   }
 
   async deleteById(deleteData: DelDeleteModel): Promise<void> {
