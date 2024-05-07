@@ -1,7 +1,7 @@
 import { HttpResponse, Controller } from "./dif-min-protocols";
 import { DifMinPostgresRepository } from "@infra/db/postgresdb/dif-min-repository/dif-min-repository";
 import { serverError, ok } from "../../../presentation/helpers/http-helpers";
-import { prisma } from "../../../infra/database/Prisma"
+import { prisma } from "../../../infra/database/Prisma";
 
 export class DifMinController implements Controller {
   constructor(private readonly difMinPostgresRepository: DifMinPostgresRepository) {}
@@ -22,14 +22,13 @@ export class DifMinController implements Controller {
             // Se não houve entrada pela manhã, consideramos como ausência no turno
             // e calculamos os minutos negativos correspondentes à jornada completa
             dif_min -= calcularMinutosTrabalho("07:12", "17:00");
-            dif_min = dif_min + 60;
+            dif_min = dif_min + 60; // Adiciona 60 minutos para compensar o dia
+            // Atualiza o dif_min (negativando o dia em minutos de carga horaria)
+            await prisma.dia.update({
+              where: { id: dia.id },
+              data: { dif_min: dif_min },
+            });
           }
-
-          const prismaClient = prisma;
-          await prismaClient.dia.update({
-            where: { id: dia.id },
-            data: { dif_min: dif_min }, // Atualiza o dif_min (negativando o dia em minutos de carga horaria)
-          });
         }
       } else {
         // Caso não haja dias anteriores, retorna uma resposta OK com uma mensagem
