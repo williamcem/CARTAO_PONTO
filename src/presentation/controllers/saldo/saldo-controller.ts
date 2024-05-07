@@ -1,4 +1,3 @@
-import { PrismaClient } from "@prisma/client";
 import { HttpResponse, Controller } from "./saldo-protocols";
 import { DbAddSaldoAnt } from "../../../data/usecase/saldoAnt/db-add-saldo-ant";
 import { serverError, ok } from "../../../presentation/helpers/http-helpers";
