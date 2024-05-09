@@ -26,6 +26,7 @@ export class HorariosMemoryController implements Controller {
 
       // 2. Calcular a diferença em minutos e o saldo anterior para cada horário
       let saldoAcumulado = 0;
+      let saldoAnt = 0; // Inicializa o saldo anterior
       const horariosComCalculos: HorariosMemoryModel[] = [];
       for (const horario of horarios) {
         let dif_min = 0;
@@ -51,11 +52,18 @@ export class HorariosMemoryController implements Controller {
           dif_min = 0;
         }
 
-        // Atualiza o saldo anterior com base no saldo acumulado
-        const saldoAnt = saldoAcumulado + dif_min;
+        // Verifica se deve dividir dif_min por 1.6 e se a operação já foi realizada
+        if (saldoAnt > 0 && dif_min < 0) {
+          dif_min = dif_min / 1.6;
+          dif_min = arredondarParteDecimal(dif_min); // Arredonda a parte decimal de dif_min
+          saldoAnt += dif_min; // Subtrai o dif_min dividido do saldo anterior
+        }
 
         // Adiciona o saldo atual ao saldo acumulado
         saldoAcumulado += dif_min;
+
+        // Atualizando o saldo anterior
+        saldoAnt = saldoAcumulado;
 
         // Adicionando os cálculos ao horário atual
         const horarioComCalculo: HorariosMemoryModel = {
