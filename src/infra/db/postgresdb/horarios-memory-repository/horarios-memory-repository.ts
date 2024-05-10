@@ -29,7 +29,7 @@ export class HorariosMemoryRepository implements AddHorariosMemoryRepository {
   async getAllHorariosOrderedByDate(): Promise<HorariosMemoryModel[]> {
     try {
       // Consultar todos os registros da tabela dia usando o Prisma
-      const dias = await prisma.dia.findMany({ include: { receberdados: true } });
+      const dias = await prisma.dia.findMany({ include: { receberdados: true }, orderBy: { receberdados: { data: "asc" } } });
 
       // Mapear os resultados para o formato esperado de HorariosMemoryModel
       const horarios = dias.map((dia) => ({
@@ -58,5 +58,9 @@ export class HorariosMemoryRepository implements AddHorariosMemoryRepository {
     );
     const saldoAnterior = horariosAnteriores.reduce((saldo, horario) => saldo + (horario.dif_min || 0), 0);
     return saldoAnterior + (dif_min || 0);
+  }
+
+  calcularSomaDifMin100(): number {
+    return this.horarios.reduce((soma, horario) => soma + (horario.dif_min100 || 0), 0);
   }
 }

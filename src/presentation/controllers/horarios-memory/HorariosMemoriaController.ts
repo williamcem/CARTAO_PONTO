@@ -26,6 +26,7 @@ export class HorariosMemoryController implements Controller {
       // 2. Calcular a diferença em minutos e o saldo anterior para cada horário
       let saldoAcumulado = 0;
       let saldoAnt = 0; // Inicializa o saldo anterior
+      let somaDifMin100 = 0; // Inicializa a soma de dif_min100
       const horariosComCalculos: HorariosMemoryModel[] = [];
       let contador = 0;
       for (const horario of horarios) {
@@ -55,6 +56,16 @@ export class HorariosMemoryController implements Controller {
         if (dif_min >= -10 && dif_min <= 10) {
           dif_min = 0;
         }
+
+        // Calcula o dif_min100 se o dif_min ultrapassar 120 minutos
+        let dif_min100 = 0;
+        if (dif_min > 120) {
+          dif_min100 = dif_min - 120;
+          dif_min = 120;
+        }
+
+        // Atualiza a soma de dif_min100
+        somaDifMin100 += dif_min100;
 
         for (let index = 0; index <= 2; index++) {
           const [entrada, saida] = this.posicaoLancamento(index);
@@ -91,6 +102,8 @@ export class HorariosMemoryController implements Controller {
           ...horario,
           dif_min,
           saldoAnt,
+          dif_min100, // Adiciona dif_min100 ao objeto
+          somaDifMin100, // Adiciona a soma de dif_min100 ao objeto
         };
 
         horariosComCalculos.push(horarioComCalculo);
