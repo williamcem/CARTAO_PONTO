@@ -37,7 +37,7 @@ export class UploadPostgresRepository implements AddUploadRepository {
             entradaTarde: "",
             saidaManha: "",
             saidaTarde: "",
-            saldoAnt: 0,
+            saldoAtual: 0,
             entradaExtra: "",
             saidaExtra: "",
             dataInicio: date,

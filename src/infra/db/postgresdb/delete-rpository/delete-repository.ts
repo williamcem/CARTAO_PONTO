@@ -25,7 +25,7 @@ export class DeletePostgresRepository implements DelDeleteRepository {
           entradaExtra: "",
           saidaExtra: "",
           dif_min: 0,
-          saldoAnt: 0,
+          saldoAtual: 0,
         },
       });
     } catch (error) {

@@ -12,14 +12,14 @@ export class SaldoPostgresRepository implements AddSaldoAntRepository {
 
   async addSaldoAnt(saldoAntData: AddSaldoAntModel): Promise<void> {
     try {
-      const { id, saldoAnt } = saldoAntData;
+      const { id, saldoAtual } = saldoAntData;
 
       await this.prisma.dia.update({
         where: {
           id: id,
         },
         data: {
-          saldoAnt: saldoAnt,
+          saldoAtual: saldoAtual,
         },
       });
     } catch (error) {

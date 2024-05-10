@@ -10,7 +10,7 @@ export interface AddHorariosMemoryModel {
   saidaExtra?: string;
   dif_min: number;
   dif_min100: number;
-  saldoAnt: number;
+  saldoAtual: number;
 }
 
 export interface AddMemoryHorarios {

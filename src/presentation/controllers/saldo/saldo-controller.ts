@@ -18,7 +18,7 @@ export class SaldoController implements Controller {
         orderBy: { receberdados: { data: "asc" } },
       });
 
-      let saldoAnterior = 0; // Inicializa o saldoAnt do primeiro dia
+      let saldoAnterior = 0; // Inicializa o saldoAtual do primeiro dia
 
       let contador = 0;
       const date = new Date();
@@ -49,8 +49,8 @@ export class SaldoController implements Controller {
         // Arredonda a parte decimal de saldoAtual
         saldoAtual = arredondarParteDecimal(saldoAtual);
 
-        // Atualiza o saldoAnt apenas se dif_min estiver fora do intervalo
-        await this.dbAddSaldoAnt.addSaldoAnt({ id: dia.id, saldoAnt: saldoAtual });
+        // Atualiza o saldoAtual apenas se dif_min estiver fora do intervalo
+        await this.dbAddSaldoAnt.addSaldoAnt({ id: dia.id, saldoAtual: saldoAtual });
 
         // Atualiza o saldoAnterior para o próximo dia
         saldoAnterior = saldoAtual;

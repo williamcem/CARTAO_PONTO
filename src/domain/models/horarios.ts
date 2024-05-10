@@ -7,5 +7,5 @@ export interface HorariosModel {
   entradaExtra?: string;
   saidaExtra?: string;
   dif_min?: number;
-  saldoAnt?: number;
+  saldoAtual?: number;
 }

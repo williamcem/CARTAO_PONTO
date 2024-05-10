@@ -21,7 +21,7 @@ const makeAddHorarios = (): AddHorarios => {
         saidaManha: "valid_saidaManha",
         entradaTarde: "valid_entradaTarde",
         saidaTarde: "valid_saidaTarde",
-        saldoAnt: 300,
+        saldoAtual: 300,
         dif_min: 1,
       };
       return new Promise((resolve) => resolve(fakeHorario));

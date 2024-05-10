@@ -18,7 +18,7 @@ export class HorariosMemoryRepository implements AddHorariosMemoryRepository {
       entradaExtra: horarioData.entradaExtra || undefined,
       saidaExtra: horarioData.saidaExtra || undefined,
       dif_min: horarioData.dif_min || 0,
-      saldoAnt: this.calcularSaldoAnterior(horarioData.id, horarioData.dif_min || 0),
+      saldoAtual: this.calcularSaldoAnterior(horarioData.id, horarioData.dif_min || 0),
     };
 
     this.horarios.push(novoHorario);
@@ -41,8 +41,8 @@ export class HorariosMemoryRepository implements AddHorariosMemoryRepository {
         entradaExtra: dia.entradaExtra ?? undefined,
         saidaExtra: dia.saidaExtra ?? undefined,
         dif_min: dia.dif_min,
-        saldoAnt: dia.saldoAnt ?? undefined,
-        recebeDia: { saldoAnt: dia.receberdados.saldoanterior },
+        saldoAtual: dia.saldoAtual ?? undefined,
+        recebeDia: { saldoAtual: dia.receberdados.saldoanterior },
       }));
 
       return horarios;
