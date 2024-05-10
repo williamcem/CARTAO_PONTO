@@ -63,7 +63,7 @@ export class HorariosPostgresRepository implements AddHorariosRepository {
         entradaExtra: updateHorarios.entradaExtra || undefined,
         saidaExtra: updateHorarios.saidaExtra || undefined,
         dif_min: updateHorarios.dif_min,
-        saldoAnt: updateHorarios.saldoAnt,
+        saldoAnt: updateHorarios.saldoAnt || undefined,
       };
 
       return HorariosModel;
