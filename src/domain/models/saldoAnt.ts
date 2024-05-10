@@ -1,4 +1,4 @@
 export interface SaldoAntModel {
   id: string;
-  saldoAnt: number;
+  saldoAnt?: number;
 }
