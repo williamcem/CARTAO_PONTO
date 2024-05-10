@@ -23,9 +23,6 @@ export class HorariosMemoryController implements Controller {
       // 1. Recuperar os horários do banco de dados e ordená-los pela data
       let horarios = await horariosRepository.getAllHorariosOrderedByDate();
 
-      // Log para verificar se os horários estão sendo retornados corretamente
-      console.log("Horários recuperados do banco de dados:", horarios);
-
       // 2. Calcular a diferença em minutos e o saldo anterior para cada horário
       let saldoAcumulado = 0;
       let saldoAnt = 0; // Inicializa o saldo anterior
@@ -68,7 +65,6 @@ export class HorariosMemoryController implements Controller {
           const isHorarioAdicionalNoturno =
             (horaEntrada >= HORA_INICIO_ADICIONAL_NOTURNO || horaEntrada < HORA_FIM_ADICIONAL_NOTURNO) &&
             (horaSaida >= HORA_INICIO_ADICIONAL_NOTURNO || horaSaida < HORA_FIM_ADICIONAL_NOTURNO);
-          console.log("isHorarioAdicionalNoturno", isHorarioAdicionalNoturno);
 
           if (isHorarioAdicionalNoturno) {
             // Multiplica a diferença em minutos por 1.14
