@@ -32,15 +32,15 @@ export class SaldoController implements Controller {
         let dif_min = dia.dif_min;
         if (contador === 0) saldoAnterior = dia.receberdados.saldoanterior;
 
-        // Verifica se deve dividir dif_min por 1.6
+        // Verifica se deve dividir dif_min por 1.6 e se a operação já foi realizada
         if (saldoAnterior > 0 && dif_min < 0) {
           dif_min = dif_min / 1.6;
-        }
-
-        // Verifica se dif_min está no intervalo de -10 e 10
-        if (dif_min >= -10 && dif_min <= 10) {
-          // Não faz nenhuma alteração no saldoAnt
-          dif_min = 0;
+          dif_min = arredondarParteDecimal(dif_min); // Arredonda a parte decimal de dif_min
+          // Atualiza dif_min no banco de dados
+          await prismaClient.dia.update({
+            where: { id: dia.id },
+            data: { dif_min: dif_min }, // Atualiza dif_min e marca a operação como realizada
+          });
         }
 
         // Atualiza o saldoAtual com base no saldoAnterior
@@ -50,10 +50,7 @@ export class SaldoController implements Controller {
         saldoAtual = arredondarParteDecimal(saldoAtual);
 
         // Atualiza o saldoAnt apenas se dif_min estiver fora do intervalo
-        await prismaClient.dia.update({
-          where: { id: dia.id },
-          data: { saldoAnt: saldoAtual }, // Atualiza o saldoAnt
-        });
+        await this.dbAddSaldoAnt.addSaldoAnt({ id: dia.id, saldoAnt: saldoAtual });
 
         // Atualiza o saldoAnterior para o próximo dia
         saldoAnterior = saldoAtual;
