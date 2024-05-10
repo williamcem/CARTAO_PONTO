@@ -33,7 +33,7 @@ export class ListaPostgresRepository implements ListarListaRepository {
         entradaExtra: horario.entradaExtra || undefined,
         saidaExtra: horario.saidaExtra || undefined,
         dif_min: horario.dif_min,
-        saldoAnt: horario.saldoAnt,
+        saldoAnt: horario.saldoAnt || undefined,
         // Adiciona os dados relacionados da tabela receberdados
         mes: horario.receberdados?.mes || "",
         data: horario.receberdados?.data || "",
