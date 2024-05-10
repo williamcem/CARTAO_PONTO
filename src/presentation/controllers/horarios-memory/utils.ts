@@ -9,9 +9,7 @@ export function calcularTotalMinutos(entrada: string, saida: string, extra?: str
     const [extraHoras, extraMinutos] = extra.split(":").map(Number);
     totalMinutosSaida += extraHoras * 60 + extraMinutos;
   }
-  /* console.log("bateu", totalMinutosSaida, totalMinutosEntrada); */
   return totalMinutosSaida - totalMinutosEntrada;
-
 }
 
 export function arredondarParteDecimal(numero: number): number {
