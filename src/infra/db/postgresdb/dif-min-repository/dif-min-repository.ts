@@ -1,7 +1,7 @@
 import { PrismaClient } from "@prisma/client";
 import { AddDifMinRepository } from "../../../../data/usecase/add-dif-min/add-dif-min-repository";
 import { DifMinModel } from "../../../../domain/models/dif-min";
-import { prisma } from "../../../database/Prisma"
+import { prisma } from "../../../database/Prisma";
 
 // Defina o tipo para representar um dia anterior
 interface Dia {
@@ -68,11 +68,6 @@ export class DifMinPostgresRepository implements AddDifMinRepository {
           dif_min: true,
         },
       });
-
-      // Retornar os dias anteriores para que o controller possa processá-los
-/*       console.log("Data atual:", dataAtual);
-      console.log("Datas anteriores:", datasAnteriores);
-      console.log("Dias anteriores encontrados:", diasAnteriores); */
 
       return diasAnteriores;
     } catch (error) {
