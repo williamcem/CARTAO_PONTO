@@ -8,6 +8,8 @@ const horariosRepository = new HorariosMemoryRepository(); // Crie uma instânci
 
 // Escala de trabalho padrão em minutos (8 horas e 48 minutos)
 const escalaDiariaMin = 8 * 60 + 48;
+const HORA_INICIO_ADICIONAL_NOTURNO = 22; // 22h
+const HORA_FIM_ADICIONAL_NOTURNO = 5; // 5h
 
 export class HorariosMemoryController implements Controller {
   private readonly addMemoryHorarios: AddMemoryHorarios;
@@ -28,7 +30,12 @@ export class HorariosMemoryController implements Controller {
       let saldoAcumulado = 0;
       let saldoAnt = 0; // Inicializa o saldo anterior
       const horariosComCalculos: HorariosMemoryModel[] = [];
+      let contador = 0;
       for (const horario of horarios) {
+        if (contador === 0) if (horario.recebeDia?.saldoAnt) saldoAcumulado = horario.recebeDia.saldoAnt;
+
+        contador++;
+
         let dif_min = 0;
 
         const totalManhaMin = calcularTotalMinutos(horario.entradaManha, horario.saidaManha);
@@ -50,6 +57,24 @@ export class HorariosMemoryController implements Controller {
         // Ajustar dif_min para 0 se estiver dentro do intervalo -10 e 10
         if (dif_min >= -10 && dif_min <= 10) {
           dif_min = 0;
+        }
+
+        for (let index = 0; index <= 2; index++) {
+          const [entrada, saida] = this.posicaoLancamento(index);
+          // Verifica se o horário está dentro do intervalo do adicional noturno (22h às 5h)
+          const horaEntrada = parseInt(horario[entrada].split(":")[0], 10);
+          const horaSaida = parseInt(horario[saida].split(":")[0], 10);
+
+          const isHorarioAdicionalNoturno =
+            (horaEntrada >= HORA_INICIO_ADICIONAL_NOTURNO || horaEntrada < HORA_FIM_ADICIONAL_NOTURNO) &&
+            (horaSaida >= HORA_INICIO_ADICIONAL_NOTURNO || horaSaida < HORA_FIM_ADICIONAL_NOTURNO);
+          console.log("isHorarioAdicionalNoturno", isHorarioAdicionalNoturno);
+
+          if (isHorarioAdicionalNoturno) {
+            // Multiplica a diferença em minutos por 1.14
+            dif_min *= 1.14;
+            dif_min = arredondarParteDecimal(dif_min); // Arredonda a parte decimal de dif_min
+          }
         }
 
         // Verifica se deve dividir dif_min por 1.6 e se a operação já foi realizada
@@ -87,5 +112,12 @@ export class HorariosMemoryController implements Controller {
         body: { message: "Erro interno do servidor" },
       };
     }
+  }
+
+  private posicaoLancamento(index: number): [string, string] {
+    if (index === 0) return ["entradaManha", "saidaManha"];
+    if (index === 1) return ["entradaTarde", "saidaTarde"];
+    if (index === 2) return ["entradaExtra", "saidaExtra"];
+    return ["", ""];
   }
 }
