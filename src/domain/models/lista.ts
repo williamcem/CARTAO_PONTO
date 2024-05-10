@@ -7,5 +7,5 @@ export interface ListaModel {
   entradaExtra?: string;
   saidaExtra?: string;
   dif_min: number;
-  saldoAnt: number;
+  saldoAnt?: number;
 }
