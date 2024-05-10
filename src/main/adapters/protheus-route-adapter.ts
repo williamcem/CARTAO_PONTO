@@ -31,7 +31,6 @@ export async function processarArquivo(req: { file?: Express.Multer.File | undef
       csv({
         separator: "!",
         mapHeaders: ({ header, index }) => {
-          console.log(header);
           return header.trim();
         },
         mapValues({ header, index, value }) {

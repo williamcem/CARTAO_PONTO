@@ -11,7 +11,6 @@ export class DifMinController implements Controller {
       const diasAnteriores = await this.difMinPostgresRepository.listarDiasAnteriores({
         dif_min: 0,
       });
-      console.log("Dias anteriores recebidos do repositório:", diasAnteriores);
 
       // Verifica se diasAnteriores é um array e se não está vazio
       if (Array.isArray(diasAnteriores) && diasAnteriores.length > 0) {

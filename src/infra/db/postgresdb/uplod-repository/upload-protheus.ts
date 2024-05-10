@@ -3,7 +3,7 @@ import { AddUploadRepository } from "../../../../data/usecase/upload-protheus/ad
 import { AddUploadModel } from "../../../../domain/usecases/add-upload";
 import { Uploadmodel } from "../../../../domain/models/upload-protheus";
 import { randomUUID } from "crypto";
-import { prisma } from "../../../database/Prisma"
+import { prisma } from "../../../database/Prisma";
 
 export class UploadPostgresRepository implements AddUploadRepository {
   private prisma: PrismaClient;
@@ -46,7 +46,6 @@ export class UploadPostgresRepository implements AddUploadRepository {
       };
     });
 
-    console.log(dataToInsert);
     try {
       // Salvar os dados em lote
       const query = dataToInsert.map((dados) => {
@@ -55,9 +54,6 @@ export class UploadPostgresRepository implements AddUploadRepository {
         });
       });
       const saved = await this.prisma.$transaction(query);
-
-      console.log(saved.length);
-      console.log("Dados salvos no banco de dados com sucesso.");
 
       return {
         saved: Boolean(saved.length),

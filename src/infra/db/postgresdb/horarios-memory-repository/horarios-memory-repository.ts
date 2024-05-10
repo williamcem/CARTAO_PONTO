@@ -45,7 +45,6 @@ export class HorariosMemoryRepository implements AddHorariosMemoryRepository {
         recebeDia: { saldoAnt: dia.receberdados.saldoanterior },
       }));
 
-      /* console.log("Horários recuperados do banco de dados:", horarios); */
       return horarios;
     } catch (error) {
       console.error("Erro ao recuperar os horários do banco de dados:", error);
@@ -60,9 +59,4 @@ export class HorariosMemoryRepository implements AddHorariosMemoryRepository {
     const saldoAnterior = horariosAnteriores.reduce((saldo, horario) => saldo + (horario.dif_min || 0), 0);
     return saldoAnterior + (dif_min || 0);
   }
-
-  /*   // Método para obter o último horário registrado
-  getUltimoHorario(): HorariosMemoryModel | undefined | number {
-    return this.horarios.length > 0 ? this.horarios[this.horarios.length - 1] : undefined;
-  } */
 }
