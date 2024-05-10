@@ -51,7 +51,12 @@ export class HorariosController implements Controller {
 
       const totalDiaMin = totalManhaMin + totalTardeMin + totalExtraMin;
       const escalaDiariaMin = 8.8 * 60; // 8 horas e 48 minutos em minutos
-      const dif_min = totalDiaMin - escalaDiariaMin;
+      let dif_min = totalDiaMin - escalaDiariaMin;
+
+      // Ajustar dif_min para 0 se estiver dentro do intervalo -10 e 10
+      if (dif_min >= -10 && dif_min <= 10) {
+        dif_min = 0;
+      }
 
       const horarioData = {
         id,
