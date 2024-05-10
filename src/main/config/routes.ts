@@ -6,6 +6,7 @@ import saldo from "../routes/horarios/saldo-routes";
 import upload from "../routes/horarios/upload-routes";
 import deletar from "../routes/horarios/delete-routes";
 import difmin from "../routes/horarios/dif-min-routes";
+import horariosMemory from "../routes/horarios/horraio-memory-routes";
 
 export const setupRoutes = (app: Express): void => {
   const router = Router();
@@ -16,4 +17,5 @@ export const setupRoutes = (app: Express): void => {
   upload(router);
   deletar(router);
   difmin(router);
+  horariosMemory(router);
 };
