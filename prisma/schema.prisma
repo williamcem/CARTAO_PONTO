@@ -17,7 +17,7 @@ model dia {
   entradaExtra   String?
   saidaExtra     String?
   dif_min        Int
-  saldoAnt       Int
+  saldoAnt       Int?
   dataInicio     DateTime     @default(now()) // Definindo o campo dataInicio como opcional e preenchido automaticamente
   receberdados   receberdados @relation(fields: [receberDadosId], references: [id])
 }
