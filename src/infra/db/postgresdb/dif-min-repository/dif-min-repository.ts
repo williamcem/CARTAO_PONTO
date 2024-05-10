@@ -70,9 +70,9 @@ export class DifMinPostgresRepository implements AddDifMinRepository {
       });
 
       // Retornar os dias anteriores para que o controller possa processá-los
-      console.log("Data atual:", dataAtual);
+/*       console.log("Data atual:", dataAtual);
       console.log("Datas anteriores:", datasAnteriores);
-      console.log("Dias anteriores encontrados:", diasAnteriores);
+      console.log("Dias anteriores encontrados:", diasAnteriores); */
 
       return diasAnteriores;
     } catch (error) {
