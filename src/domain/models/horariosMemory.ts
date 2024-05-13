@@ -10,5 +10,8 @@ export interface HorariosMemoryModel {
   dif_min100?: number;
   somaDifMin100?: number;
   saldoAtual?: number;
+  adicionalNoturno?: number;
+  somaAdicionalNoturno?: number;
+  somaDif_min?: number;
   recebeDia?: { saldoAtual: number };
 }
