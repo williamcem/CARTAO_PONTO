@@ -71,10 +71,24 @@ export class HorariosMemoryController implements Controller {
         somaDifMin100 += dif_min100;
 
         for (let index = 0; index <= 2; index++) {
-          const [entrada, saida] = this.posicaoLancamento(index);
+          let horaEntrada = 0,
+            horaSaida = 0;
+
           // Verifica se o horário está dentro do intervalo do adicional noturno (22h às 5h)
-          const horaEntrada = parseInt(horario[entrada].split(":")[0], 10);
-          const horaSaida = parseInt(horario[saida].split(":")[0], 10);
+          if (index === 0) {
+            horaEntrada = parseInt(horario.entradaManha.split(":")[0], 10);
+            horaSaida = parseInt(horario.saidaManha.split(":")[0], 10);
+          } else if (index === 1) {
+            if (horario.entradaTarde && horario.saidaTarde) {
+              horaEntrada = parseInt(horario.entradaTarde.split(":")[0], 10);
+              horaSaida = parseInt(horario.saidaTarde.split(":")[0], 10);
+            }
+          } else if (index === 2) {
+            if (horario.entradaExtra && horario.saidaExtra) {
+              horaEntrada = parseInt(horario.entradaExtra.split(":")[0], 10);
+              horaSaida = parseInt(horario.saidaExtra.split(":")[0], 10);
+            }
+          }
 
           const isHorarioAdicionalNoturno =
             (horaEntrada >= HORA_INICIO_ADICIONAL_NOTURNO || horaEntrada < HORA_FIM_ADICIONAL_NOTURNO) &&
@@ -116,7 +130,7 @@ export class HorariosMemoryController implements Controller {
           adicionalNoturno,
           dif_min100, // Adiciona dif_min100 ao objeto
           somaDifMin100, // Adiciona a soma de dif_min100 ao objeto
-          somaAdicionalNoturno,
+          somaAdicionalNoturno, // Adiciona a soma de Adicional Noturno ao objeto ao objeto
           somaDif_min, // Adiciona a soma de dif_min entre dias ao objeto
         };
 
@@ -138,12 +152,5 @@ export class HorariosMemoryController implements Controller {
         body: { message: "Erro interno do servidor" },
       };
     }
-  }
-
-  private posicaoLancamento(index: number): [string, string] {
-    if (index === 0) return ["entradaManha", "saidaManha"];
-    if (index === 1) return ["entradaTarde", "saidaTarde"];
-    if (index === 2) return ["entradaExtra", "saidaExtra"];
-    return ["", ""];
   }
 }
