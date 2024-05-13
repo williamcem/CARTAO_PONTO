@@ -27,6 +27,8 @@ export class HorariosMemoryController implements Controller {
       let saldoAcumulado = 0;
       let saldoAtual = 0; // Inicializa o saldo anterior
       let somaDifMin100 = 0; // Inicializa a soma de dif_min100
+      let somaAdicionalNoturno = 0; // Inicializa a soma do adicional noturno
+      let somaDif_min = 0; // Inicializa a soma de dif_min entre dias
       const horariosComCalculos: HorariosMemoryModel[] = [];
       let contador = 0;
       for (const horario of horarios) {
@@ -35,6 +37,7 @@ export class HorariosMemoryController implements Controller {
         contador++;
 
         let dif_min = 0;
+        let adicionalNoturno = 0; // Inicializa o adicional noturno
 
         const totalManhaMin = calcularTotalMinutos(horario.entradaManha, horario.saidaManha);
         dif_min += totalManhaMin;
@@ -78,7 +81,9 @@ export class HorariosMemoryController implements Controller {
             (horaSaida >= HORA_INICIO_ADICIONAL_NOTURNO || horaSaida < HORA_FIM_ADICIONAL_NOTURNO);
 
           if (isHorarioAdicionalNoturno) {
-            // Multiplica a diferença em minutos por 1.14
+            // Calcula o adicional noturno multiplicando a diferença em minutos por 0.14
+            adicionalNoturno = dif_min * 0.14;
+            adicionalNoturno = arredondarParteDecimal(adicionalNoturno);
             dif_min *= 1.14;
             dif_min = arredondarParteDecimal(dif_min); // Arredonda a parte decimal de dif_min
           }
@@ -97,13 +102,22 @@ export class HorariosMemoryController implements Controller {
         // Atualizando o saldo anterior
         saldoAtual = saldoAcumulado;
 
+        // Adiciona o adicional noturno ao total
+        somaAdicionalNoturno += adicionalNoturno;
+
+        // Adiciona dif_min à soma de dif_min entre dias
+        somaDif_min += dif_min;
+
         // Adicionando os cálculos ao horário atual
         const horarioComCalculo: HorariosMemoryModel = {
           ...horario,
           dif_min,
           saldoAtual,
+          adicionalNoturno,
           dif_min100, // Adiciona dif_min100 ao objeto
           somaDifMin100, // Adiciona a soma de dif_min100 ao objeto
+          somaAdicionalNoturno,
+          somaDif_min, // Adiciona a soma de dif_min entre dias ao objeto
         };
 
         horariosComCalculos.push(horarioComCalculo);
@@ -112,7 +126,10 @@ export class HorariosMemoryController implements Controller {
       // 3. Retornar os horários com os cálculos para o cliente
       return {
         statusCode: 200,
-        body: { message: "Horários com cálculos adicionados em memória com sucesso", horarios: horariosComCalculos },
+        body: {
+          message: "Horários com cálculos adicionados em memória com sucesso",
+          horarios: horariosComCalculos,
+        },
       };
     } catch (error) {
       console.error(error);
