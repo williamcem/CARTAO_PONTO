@@ -28,7 +28,7 @@ export class HorariosMemoryRepository implements AddHorariosMemoryRepository {
   // Método para obter todos os horários registrados
   async getAllHorariosOrderedByDate(): Promise<HorariosMemoryModel[]> {
     try {
-      // Consultar todos os registros da tabela dia usando o Prisma
+      // Consultar todos os registros da tabela dia usando o Prisma e ordenalos
       const dias = await prisma.dia.findMany({ include: { receberdados: true }, orderBy: { receberdados: { data: "asc" } } });
 
       // Mapear os resultados para o formato esperado de HorariosMemoryModel
@@ -42,7 +42,15 @@ export class HorariosMemoryRepository implements AddHorariosMemoryRepository {
         saidaExtra: dia.saidaExtra ?? undefined,
         dif_min: dia.dif_min,
         saldoAtual: dia.saldoAtual ?? undefined,
-        recebeDia: { saldoAtual: dia.receberdados.saldoanterior },
+        recebeDia: {
+          saldoAnterior: dia.receberdados.saldoanterior,
+          nome: dia.receberdados.nome,
+          matricula: dia.receberdados.matricula,
+          setor: dia.receberdados.setor,
+          expediente: dia.receberdados.expediente,
+          data: dia.receberdados.data,
+          status: dia.receberdados.status,
+        },
       }));
 
       return horarios;
