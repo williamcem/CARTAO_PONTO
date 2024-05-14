@@ -3,6 +3,7 @@ import { AddMemoryHorarios } from "../../../domain/usecases/add-horarios-memory"
 import { HorariosMemoryRepository } from "../../../infra/db/postgresdb/horarios-memory-repository/horarios-memory-repository";
 import { calcularTotalMinutos, arredondarParteDecimal } from "./utils";
 import { HorariosMemoryModel } from "../../../domain/models/horariosMemory";
+import moment, { utc } from "moment";
 
 const horariosRepository = new HorariosMemoryRepository(); // Crie uma instância do repositório
 
@@ -60,8 +61,126 @@ export class HorariosMemoryController implements Controller {
           dif_min = 0;
         }
 
+        let totalAdicionalNoturno = 0;
+
+        for (let index = 0; index <= 2; index++) {
+          let horaEntrada = 0,
+            horaSaida = 0,
+            entradaData = undefined,
+            saidaData = undefined;
+
+          // Verifica se o horário está dentro do intervalo do adicional noturno (22h às 5h)
+          if (index === 0) {
+            if (horario.entradaManha === "" && horario.saidaManha === "") continue;
+            horaEntrada = parseInt(horario.entradaManha.split(":")[0], 10);
+            horaSaida = parseInt(horario.saidaManha.split(":")[0], 10);
+            entradaData = moment(horario.recebeDia?.data).utc(false).add(horario.entradaManha);
+            saidaData = moment(horario.recebeDia?.data).utc(false).add(horario.saidaManha);
+          } else if (index === 1) {
+            if (horario.entradaTarde === "" && horario.saidaTarde === "") continue;
+            if (horario.entradaTarde && horario.saidaTarde) {
+              horaEntrada = parseInt(horario.entradaTarde.split(":")[0], 10);
+              horaSaida = parseInt(horario.saidaTarde.split(":")[0], 10);
+              entradaData = moment(horario.recebeDia?.data).utc(false).add(horario.entradaTarde);
+              saidaData = moment(horario.recebeDia?.data).utc(false).add(horario.saidaTarde);
+            }
+          } else if (index === 2) {
+            if (horario.entradaExtra === "" && horario.saidaExtra === "") continue;
+            if (horario.entradaExtra && horario.saidaExtra) {
+              horaEntrada = parseInt(horario.entradaExtra.split(":")[0], 10);
+              horaSaida = parseInt(horario.saidaExtra.split(":")[0], 10);
+              entradaData = moment(horario.recebeDia?.data).utc(false).add(horario.entradaExtra);
+              saidaData = moment(horario.recebeDia?.data).utc(false).add(horario.saidaExtra);
+            }
+          }
+
+          if (saidaData?.isBefore(entradaData)) saidaData?.add(1, "d");
+
+          //Se a primeira entrada for depois da entrada atual adiciona 1 dia
+          if (entradaData?.isBefore(moment(horario.recebeDia?.data).utc(false).add(horario.entradaManha))) {
+            entradaData?.add(1, "d");
+          }
+
+          //Se a primeira entrada for depois da saida atual adiciona 1 dia
+          if (saidaData?.isBefore(moment(horario.recebeDia?.data).utc(false).add(horario.entradaManha))) {
+            saidaData?.add(1, "d");
+          }
+          const inicioAdicional = moment(horario.recebeDia?.data).utc(false).minutes(0).seconds(0).hour(22);
+          const finalAdicional = moment(horario.recebeDia?.data).utc(false).minutes(0).seconds(0).add(1, "d").hour(5);
+
+          let difMinNotuno = 0;
+
+          //Quando Entrada e saida estão no adicional
+          if (entradaData?.isBetween(inicioAdicional, finalAdicional)) {
+            if (entradaData.isAfter(inicioAdicional)) {
+              if (saidaData?.isBefore(finalAdicional)) {
+                difMinNotuno = saidaData.diff(entradaData, "minutes");
+              }
+            }
+          }
+
+          //Quando a saida está entre o adicional e a entrada está antes
+          if (saidaData?.isBetween(inicioAdicional, finalAdicional) && entradaData?.isBefore(inicioAdicional)) {
+            difMinNotuno = saidaData.diff(inicioAdicional, "minutes");
+          }
+
+          //Quando a entrada está entre o adicional e a saida depois
+          if (entradaData?.isBetween(inicioAdicional, finalAdicional) && saidaData?.isAfter(finalAdicional)) {
+            difMinNotuno = finalAdicional.diff(entradaData, "minutes");
+          }
+
+          //Quando inicio e final do adicional estão entre entrada e saida e entrada é antes do inicio do adicional e a saída é depois do fim do adicional
+          if (
+            inicioAdicional.isBetween(entradaData, saidaData) &&
+            finalAdicional.isBetween(entradaData, saidaData) &&
+            entradaData?.isBefore(inicioAdicional) &&
+            saidaData?.isAfter(finalAdicional)
+          ) {
+            difMinNotuno = finalAdicional.diff(inicioAdicional, "minutes");
+          }
+
+          if (entradaData?.isSame(inicioAdicional)) {
+            if (saidaData?.isBefore(finalAdicional)) {
+              difMinNotuno = saidaData.diff(entradaData, "minutes");
+            } else {
+              difMinNotuno = finalAdicional.diff(entradaData, "minutes");
+            }
+          }
+
+          if (saidaData?.isSame(finalAdicional)) {
+            if (entradaData?.isBefore(inicioAdicional)) {
+              difMinNotuno = saidaData.diff(inicioAdicional, "minutes");
+            } else {
+              difMinNotuno = saidaData.diff(entradaData, "minutes");
+            }
+          }
+
+          console.log(difMinNotuno, dif_min);
+
+          if (difMinNotuno > 0) {
+            adicionalNoturno = difMinNotuno * 0.14;
+            adicionalNoturno = arredondarParteDecimal(adicionalNoturno);
+          }
+          //Saida
+          /*           if (saidaManhaData?.isBetween(inicioAdicional, finalAdicional)) {
+          } */
+          /*
+          if (isHorarioAdicionalNoturno) {
+            console.log(finalAdicional.diff(entradaManhaData, "minutes"));
+            console.log(finalAdicional.diff(entradaManhaData, "minutes"));
+
+            console.log(horaEntrada, horaSaida);
+            // Calcula o adicional noturno multiplicando a diferença em minutos por 0.14
+            adicionalNoturno = difMinNotuno * 0.14;
+            adicionalNoturno = arredondarParteDecimal(adicionalNoturno);
+            dif_min *= 1.14;
+            dif_min = arredondarParteDecimal(dif_min); // Arredonda a parte decimal de dif_min
+          } */
+        }
+
         // Calcula o dif_min100 se o dif_min ultrapassar 120 minutos
         let dif_min100 = 0;
+        console.log("dif_min", dif_min);
         if (dif_min > 120) {
           dif_min100 = dif_min - 120;
           dif_min = 120;
@@ -69,39 +188,6 @@ export class HorariosMemoryController implements Controller {
 
         // Atualiza a soma de dif_min100
         somaDifMin100 += dif_min100;
-
-        for (let index = 0; index <= 2; index++) {
-          let horaEntrada = 0,
-            horaSaida = 0;
-
-          // Verifica se o horário está dentro do intervalo do adicional noturno (22h às 5h)
-          if (index === 0) {
-            horaEntrada = parseInt(horario.entradaManha.split(":")[0], 10);
-            horaSaida = parseInt(horario.saidaManha.split(":")[0], 10);
-          } else if (index === 1) {
-            if (horario.entradaTarde && horario.saidaTarde) {
-              horaEntrada = parseInt(horario.entradaTarde.split(":")[0], 10);
-              horaSaida = parseInt(horario.saidaTarde.split(":")[0], 10);
-            }
-          } else if (index === 2) {
-            if (horario.entradaExtra && horario.saidaExtra) {
-              horaEntrada = parseInt(horario.entradaExtra.split(":")[0], 10);
-              horaSaida = parseInt(horario.saidaExtra.split(":")[0], 10);
-            }
-          }
-
-          const isHorarioAdicionalNoturno =
-            (horaEntrada >= HORA_INICIO_ADICIONAL_NOTURNO || horaEntrada < HORA_FIM_ADICIONAL_NOTURNO) &&
-            (horaSaida >= HORA_INICIO_ADICIONAL_NOTURNO || horaSaida < HORA_FIM_ADICIONAL_NOTURNO);
-
-          if (isHorarioAdicionalNoturno) {
-            // Calcula o adicional noturno multiplicando a diferença em minutos por 0.14
-            adicionalNoturno = dif_min * 0.14;
-            adicionalNoturno = arredondarParteDecimal(adicionalNoturno);
-            dif_min *= 1.14;
-            dif_min = arredondarParteDecimal(dif_min); // Arredonda a parte decimal de dif_min
-          }
-        }
 
         // Verifica se deve dividir dif_min por 1.6 e se a operação já foi realizada
         if (saldoAtual > 0 && dif_min < 0) {
