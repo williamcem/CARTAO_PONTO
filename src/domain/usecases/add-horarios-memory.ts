@@ -11,6 +11,7 @@ export interface AddHorariosMemoryModel {
   dif_min: number;
   dif_min100: number;
   saldoAtual: number;
+  status: string;
 }
 
 export interface AddMemoryHorarios {

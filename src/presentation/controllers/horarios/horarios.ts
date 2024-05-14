@@ -3,6 +3,7 @@ import { AddHorarios } from "../../../domain/usecases/add-horarios";
 import { serverError, ok, badRequest } from "../../../presentation/helpers/http-helpers";
 import { ExtraParamError } from "../../errors/extra-erro";
 import { TardeParamError } from "../../errors/tarde-erro";
+import { ManhaParamError } from "../../errors/manha-erro";
 
 export interface HorarioData {
   id: string;
@@ -13,6 +14,7 @@ export interface HorarioData {
   entradaExtra: string;
   saidaExtra: string;
   dif_min: number;
+  data?: Date;
 }
 
 export class HorariosController implements Controller {
@@ -27,6 +29,10 @@ export class HorariosController implements Controller {
       const { id, entradaManha, entradaTarde, saidaManha, saidaTarde, entradaExtra, saidaExtra } = httpRequest.body;
 
       // Verificação para entradaTarde e saidaTarde
+      if ((entradaManha && !saidaManha) || (!entradaManha && saidaManha)) {
+        return badRequest(new ManhaParamError("Se entradaManha ou saidaManha for fornecido, ambos devem estar presentes."));
+      }
+
       if ((entradaTarde && !saidaTarde) || (!entradaTarde && saidaTarde)) {
         return badRequest(new TardeParamError("Se entradaTarde ou saidaTarde for fornecido, ambos devem estar presentes."));
       }
@@ -66,7 +72,7 @@ export class HorariosController implements Controller {
         saidaTarde,
         entradaExtra,
         saidaExtra,
-        dif_min,
+        dif_min: 0,
       };
 
       const horario = await this.addHorarios.add(horarioData);
