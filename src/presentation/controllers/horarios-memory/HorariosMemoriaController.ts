@@ -2,7 +2,7 @@ import { Controller, HttpRequest, HttpResponse } from "./horarios-memory-protoco
 import { AddMemoryHorarios } from "../../../domain/usecases/add-horarios-memory";
 import { HorariosMemoryRepository } from "../../../infra/db/postgresdb/horarios-memory-repository/horarios-memory-repository";
 import { calcularTotalMinutos, arredondarParteDecimal } from "./utils";
-import { HorariosMemoryModel } from "../../../domain/models/horariosMemory";
+import { HorariosMemoryModel, Resumo } from "../../../domain/models/horariosMemory";
 import moment, { utc } from "moment";
 
 const horariosRepository = new HorariosMemoryRepository(); // Crie uma instância do repositório
@@ -23,6 +23,7 @@ export class HorariosMemoryController implements Controller {
     try {
       // 1. Recuperar os horários do banco de dados e ordená-los pela data
       let horarios = await horariosRepository.getAllHorariosOrderedByDate();
+      console.log({ horarios });
 
       // 2. Calcular a diferença em minutos e o saldo anterior para cada horário
       let saldoAcumulado = 0;
@@ -32,8 +33,10 @@ export class HorariosMemoryController implements Controller {
       let somaDif_min = 0; // Inicializa a soma de dif_min entre dias
       const horariosComCalculos: HorariosMemoryModel[] = [];
       let contador = 0;
+      let inf = {};
+
       for (const horario of horarios) {
-        if (contador === 0) if (horario.recebeDia?.saldoAtual) saldoAcumulado = horario.recebeDia.saldoAtual;
+        if (contador === 0) if (horario.recebeDia?.saldoAnterior) saldoAcumulado = horario.recebeDia.saldoAnterior;
 
         contador++;
 
@@ -155,7 +158,13 @@ export class HorariosMemoryController implements Controller {
             }
           }
 
-          console.log(difMinNotuno, dif_min);
+          if (horario.recebeDia.nome) {
+            inf.matricula = horario.recebeDia.matricula;
+            inf.nome = horario.recebeDia.nome;
+            inf.setor = horario.recebeDia.setor;
+            inf.expediente = horario.recebeDia.expediente;
+            inf.saldoAnterior = horario.recebeDia.saldoAnterior;
+          }
 
           if (difMinNotuno > 0) {
             adicionalNoturno = difMinNotuno * 0.14;
@@ -180,7 +189,7 @@ export class HorariosMemoryController implements Controller {
 
         // Calcula o dif_min100 se o dif_min ultrapassar 120 minutos
         let dif_min100 = 0;
-        console.log("dif_min", dif_min);
+        // console.log("dif_min", dif_min);
         if (dif_min > 120) {
           dif_min100 = dif_min - 120;
           dif_min = 120;
@@ -229,6 +238,7 @@ export class HorariosMemoryController implements Controller {
         body: {
           message: "Horários com cálculos adicionados em memória com sucesso",
           horarios: horariosComCalculos,
+          resumo: inf,
         },
       };
     } catch (error) {
