@@ -23,7 +23,6 @@ export class HorariosMemoryController implements Controller {
     try {
       // 1. Recuperar os horários do banco de dados e ordená-los pela data
       let horarios = await horariosRepository.getAllHorariosOrderedByDate();
-      console.log({ horarios });
 
       // 2. Calcular a diferença em minutos e o saldo anterior para cada horário
       let saldoAcumulado = 0;
