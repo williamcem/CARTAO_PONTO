@@ -14,7 +14,6 @@ export interface HorarioData {
   entradaExtra: string;
   saidaExtra: string;
   dif_min: number;
-  data?: Date;
 }
 
 export class HorariosController implements Controller {
@@ -79,7 +78,7 @@ export class HorariosController implements Controller {
 
       return ok({ dif_min: horario.dif_min, horarioData });
     } catch (error) {
-      console.log(error);
+      -console.log(error);
       return serverError();
     }
   }
