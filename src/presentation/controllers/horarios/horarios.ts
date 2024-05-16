@@ -29,16 +29,16 @@ export class HorariosController implements Controller {
 
       // Verificação para entradaTarde e saidaTarde
       if ((entradaManha && !saidaManha) || (!entradaManha && saidaManha)) {
-        return badRequest(new ManhaParamError("Se entradaManha ou saidaManha for fornecido, ambos devem estar presentes."));
+        return badRequest(new ManhaParamError("Se entrada Manha ou saida Manha for fornecido, ambos devem estar presentes."));
       }
 
       if ((entradaTarde && !saidaTarde) || (!entradaTarde && saidaTarde)) {
-        return badRequest(new TardeParamError("Se entradaTarde ou saidaTarde for fornecido, ambos devem estar presentes."));
+        return badRequest(new TardeParamError("Se entrada Tarde ou saida Tarde for fornecido, ambos devem estar presentes."));
       }
 
       // Verificação para entradaExtra e saidaExtra
       if ((entradaExtra && !saidaExtra) || (!entradaExtra && saidaExtra)) {
-        return badRequest(new ExtraParamError("Se entradaExtra ou saidaExtra for fornecido, ambos devem estar presentes."));
+        return badRequest(new ExtraParamError("Se entrada Extra ou saida Extra for fornecido, ambos devem estar presentes."));
       }
 
       let totalManhaMin = this.calcularTotalMinutos(entradaManha, saidaManha);
