@@ -2,15 +2,13 @@ import { Controller, HttpRequest, HttpResponse } from "./horarios-memory-protoco
 import { AddMemoryHorarios } from "../../../domain/usecases/add-horarios-memory";
 import { HorariosMemoryRepository } from "../../../infra/db/postgresdb/horarios-memory-repository/horarios-memory-repository";
 import { calcularTotalMinutos, arredondarParteDecimal } from "./utils";
-import { HorariosMemoryModel, Resumo } from "../../../domain/models/horariosMemory";
-import moment, { utc } from "moment";
+import { HorariosMemoryModel } from "../../../domain/models/horariosMemory";
+import moment from "moment";
 
 const horariosRepository = new HorariosMemoryRepository(); // Crie uma instância do repositório
 
 // Escala de trabalho padrão em minutos (8 horas e 48 minutos)
 const escalaDiariaMin = 8 * 60 + 48;
-const HORA_INICIO_ADICIONAL_NOTURNO = 22; // 22h
-const HORA_FIM_ADICIONAL_NOTURNO = 5; // 5h
 
 export class HorariosMemoryController implements Controller {
   private readonly addMemoryHorarios: AddMemoryHorarios;
@@ -30,46 +28,122 @@ export class HorariosMemoryController implements Controller {
       let somaDifMin100 = 0; // Inicializa a soma de dif_min100
       let somaAdicionalNoturno = 0; // Inicializa a soma do adicional noturno
       let somaDif_min = 0; // Inicializa a soma de dif_min entre dias
+      let somaAdicionalNoturno100 = 0; // Inicializa a soma de dif_min entre dias
+
       const horariosComCalculos: HorariosMemoryModel[] = [];
       let contador = 0;
-      let inf = {};
+      let funcionario: {
+        nome: string;
+        matricula: string;
+        setor: string;
+        expediente: string;
+        data: Date;
+        status: string;
+      } = {
+        data: new Date(),
+        expediente: "",
+        matricula: "",
+        nome: "",
+        setor: "",
+        status: "",
+      };
+
+      let resumo: {
+        saldoAtual: number;
+        saldoAnterior?: number;
+        difMin: number;
+        difMin100: number;
+        adicionalNoturno: number;
+        adicionalNoturno100: number;
+      } = {
+        adicionalNoturno: 0,
+        adicionalNoturno100: 0,
+        difMin: 0,
+        difMin100: 0,
+        saldoAnterior: 0,
+        saldoAtual: 0,
+      };
 
       for (const horario of horarios) {
-        if (contador === 0) if (horario.recebeDia?.saldoAnterior) saldoAcumulado = horario.recebeDia.saldoAnterior;
+        if (contador === 0) {
+          if (horario.recebeDia?.saldoAnterior) saldoAcumulado = horario.recebeDia.saldoAnterior;
+          funcionario = {
+            data: horario.recebeDia?.data || new Date(),
+            expediente: horario.recebeDia?.expediente || "",
+            matricula: horario.recebeDia?.matricula || "",
+            nome: horario.recebeDia?.nome || "",
+            setor: horario.recebeDia?.setor || "",
+            status: "",
+          };
+          resumo.saldoAnterior = horario.recebeDia?.saldoAnterior || 0;
+        }
 
         contador++;
 
         let dif_min = 0;
         let adicionalNoturno = 0; // Inicializa o adicional noturno
+        let dif_min100 = 0;
+        let adicionalNoturno100 = 0; // Inicializa a soma de dif_min entre dias
 
-        const totalManhaMin = calcularTotalMinutos(horario.entradaManha, horario.saidaManha);
+        const entradaData = moment(horario.recebeDia?.data).utc(false).add(horario.entradaManha);
+        const saidaData = moment(horario.recebeDia?.data).utc(false).add(horario.saidaManha);
+
+        if (saidaData.isBefore(entradaData)) saidaData.add(1, "d");
+
+        const totalManhaMin = saidaData.diff(entradaData, "minutes");
+
         dif_min += totalManhaMin;
 
         if (horario.entradaTarde && horario.saidaTarde) {
-          const totalTardeMin = calcularTotalMinutos(horario.entradaTarde, horario.saidaTarde);
+          const entradaData = moment(horario.recebeDia?.data).utc(false).add(horario.entradaTarde);
+          const saidaData = moment(horario.recebeDia?.data).utc(false).add(horario.saidaTarde);
+
+          if (saidaData.isBefore(entradaData)) saidaData.add(1, "d");
+
+          const totalTardeMin = saidaData.diff(entradaData, "minutes");
+
           dif_min += totalTardeMin;
         }
 
         if (horario.entradaExtra && horario.saidaExtra) {
-          const totalExtraMin = calcularTotalMinutos(horario.entradaExtra, horario.saidaExtra);
+          const entradaData = moment(horario.recebeDia?.data).utc(false).add(horario.entradaExtra);
+          const saidaData = moment(horario.recebeDia?.data).utc(false).add(horario.saidaExtra);
+
+          if (saidaData.isBefore(entradaData)) saidaData.add(1, "d");
+
+          const totalExtraMin = saidaData.diff(entradaData, "minutes");
+
           dif_min += totalExtraMin;
         }
 
-        // Calcula a diferença em relação à escala de trabalho padrão
-        dif_min -= escalaDiariaMin;
+        //Se não houver lançamento irá zerar a diferença de minutos
+        if (
+          !horario.entradaManha &&
+          !horario.saidaManha &&
+          !horario.entradaTarde &&
+          !horario.saidaTarde &&
+          !horario.entradaExtra &&
+          !horario.saidaExtra
+        ) {
+          dif_min = 0;
+        } else {
+          // Calcula a diferença em relação à escala de trabalho padrão
+          dif_min -= escalaDiariaMin;
+        }
 
         // Ajustar dif_min para 0 se estiver dentro do intervalo -10 e 10
         if (dif_min >= -10 && dif_min <= 10) {
           dif_min = 0;
         }
 
-        let totalAdicionalNoturno = 0;
+        let difMinNotuno = 0;
 
         for (let index = 0; index <= 2; index++) {
           let horaEntrada = 0,
             horaSaida = 0,
             entradaData = undefined,
             saidaData = undefined;
+          difMinNotuno = 0;
 
           // Verifica se o horário está dentro do intervalo do adicional noturno (22h às 5h)
           if (index === 0) {
@@ -109,8 +183,6 @@ export class HorariosMemoryController implements Controller {
           }
           const inicioAdicional = moment(horario.recebeDia?.data).utc(false).minutes(0).seconds(0).hour(22);
           const finalAdicional = moment(horario.recebeDia?.data).utc(false).minutes(0).seconds(0).add(1, "d").hour(5);
-
-          let difMinNotuno = 0;
 
           //Quando Entrada e saida estão no adicional
           if (entradaData?.isBetween(inicioAdicional, finalAdicional)) {
@@ -156,88 +228,123 @@ export class HorariosMemoryController implements Controller {
               difMinNotuno = saidaData.diff(entradaData, "minutes");
             }
           }
+        }
 
-          if (horario.recebeDia.nome) {
-            inf.matricula = horario.recebeDia.matricula;
-            inf.nome = horario.recebeDia.nome;
-            inf.setor = horario.recebeDia.setor;
-            inf.expediente = horario.recebeDia.expediente;
-            inf.saldoAnterior = horario.recebeDia.saldoAnterior;
+        //Após achar o adicionalNoturno tem que verificar se o dif_min já bateu os 120, se não bateu tem que completar, o que sobrar vira 100%
+        if (difMinNotuno > 0) {
+          adicionalNoturno = difMinNotuno * 1.14;
+          adicionalNoturno = arredondarParteDecimal(adicionalNoturno);
+
+          // Calcula o dif_min100 se o dif_min ultrapassar 120 minutos
+          if (dif_min > 120) {
+            dif_min = dif_min - difMinNotuno;
           }
 
-          if (difMinNotuno > 0) {
-            adicionalNoturno = difMinNotuno * 0.14;
-            adicionalNoturno = arredondarParteDecimal(adicionalNoturno);
-          }
-          //Saida
-          /*           if (saidaManhaData?.isBetween(inicioAdicional, finalAdicional)) {
-          } */
-          /*
-          if (isHorarioAdicionalNoturno) {
-            console.log(finalAdicional.diff(entradaManhaData, "minutes"));
-            console.log(finalAdicional.diff(entradaManhaData, "minutes"));
+          const faltaPara120 = 120 - dif_min;
 
-            console.log(horaEntrada, horaSaida);
-            // Calcula o adicional noturno multiplicando a diferença em minutos por 0.14
-            adicionalNoturno = difMinNotuno * 0.14;
-            adicionalNoturno = arredondarParteDecimal(adicionalNoturno);
-            dif_min *= 1.14;
+          if (faltaPara120 > 0) {
+            if (adicionalNoturno > faltaPara120) {
+              // Se adicionalNoturno é maior do que o necessário para completar 120
+              const partePara120 = faltaPara120;
+              const parteRestante = adicionalNoturno - partePara120;
+
+              // Atualiza dif_min e dif_min100
+              dif_min += partePara120;
+              dif_min100 = parteRestante;
+              adicionalNoturno100 = parteRestante;
+            }
+          }
+
+          // Verifica se deve dividir dif_min por 1.6 e se a operação já foi realizada
+          if (saldoAtual > 0 && dif_min < 0) {
+            dif_min = dif_min / 1.6;
             dif_min = arredondarParteDecimal(dif_min); // Arredonda a parte decimal de dif_min
-          } */
+            saldoAtual += dif_min; // Subtrai o dif_min dividido do saldo anterior
+          }
+
+          // Atualiza a soma de adicionalNoturno100
+          somaAdicionalNoturno100 += adicionalNoturno100;
+
+          // Adiciona ao adicionalNoturno sobre o resto de 120 (se houver)s
+          if (dif_min >= 120) adicionalNoturno = faltaPara120;
+
+          // Atualiza a soma de dif_min100
+          somaDifMin100 += dif_min100;
+
+          // Adiciona o saldo atual ao saldo acumulado
+          saldoAcumulado += dif_min;
+
+          // Atualizando o saldo anterior
+          saldoAtual = saldoAcumulado;
+
+          // Adiciona o adicional noturno ao total
+          somaAdicionalNoturno += adicionalNoturno;
+
+          // Adiciona dif_min à soma de dif_min entre dias
+          somaDif_min += dif_min;
+        } else {
+          // Calcula o dif_min100 se o dif_min ultrapassar 120 minutos
+          if (dif_min > 120) {
+            dif_min100 = dif_min - 120;
+            dif_min = 120;
+          }
+
+          // Atualiza a soma de dif_min100
+          somaDifMin100 += dif_min100;
+
+          // Verifica se deve dividir dif_min por 1.6 e se a operação já foi realizada
+          if (saldoAtual > 0 && dif_min < 0) {
+            dif_min = dif_min / 1.6;
+            dif_min = arredondarParteDecimal(dif_min); // Arredonda a parte decimal de dif_min
+            saldoAtual += dif_min; // Subtrai o dif_min dividido do saldo anterior
+          }
+
+          // Adiciona o saldo atual ao saldo acumulado
+          saldoAcumulado += dif_min;
+
+          // Atualizando o saldo anterior
+          saldoAtual = saldoAcumulado;
+
+          // Adiciona o adicional noturno ao total
+          somaAdicionalNoturno += adicionalNoturno;
+
+          // Adiciona dif_min à soma de dif_min entre dias
+          somaDif_min += dif_min;
         }
-
-        // Calcula o dif_min100 se o dif_min ultrapassar 120 minutos
-        let dif_min100 = 0;
-        // console.log("dif_min", dif_min);
-        if (dif_min > 120) {
-          dif_min100 = dif_min - 120;
-          dif_min = 120;
-        }
-
-        // Atualiza a soma de dif_min100
-        somaDifMin100 += dif_min100;
-
-        // Verifica se deve dividir dif_min por 1.6 e se a operação já foi realizada
-        if (saldoAtual > 0 && dif_min < 0) {
-          dif_min = dif_min / 1.6;
-          dif_min = arredondarParteDecimal(dif_min); // Arredonda a parte decimal de dif_min
-          saldoAtual += dif_min; // Subtrai o dif_min dividido do saldo anterior
-        }
-
-        // Adiciona o saldo atual ao saldo acumulado
-        saldoAcumulado += dif_min;
-
-        // Atualizando o saldo anterior
-        saldoAtual = saldoAcumulado;
-
-        // Adiciona o adicional noturno ao total
-        somaAdicionalNoturno += adicionalNoturno;
-
-        // Adiciona dif_min à soma de dif_min entre dias
-        somaDif_min += dif_min;
 
         // Adicionando os cálculos ao horário atual
         const horarioComCalculo: HorariosMemoryModel = {
           ...horario,
           dif_min,
           saldoAtual,
-          adicionalNoturno,
+          somaDif_min, // Adiciona a soma de dif_min entre dias ao objeto
           dif_min100, // Adiciona dif_min100 ao objeto
           somaDifMin100, // Adiciona a soma de dif_min100 ao objeto
+          adicionalNoturno,
           somaAdicionalNoturno, // Adiciona a soma de Adicional Noturno ao objeto ao objeto
-          somaDif_min, // Adiciona a soma de dif_min entre dias ao objeto
+          adicionalNoturno100,
+          somaAdicionalNoturno100,
         };
 
         horariosComCalculos.push(horarioComCalculo);
       }
 
+      const ultimoObjeto = horariosComCalculos[horariosComCalculos.length - 1];
+      resumo = {
+        adicionalNoturno: ultimoObjeto.somaAdicionalNoturno || 0,
+        adicionalNoturno100: ultimoObjeto.somaAdicionalNoturno100 || 0,
+        difMin: ultimoObjeto.somaDif_min || 0,
+        difMin100: ultimoObjeto.somaDifMin100 || 0,
+        saldoAtual: ultimoObjeto.saldoAtual || 0,
+      };
       // 3. Retornar os horários com os cálculos para o cliente
       return {
         statusCode: 200,
         body: {
           message: "Horários com cálculos adicionados em memória com sucesso",
           horarios: horariosComCalculos,
-          resumo: inf,
+          funcionario,
+          resumo,
         },
       };
     } catch (error) {
@@ -249,3 +356,4 @@ export class HorariosMemoryController implements Controller {
     }
   }
 }
+
