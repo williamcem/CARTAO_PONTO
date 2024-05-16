@@ -38,14 +38,12 @@ export class HorariosMemoryController implements Controller {
         setor: string;
         expediente: string;
         data: Date;
-        status: string;
       } = {
         data: new Date(),
         expediente: "",
         matricula: "",
         nome: "",
         setor: "",
-        status: "",
       };
 
       let resumo: {
@@ -73,7 +71,6 @@ export class HorariosMemoryController implements Controller {
             matricula: horario.recebeDia?.matricula || "",
             nome: horario.recebeDia?.nome || "",
             setor: horario.recebeDia?.setor || "",
-            status: "",
           };
           resumo.saldoAnterior = horario.recebeDia?.saldoAnterior || 0;
         }
