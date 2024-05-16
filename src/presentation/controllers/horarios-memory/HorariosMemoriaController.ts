@@ -20,7 +20,7 @@ export class HorariosMemoryController implements Controller {
   async handle(_httpRequest: HttpRequest): Promise<HttpResponse> {
     try {
       // 1. Recuperar os horários do banco de dados e ordená-los pela data
-      let horarios = await horariosRepository.getAllHorariosOrderedByDate();
+      let horariosRepo = await horariosRepository.getAllHorariosOrderedByDate();
 
       // 2. Calcular a diferença em minutos e o saldo anterior para cada horário
       let saldoAcumulado = 0;
@@ -32,16 +32,17 @@ export class HorariosMemoryController implements Controller {
 
       const horariosComCalculos: HorariosMemoryModel[] = [];
       let contador = 0;
+
       let funcionario: {
         nome: string;
-        matricula: string;
+        identificacao: string;
         setor: string;
         expediente: string;
         data: Date;
       } = {
         data: new Date(),
         expediente: "",
-        matricula: "",
+        identificacao: "",
         nome: "",
         setor: "",
       };
@@ -49,30 +50,35 @@ export class HorariosMemoryController implements Controller {
       let resumo: {
         saldoAtual: number;
         saldoAnterior?: number;
-        difMin: number;
-        difMin100: number;
-        adicionalNoturno: number;
-        adicionalNoturno100: number;
+        movimentacao60: number;
+        movimentacao100: number;
+        movimentacaoNoturno60: number;
+        movimentacaoNoturno100: number;
+        mes?: string;
       } = {
-        adicionalNoturno: 0,
-        adicionalNoturno100: 0,
-        difMin: 0,
-        difMin100: 0,
-        saldoAnterior: 0,
         saldoAtual: 0,
+        saldoAnterior: 0,
+        movimentacao60: 0,
+        movimentacao100: 0,
+        movimentacaoNoturno60: 0,
+        movimentacaoNoturno100: 0,
+        mes: "",
       };
 
-      for (const horario of horarios) {
+      for (const horario of horariosRepo) {
         if (contador === 0) {
           if (horario.recebeDia?.saldoAnterior) saldoAcumulado = horario.recebeDia.saldoAnterior;
           funcionario = {
             data: horario.recebeDia?.data || new Date(),
             expediente: horario.recebeDia?.expediente || "",
-            matricula: horario.recebeDia?.matricula || "",
+            identificacao: horario.recebeDia?.matricula || "",
             nome: horario.recebeDia?.nome || "",
             setor: horario.recebeDia?.setor || "",
           };
+
           resumo.saldoAnterior = horario.recebeDia?.saldoAnterior || 0;
+
+          resumo.mes = horario.recebeDia?.mes || "";
         }
 
         contador++;
@@ -327,19 +333,52 @@ export class HorariosMemoryController implements Controller {
       }
 
       const ultimoObjeto = horariosComCalculos[horariosComCalculos.length - 1];
-      resumo = {
-        adicionalNoturno: ultimoObjeto?.somaAdicionalNoturno || 0,
-        adicionalNoturno100: ultimoObjeto?.somaAdicionalNoturno100 || 0,
-        difMin: ultimoObjeto?.somaDif_min || 0,
-        difMin100: ultimoObjeto?.somaDifMin100 || 0,
-        saldoAtual: ultimoObjeto?.saldoAtual || 0,
-      };
+
+      resumo.movimentacaoNoturno60 = ultimoObjeto?.somaAdicionalNoturno || 0;
+      resumo.movimentacaoNoturno100 = ultimoObjeto?.somaAdicionalNoturno100 || 0;
+      resumo.movimentacao60 = ultimoObjeto?.somaDif_min || 0;
+      resumo.movimentacao100 = ultimoObjeto?.somaDifMin100 || 0;
+      resumo.saldoAtual = ultimoObjeto?.saldoAtual || 0;
+
+      const horarios: {
+        id: string;
+        entradaManha: string;
+        saidaManha: string;
+        entradaTarde?: string;
+        saidaTarde?: string;
+        entradaExtra?: string;
+        saidaExtra?: string;
+        dif_min?: number;
+        dif_min100?: number;
+        adicionalNoturno?: number;
+        adicionalNoturno100?: number;
+        status?: string;
+      }[] = [];
+
+      horariosComCalculos.map((horario) => {
+        horarios.push({
+          id: horario.id,
+          entradaManha: horario.entradaManha,
+          saidaManha: horario.saidaManha,
+          adicionalNoturno: horario.adicionalNoturno,
+          adicionalNoturno100: horario.adicionalNoturno100,
+          dif_min: horario.dif_min,
+          dif_min100: horario.dif_min100,
+          entradaExtra: horario.entradaExtra,
+          entradaTarde: horario.entradaTarde,
+          saidaExtra: horario.saidaExtra,
+          saidaTarde: horario.saidaTarde,
+          status: horario.status,
+        });
+        return horario;
+      });
+
       // 3. Retornar os horários com os cálculos para o cliente
       return {
         statusCode: 200,
         body: {
           message: "Horários com cálculos adicionados em memória com sucesso",
-          horarios: horariosComCalculos,
+          horarios,
           funcionario,
           resumo,
         },
