@@ -331,11 +331,11 @@ export class HorariosMemoryController implements Controller {
 
       const ultimoObjeto = horariosComCalculos[horariosComCalculos.length - 1];
       resumo = {
-        adicionalNoturno: ultimoObjeto.somaAdicionalNoturno || 0,
-        adicionalNoturno100: ultimoObjeto.somaAdicionalNoturno100 || 0,
-        difMin: ultimoObjeto.somaDif_min || 0,
-        difMin100: ultimoObjeto.somaDifMin100 || 0,
-        saldoAtual: ultimoObjeto.saldoAtual || 0,
+        adicionalNoturno: ultimoObjeto?.somaAdicionalNoturno || 0,
+        adicionalNoturno100: ultimoObjeto?.somaAdicionalNoturno100 || 0,
+        difMin: ultimoObjeto?.somaDif_min || 0,
+        difMin100: ultimoObjeto?.somaDifMin100 || 0,
+        saldoAtual: ultimoObjeto?.saldoAtual || 0,
       };
       // 3. Retornar os horários com os cálculos para o cliente
       return {
@@ -356,4 +356,3 @@ export class HorariosMemoryController implements Controller {
     }
   }
 }
-
