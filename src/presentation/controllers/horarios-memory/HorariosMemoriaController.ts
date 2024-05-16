@@ -38,9 +38,7 @@ export class HorariosMemoryController implements Controller {
         identificacao: string;
         setor: string;
         expediente: string;
-        data: Date;
       } = {
-        data: new Date(),
         expediente: "",
         identificacao: "",
         nome: "",
@@ -69,7 +67,6 @@ export class HorariosMemoryController implements Controller {
         if (contador === 0) {
           if (horario.recebeDia?.saldoAnterior) saldoAcumulado = horario.recebeDia.saldoAnterior;
           funcionario = {
-            data: horario.recebeDia?.data || new Date(),
             expediente: horario.recebeDia?.expediente || "",
             identificacao: horario.recebeDia?.matricula || "",
             nome: horario.recebeDia?.nome || "",
@@ -353,6 +350,7 @@ export class HorariosMemoryController implements Controller {
         adicionalNoturno?: number;
         adicionalNoturno100?: number;
         status?: string;
+        date: Date;
       }[] = [];
 
       horariosComCalculos.map((horario) => {
@@ -369,6 +367,7 @@ export class HorariosMemoryController implements Controller {
           saidaExtra: horario.saidaExtra,
           saidaTarde: horario.saidaTarde,
           status: horario.status,
+          date: horario.recebeDia?.data || new Date(),
         });
         return horario;
       });
