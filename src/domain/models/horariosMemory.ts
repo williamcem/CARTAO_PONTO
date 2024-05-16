@@ -16,6 +16,7 @@ export interface HorariosMemoryModel {
   somaAdicionalNoturno?: number;
   somaDif_min?: number;
   status?: string;
+  mes?: string;
   recebeDia?: {
     saldoAnterior?: number;
     data?: Date;
@@ -23,6 +24,7 @@ export interface HorariosMemoryModel {
     matricula?: string;
     setor?: string;
     expediente?: string;
+    mes?: string;
   };
 }
 
