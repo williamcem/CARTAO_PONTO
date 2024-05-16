@@ -50,6 +50,7 @@ export class HorariosMemoryRepository implements AddHorariosMemoryRepository {
           expediente: dia.receberdados.expediente,
           data: dia.receberdados.data,
           status: dia.receberdados.status,
+          mes: dia.receberdados.mes,
         },
       }));
 
