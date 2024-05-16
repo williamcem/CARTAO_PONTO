@@ -29,7 +29,7 @@ export class HorariosController implements Controller {
 
       // Verificação para entradaTarde e saidaTarde
       if ((entradaManha && !saidaManha) || (!entradaManha && saidaManha)) {
-        return badRequest(new ManhaParamError("Se entrada Manha ou saida Manha for fornecido, ambos devem estar presentes."));
+        return badRequest(new ManhaParamError("Se entrada Manhã ou saida Manhã for fornecido, ambos devem estar presentes."));
       }
 
       if ((entradaTarde && !saidaTarde) || (!entradaTarde && saidaTarde)) {
