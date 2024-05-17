@@ -1,3 +1,7 @@
 export interface DifMinModel {
-  dif_min: number;
+  id: string;
+  entradaManha?: string;
+  saidaManha?: string;
+  entradaTarde?: string;
+  saidaTarde?: string;
 }

@@ -3,13 +3,12 @@ import { HorarioData } from "../../presentation/controllers/horarios/horarios";
 
 export interface AddHorariosModel {
   id: string;
-  entradaManha: string;
-  saidaManha: string;
+  entradaManha?: string;
+  saidaManha?: string;
   entradaTarde?: string;
   saidaTarde?: string;
   entradaExtra?: string;
   saidaExtra?: string;
-  dif_min: number;
 }
 
 export interface AddHorarios {
