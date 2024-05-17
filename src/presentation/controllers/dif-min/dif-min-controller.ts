@@ -13,24 +13,27 @@ export class DifMinController implements Controller {
         return badRequest(new Error("ID é requirido"));
       }
 
-      // Calcula a diferença de minutos negativos para o dia específico
-      let dif_min = -calcularMinutosTrabalho("07:12", "17:00");
-      dif_min = dif_min + 60;
+      const existDia = await this.difMinPostgresRepository.buscarPorId({ id });
 
-      // Prepara os dados para atualização
-      const diaUpdate = {
-        id,
-        dif_min,
-        entradaManha: "FALTA",
-        saidaManha: "FALTA",
-        entradaTarde: "FALTA",
-        saidaTarde: "FALTA",
-        entradaExtra: "FALTA",
-        saidaExtra: "FALTA",
-      };
+      if (!existDia) {
+        return badRequest({ message: "Id inexistente!", name: "Erro" });
+      }
+
+      let manha = undefined;
+      let tarde = undefined;
+
+      if (!existDia.entradaManha && !existDia.saidaManha) manha = "FALTA";
+
+      if (!existDia.entradaTarde && !existDia.saidaTarde) tarde = "FALTA";
 
       // Atualiza o dia específico para falta
-      const update = await this.difMinPostgresRepository.atualizarDiaParaFalta(diaUpdate);
+      const update = await this.difMinPostgresRepository.atualizarDiaParaFalta({
+        id: existDia.id,
+        entradaManha: manha,
+        saidaManha: manha,
+        entradaTarde: tarde,
+        saidaTarde: tarde,
+      });
 
       if (!update) return badRequest({ message: "Erro ao atualizar dia para falta", name: "Error" });
 
