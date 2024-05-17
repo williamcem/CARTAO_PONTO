@@ -239,6 +239,8 @@ export class HorariosMemoryController implements Controller {
           if (dif_min > 120) {
             dif_min = dif_min - difMinNotuno;
           }
+          //Se for dif min for igual dif min noturno irá zerar o dif_min
+          if (difMinNotuno === dif_min) dif_min = 0;
 
           const faltaPara120 = 120 - dif_min;
 
