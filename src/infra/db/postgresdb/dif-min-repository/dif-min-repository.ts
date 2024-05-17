@@ -1,16 +1,13 @@
 import { PrismaClient } from "@prisma/client";
 import { prisma } from "../../../database/Prisma";
-import { AddDifMin } from "../../../../presentation/controllers/dif-min/dif-min-protocols";
+import { AddDifMin, AddDifMinModel } from "../../../../presentation/controllers/dif-min/dif-min-protocols";
 
 interface DiaUpdate {
   id: string;
-  dif_min: number;
-  entradaManha: string;
-  saidaManha: string;
-  entradaTarde: string | null;
-  saidaTarde: string | null;
-  entradaExtra: string | null;
-  saidaExtra: string | null;
+  entradaManha?: string;
+  saidaManha?: string;
+  entradaTarde?: string;
+  saidaTarde?: string;
 }
 
 export class DifMinPostgresRepository implements AddDifMin {
@@ -20,25 +17,32 @@ export class DifMinPostgresRepository implements AddDifMin {
     this.prisma = prisma;
   }
 
-  async atualizarDiaParaFalta(diaUpdate: DiaUpdate): Promise<boolean> {
-    try {
-      const { id, dif_min, entradaManha, saidaManha, entradaTarde, saidaTarde, entradaExtra, saidaExtra } = diaUpdate;
+  public async buscarPorId(input: { id: string }): Promise<AddDifMinModel | undefined> {
+    const result = await this.prisma.dia.findFirst({ where: { id: input.id } });
 
+    if (!result) return undefined;
+
+    return {
+      id: result.id,
+      entradaManha: result.entradaManha,
+      entradaTarde: result.entradaTarde,
+      saidaManha: result.saidaManha,
+      saidaTarde: result.saidaTarde,
+    };
+  }
+
+  async atualizarDiaParaFalta(difData: DiaUpdate): Promise<boolean> {
+    try {
+      const { id, entradaManha, saidaManha, entradaTarde, saidaTarde } = difData;
       // Atualiza o registro no banco de dados
-      const updated = await this.prisma.dia.update({
+      await this.prisma.dia.update({
         where: { id },
         data: {
-          dif_min,
-          entradaManha,
-          saidaManha,
-          entradaTarde,
-          saidaTarde,
-          entradaExtra,
-          saidaExtra,
+          ...{ entradaManha, saidaManha, entradaTarde, saidaTarde },
         },
       });
 
-      return Boolean(updated);
+      return true;
     } catch (error) {
       console.error("Erro ao atualizar o dia para falta:", error);
       throw new Error("Erro ao atualizar o dia para falta");
