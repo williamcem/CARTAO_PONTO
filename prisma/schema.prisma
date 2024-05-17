@@ -37,20 +37,20 @@ model receberdados {
 }
 
 model funcionario {
-  id             Int      @id @unique @default(autoincrement())
+  id             Int       @id @unique @default(autoincrement())
   filial         String
-  identificacao  String   @unique
+  identificacao  String    @unique
   nome           String
   turnoId        Int
   centroCustoId  Int
   funcaoId       Int
   dataNascimento DateTime
   dataAdmissao   DateTime
-  dataDemissao   DateTime
+  dataDemissao   DateTime?
 
-  turno        turno        @relation(fields: [turnoId], references: [id])
-  centro_custo centro_custo @relation(fields: [centroCustoId], references: [id])
-  funcao       funcao       @relation(fields: [funcaoId], references: [id])
+  turno        turno        @relation(fields: [turnoId], references: [id], onDelete: Cascade)
+  centro_custo centro_custo @relation(fields: [centroCustoId], references: [id], onDelete: Cascade)
+  funcao       funcao       @relation(fields: [funcaoId], references: [id], onDelete: Cascade)
   endereco     endereco?
   contatos     contato[]
   emails       email[]
@@ -75,7 +75,7 @@ model funcao {
 }
 
 model endereco {
-  id          Int    @id @unique @default(autoincrement())
+  id          Int    @id @default(autoincrement())
   rua         String
   numero      String
   complemento String
@@ -85,19 +85,19 @@ model endereco {
   cep         String
 
   funcionarioId Int         @unique
-  funcionario   funcionario @relation(fields: [funcionarioId], references: [id])
+  funcionario   funcionario @relation(fields: [funcionarioId], references: [id], onDelete: Cascade)
 }
 
 model contato {
   id            Int          @id @unique @default(autoincrement())
   numero        String       @unique
   funcionarioId Int?
-  funcionario   funcionario? @relation(fields: [funcionarioId], references: [id])
+  funcionario   funcionario? @relation(fields: [funcionarioId], references: [id], onDelete: Cascade)
 }
 
 model email {
   id            Int          @id @unique @default(autoincrement())
   nome          String       @unique
   funcionarioId Int?
-  funcionario   funcionario? @relation(fields: [funcionarioId], references: [id])
+  funcionario   funcionario? @relation(fields: [funcionarioId], references: [id], onDelete: Cascade)
 }

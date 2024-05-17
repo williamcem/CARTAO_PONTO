@@ -4,6 +4,7 @@ import { UploadPostgresRepository } from "@infra/db/postgresdb/uplod-repository/
 import { randomUUID } from "crypto";
 import { MissingParamError } from "../../presentation/errors";
 import { Response } from "express";
+import { FuncionarioPostgresRepository } from "@infra/db/postgresdb/funcionario/funcionario-repository";
 
 export async function processarArquivo(req: { file?: Express.Multer.File | undefined }, res: Response) {
   if (!req.file?.buffer) {
@@ -81,4 +82,88 @@ export async function processarArquivo(req: { file?: Express.Multer.File | undef
       return res.send(await uploadPostgresRepository.add(novoDados));
     })
     .on("error", (error) => {});
+}
+
+export async function importarArquivoFuncionario(req: { file?: Express.Multer.File | undefined }, res: Response) {
+  try {
+    if (!req.file?.buffer) {
+      return new MissingParamError("Falta arquivo!");
+    }
+
+    const arquivo = Buffer.from(req.file.buffer).toString("utf-8");
+
+    const funcionarios = arquivo.split("\n");
+    const funcionarioRepository = new FuncionarioPostgresRepository();
+
+    const errors: { identificacao: string; nome: string }[] = [];
+
+    Promise.all(
+      funcionarios.map(async (funcionario, i) => {
+        const [
+          ,
+          ,
+          filial,
+          ,
+          identificacao,
+          nome,
+          ,
+          ,
+          codTurno,
+          descricaoTurno,
+          codCentroCusto,
+          descricaoCentroCusto,
+          codFuncao,
+          descricaoFuncao,
+          dataNascimento,
+          dataAdmissao,
+          dataDemissao,
+          rua,
+          numero,
+          complemento,
+          bairro,
+          cidade,
+          estado,
+          cep,
+          ddd,
+          telefone,
+          email,
+        ] = funcionario.split(";");
+
+        if (i === 1) if (!nome) throw "Arquivo inválido!";
+
+        if (!identificacao) return funcionario;
+
+        const novaDataAdmissao = new Date(`${dataAdmissao.slice(0, 4)}-${dataAdmissao.slice(4, 6)}-${dataAdmissao.slice(6, 8)}`);
+        const novaDataDemissao = new Date(`${dataDemissao.slice(0, 4)}-${dataDemissao.slice(4, 6)}-${dataDemissao.slice(6, 8)}`);
+        const novaDataNascimento = new Date(
+          `${dataNascimento.slice(0, 4)}-${dataNascimento.slice(4, 6)}-${dataNascimento.slice(6, 8)}`,
+        );
+
+        const saved = await funcionarioRepository.upsert({
+          nome,
+          centroCusto: { nome: descricaoCentroCusto },
+          contato: ddd && telefone ? { numero: `${ddd} ${telefone}` } : undefined,
+          dataAdmissao: novaDataAdmissao,
+          dataDemissao: dataDemissao ? novaDataDemissao : undefined,
+          dataNascimento: novaDataNascimento,
+          email: email ? { nome: email } : undefined,
+          endereco: { cep, bairro, cidade, complemento, estado, numero, rua },
+          filial,
+          funcao: { nome: descricaoFuncao },
+          identificacao,
+          turno: { nome: descricaoTurno },
+        });
+
+        if (!saved) {
+          errors.push({ identificacao, nome });
+        }
+
+        return undefined;
+      }),
+    );
+
+    return res.json({ message: "Arquivo importado com sucesso", errors });
+  } catch (error) {
+    return res.send({ error }).status(400);
+  }
 }
