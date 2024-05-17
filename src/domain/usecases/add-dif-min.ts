@@ -5,5 +5,5 @@ export interface AddDifMinModel {
 }
 
 export interface AddDifMin {
-  listarDiasAnteriores(difData: DifMinModel): Promise<AddDifMinModel>;
+  listarDiasAnteriores(difData: DifMinModel): Promise<DifMinModel>;
 }
