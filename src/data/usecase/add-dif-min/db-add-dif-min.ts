@@ -8,7 +8,7 @@ export class DbAddDifMin implements AddDifMin {
   constructor(addDifMiRepository: AddDifMinRepository) {
     this.addDifMiRepository = addDifMiRepository;
   }
-  listarDiasAnteriores(difData: DifMinModel): Promise<AddDifMinModel> {
+  atualizarDiaParaFalta(difData: DifMinModel): Promise<AddDifMinModel> {
     throw new Error("Method not implemented.");
   }
 }

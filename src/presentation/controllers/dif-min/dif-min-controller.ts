@@ -1,40 +1,40 @@
-import { HttpResponse, Controller } from "./dif-min-protocols";
+import { HttpResponse, Controller, HttpRequest } from "./dif-min-protocols";
 import { DifMinPostgresRepository } from "@infra/db/postgresdb/dif-min-repository/dif-min-repository";
-import { serverError, ok } from "../../../presentation/helpers/http-helpers";
-import { prisma } from "../../../infra/database/Prisma";
+import { serverError, ok, badRequest } from "../../../presentation/helpers/http-helpers";
 
 export class DifMinController implements Controller {
   constructor(private readonly difMinPostgresRepository: DifMinPostgresRepository) {}
-  async handle(): Promise<HttpResponse> {
-    try {
-      // Recebe os dias anteriores do repositório
-      const diasAnteriores = await this.difMinPostgresRepository.listarDiasAnteriores({
-        dif_min: 0,
-      });
 
-      // Verifica se diasAnteriores é um array e se não está vazio
-      if (Array.isArray(diasAnteriores) && diasAnteriores.length > 0) {
-        // Calcula a diferença de minutos negativos para cada dia anterior
-        for (const dia of diasAnteriores) {
-          let dif_min = 0;
-          if (!dia.entradaManha) {
-            // Se não houve entrada pela manhã, consideramos como ausência no turno
-            // e calculamos os minutos negativos correspondentes à jornada completa
-            dif_min -= calcularMinutosTrabalho("07:12", "17:00");
-            dif_min = dif_min + 60; // Adiciona 60 minutos para compensar o dia
-            // Atualiza o dif_min (negativando o dia em minutos de carga horaria)
-            await prisma.dia.update({
-              where: { id: dia.id },
-              data: { dif_min: dif_min },
-            });
-          }
-        }
-      } else {
-        // Caso não haja dias anteriores, retorna uma resposta OK com uma mensagem
-        return ok({ message: "Não há dias anteriores para processar" });
+  async handle(httpRequest: HttpRequest): Promise<HttpResponse> {
+    try {
+      const { id } = httpRequest.body;
+
+      if (!id) {
+        return badRequest(new Error("ID é requirido"));
       }
 
-      return ok({ message: "Diferenças de minutos negativos calculadas e salvas com sucesso" });
+      // Calcula a diferença de minutos negativos para o dia específico
+      let dif_min = -calcularMinutosTrabalho("07:12", "17:00");
+      dif_min = dif_min + 60;
+
+      // Prepara os dados para atualização
+      const diaUpdate = {
+        id,
+        dif_min,
+        entradaManha: "FALTA",
+        saidaManha: "FALTA",
+        entradaTarde: "FALTA",
+        saidaTarde: "FALTA",
+        entradaExtra: "FALTA",
+        saidaExtra: "FALTA",
+      };
+
+      // Atualiza o dia específico para falta
+      const update = await this.difMinPostgresRepository.atualizarDiaParaFalta(diaUpdate);
+
+      if (!update) return badRequest({ message: "Erro ao atualizar dia para falta", name: "Error" });
+
+      return ok({ message: "Dia atualizado com sucesso como falta" });
     } catch (error) {
       console.error(error);
       return serverError();

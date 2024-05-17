@@ -1,78 +1,47 @@
 import { PrismaClient } from "@prisma/client";
-import { AddDifMinRepository } from "../../../../data/usecase/add-dif-min/add-dif-min-repository";
-import { DifMinModel } from "../../../../domain/models/dif-min";
 import { prisma } from "../../../database/Prisma";
+import { AddDifMin } from "../../../../presentation/controllers/dif-min/dif-min-protocols";
 
-// Defina o tipo para representar um dia anterior
-interface Dia {
+interface DiaUpdate {
   id: string;
+  dif_min: number;
   entradaManha: string;
   saidaManha: string;
   entradaTarde: string | null;
   saidaTarde: string | null;
   entradaExtra: string | null;
   saidaExtra: string | null;
-  dif_min: number;
 }
 
-export class DifMinPostgresRepository implements AddDifMinRepository {
+export class DifMinPostgresRepository implements AddDifMin {
   private prisma: PrismaClient;
 
   constructor() {
     this.prisma = prisma;
   }
 
-  async listarDiasAnteriores(difData: DifMinModel): Promise<Dia[]> {
+  async atualizarDiaParaFalta(diaUpdate: DiaUpdate): Promise<boolean> {
     try {
-      const { dif_min } = difData;
-      const dataAtual = new Date();
-      dataAtual.setHours(0, 0, 0, 0); // Define a data atual para o início do dia
+      const { id, dif_min, entradaManha, saidaManha, entradaTarde, saidaTarde, entradaExtra, saidaExtra } = diaUpdate;
 
-      // Passo 1: Obter as datas da tabela receberdados que são anteriores à data atual e não são sábado, domingo, "COMPESADO" ou "DOMINGO"
-      const datasAnteriores = await this.prisma.receberdados.findMany({
-        where: {
-          data: {
-            lt: dataAtual,
-          },
-          NOT: [{ status: "COMPENSADO" }, { status: "DOMINGO" }],
-        },
-        select: {
-          data: true,
+      // Atualiza o registro no banco de dados
+      const updated = await this.prisma.dia.update({
+        where: { id },
+        data: {
+          dif_min,
+          entradaManha,
+          saidaManha,
+          entradaTarde,
+          saidaTarde,
+          entradaExtra,
+          saidaExtra,
         },
       });
 
-      // Passo 2: Usar as datas obtidas para filtrar os registros na tabela dia
-      const diasAnteriores: Dia[] = await this.prisma.dia.findMany({
-        where: {
-          AND: [
-            {
-              receberdados: { data: { in: datasAnteriores.map((data) => data.data) } },
-            },
-            {
-              receberdados: {
-                data: {
-                  lt: dataAtual, // Garante que a data seja anterior à data atual
-                },
-              },
-            },
-          ],
-        },
-        select: {
-          id: true,
-          entradaManha: true,
-          saidaManha: true,
-          entradaTarde: true,
-          saidaTarde: true,
-          entradaExtra: true,
-          saidaExtra: true,
-          dif_min: true,
-        },
-      });
-
-      return diasAnteriores;
+      return Boolean(updated);
     } catch (error) {
-      console.error("Erro ao listar dias anteriores:", error);
-      throw new Error("Erro ao listar dias anteriores");
+      console.error("Erro ao atualizar o dia para falta:", error);
+      throw new Error("Erro ao atualizar o dia para falta");
     }
   }
 }

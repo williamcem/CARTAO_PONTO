@@ -5,5 +5,5 @@ interface Dia {
 }
 
 export interface AddDifMinRepository {
-  listarDiasAnteriores(difData: DifMinModel): Promise<Dia[]>; // Corrigido para retornar um array de Dia
+  atualizarDiaParaFalta(difData: DifMinModel): Promise<Dia[]>; // Corrigido para retornar um array de Dia
 }
