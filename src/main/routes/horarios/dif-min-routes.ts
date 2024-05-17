@@ -3,7 +3,7 @@ import { adaptRoute } from "../../adapters/express-route-adapter";
 import { makeDifMinController } from "../../factories/dif-min-factore";
 
 const route = (router: Router): void => {
-  router.post("/difmin", adaptRoute(makeDifMinController()));
+  router.post("/falta", adaptRoute(makeDifMinController()));
 };
 
 export default route;
