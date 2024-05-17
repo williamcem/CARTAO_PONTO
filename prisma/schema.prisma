@@ -35,3 +35,69 @@ model receberdados {
   saldoanterior Int
   dia           dia?
 }
+
+model funcionario {
+  id             Int      @id @unique @default(autoincrement())
+  filial         String
+  identificacao  String   @unique
+  nome           String
+  turnoId        Int
+  centroCustoId  Int
+  funcaoId       Int
+  dataNascimento DateTime
+  dataAdmissao   DateTime
+  dataDemissao   DateTime
+
+  turno        turno        @relation(fields: [turnoId], references: [id])
+  centro_custo centro_custo @relation(fields: [centroCustoId], references: [id])
+  funcao       funcao       @relation(fields: [funcaoId], references: [id])
+  endereco     endereco?
+  contatos     contato[]
+  emails       email[]
+}
+
+model turno {
+  id           Int           @id @unique @default(autoincrement())
+  nome         String        @unique
+  funcionarios funcionario[]
+}
+
+model centro_custo {
+  id           Int           @id @unique @default(autoincrement())
+  nome         String        @unique
+  funcionarios funcionario[]
+}
+
+model funcao {
+  id           Int           @id @unique @default(autoincrement())
+  nome         String        @unique
+  funcionarios funcionario[]
+}
+
+model endereco {
+  id          Int    @id @unique @default(autoincrement())
+  rua         String
+  numero      String
+  complemento String
+  bairro      String
+  cidade      String
+  estado      String
+  cep         String
+
+  funcionarioId Int         @unique
+  funcionario   funcionario @relation(fields: [funcionarioId], references: [id])
+}
+
+model contato {
+  id            Int          @id @unique @default(autoincrement())
+  numero        String       @unique
+  funcionarioId Int?
+  funcionario   funcionario? @relation(fields: [funcionarioId], references: [id])
+}
+
+model email {
+  id            Int          @id @unique @default(autoincrement())
+  nome          String       @unique
+  funcionarioId Int?
+  funcionario   funcionario? @relation(fields: [funcionarioId], references: [id])
+}
