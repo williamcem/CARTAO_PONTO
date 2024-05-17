@@ -324,6 +324,7 @@ export class HorariosMemoryController implements Controller {
           somaAdicionalNoturno, // Adiciona a soma de Adicional Noturno ao objeto ao objeto
           adicionalNoturno100,
           somaAdicionalNoturno100,
+          status: horario.recebeDia.status,
         };
 
         horariosComCalculos.push(horarioComCalculo);
@@ -349,7 +350,7 @@ export class HorariosMemoryController implements Controller {
         dif_min100?: number;
         adicionalNoturno?: number;
         adicionalNoturno100?: number;
-        status?: string;
+        status: string;
         date: Date;
       }[] = [];
 
