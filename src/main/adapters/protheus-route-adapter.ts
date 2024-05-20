@@ -151,7 +151,7 @@ export async function importarArquivoFuncionario(req: { file?: Express.Multer.Fi
           dataAdmissao: novaDataAdmissao,
           dataDemissao: dataDemissao ? novaDataDemissao : undefined,
           dataNascimento: novaDataNascimento,
-          email: email ? { nome: email } : undefined,
+          email: email.replace("\r", "").trim() ? { nome: email.replace("\r", "").trim() } : undefined,
           endereco: { cep, bairro, cidade, complemento, estado, numero, rua },
           filial,
           funcao: { nome: descricaoFuncao },
