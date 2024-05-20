@@ -54,6 +54,7 @@ model funcionario {
   endereco     endereco?
   contatos     contato[]
   emails       email[]
+  cartao       cartao[]
 }
 
 model turno {
@@ -100,4 +101,68 @@ model email {
   nome          String       @unique
   funcionarioId Int?
   funcionario   funcionario? @relation(fields: [funcionarioId], references: [id], onDelete: Cascade)
+}
+
+model cartao {
+  id               Int      @id @default(autoincrement())
+  funcionarioId    Int
+  referencia       DateTime
+  saldoAnterior60  Int
+  saldoAnterior100 Int
+  statusId         Int
+
+  funcionario   funcionario    @relation(fields: [funcionarioId], references: [id], onDelete: Cascade)
+  cartao_dia    cartao_dia[]
+  cartao_status cartao_status? @relation(fields: [statusId], references: [id], onDelete: Cascade)
+
+  @@unique([funcionarioId, referencia])
+}
+
+model cartao_status {
+  id   Int    @id @default(autoincrement())
+  nome String @unique
+
+  cartao cartao[]
+}
+
+model cartao_dia {
+  id                      Int                     @id @default(autoincrement())
+  data                    DateTime
+  statusId                Int
+  cartaoId                Int
+  periodoDescanso         Int
+  cargaHor                Int
+  cargaHorPrimeiroPeriodo Int
+  cargaHorSegundoPeriodo  Int
+  cargaHorariaCompleta    String
+  cargaHorariaNoturna     Int                     @default(0)
+  cartao_dia_status       cartao_dia_status       @relation(fields: [statusId], references: [id], onDelete: Cascade)
+  cartao                  cartao                  @relation(fields: [cartaoId], references: [id], onDelete: Cascade)
+  cartao_dia_lancamentos  cartao_dia_lancamento[]
+
+  @@unique([cartaoId, data])
+}
+
+model cartao_dia_status {
+  id          Int          @id
+  nome        String
+  cartao_dias cartao_dia[]
+}
+
+model cartao_dia_lancamento {
+  id            Int      @id @default(autoincrement())
+  periodoId     Int
+  entrada       DateTime
+  saida         DateTime
+  statusId      Int
+  cartao_dia_id Int
+
+  cartao_dia_lancamento_periodo cartao_dia_lancamento_periodo @relation(fields: [periodoId], references: [id], onDelete: Cascade)
+  cartao_dia                    cartao_dia                    @relation(fields: [cartao_dia_id], references: [id])
+}
+
+model cartao_dia_lancamento_periodo {
+  id                     Int                     @id @default(autoincrement())
+  nome                   String                  @unique
+  cartao_dia_lancamentos cartao_dia_lancamento[]
 }

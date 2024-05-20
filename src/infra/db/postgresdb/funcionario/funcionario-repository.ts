@@ -126,4 +126,14 @@ export class FuncionarioPostgresRepository implements FuncionarioRepository {
 
     return Boolean(saveFuncionario);
   }
+
+  public async findFisrt(input: { identificacao: string }): Promise<{ id: number } | undefined> {
+    const result = await this.prisma.funcionario.findFirst({ where: { identificacao: input.identificacao } });
+
+    if (!result) return undefined;
+
+    return {
+      id: result.id,
+    };
+  }
 }
