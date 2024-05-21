@@ -1,5 +1,5 @@
 import { AddMemoryHorarios, AddHorariosMemoryModel } from "../../../domain/usecases/add-horarios-memory";
-import { HorariosMemoryModel } from "../../../domain/models/horariosMemory";
+import { HorariosMemoryModel } from "../../../domain/models/horarios-memory";
 import { AddHorariosMemoryRepository } from "./add-horarios-memory-repository";
 
 export class DbAddHorariosMemory implements AddMemoryHorarios {
