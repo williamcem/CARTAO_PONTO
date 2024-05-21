@@ -1,7 +1,7 @@
 import { PrismaClient } from "@prisma/client";
 import { AddHorariosMemoryRepository } from "../../../../data/usecase/add-horarios-memory/add-horarios-memory-repository";
 import { AddHorariosMemoryModel } from "../../../../domain/usecases/add-horarios-memory";
-import { HorariosMemoryModel } from "../../../../domain/models/horariosMemory";
+import { HorariosMemoryModel } from "../../../../domain/models/horarios-memory";
 
 const prisma = new PrismaClient();
 
@@ -18,6 +18,9 @@ export class HorariosMemoryRepository implements AddHorariosMemoryRepository {
       entradaExtra: horarioData.entradaExtra || undefined,
       saidaExtra: horarioData.saidaExtra || undefined,
       dif_min: horarioData.dif_min || 0,
+      status: horarioData.status,
+      recebeDia: horarioData.recebeDia,
+
       saldoAtual: this.calcularSaldoAnterior(horarioData.id, horarioData.dif_min || 0),
     };
 
@@ -42,6 +45,7 @@ export class HorariosMemoryRepository implements AddHorariosMemoryRepository {
         saidaExtra: dia.saidaExtra ?? undefined,
         dif_min: dia.dif_min,
         saldoAtual: dia.saldoAtual ?? undefined,
+        status: dia.receberdados.status, // Adicionando a propriedade 'status'
         recebeDia: {
           saldoAnterior: dia.receberdados.saldoanterior,
           nome: dia.receberdados.nome,
