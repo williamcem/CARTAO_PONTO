@@ -14,6 +14,21 @@ export function calcularTotalMinutos(entrada: string, saida: string, extra?: str
   return totalMinutosSaida - totalMinutosEntrada;
 }
 
+export function arredondarParteDecimalHoras(numero: number): number {
+  const inteiro = Math.floor(numero); // Obtém a parte inteira do número
+  const decimal = numero - inteiro; // Obtém a parte decimal do número
+  const terceiraCasa = Math.floor((decimal * 1000) % 10); // Obtém a terceira casa decimal
+
+  // Verifica se a terceira casa decimal é maior ou igual a 6
+  if (terceiraCasa >= 6) {
+    // Arredonda para cima a segunda casa decimal
+    return Math.round(numero * 100) / 100;
+  } else {
+    // Trunca para duas casas decimais
+    return Math.floor(numero * 100) / 100;
+  }
+}
+
 export function arredondarParteDecimal(numero: number): number {
   const inteiro = Math.floor(numero); // Obtém a parte inteira do número
   const decimal = numero - inteiro; // Obtém a parte decimal do número
