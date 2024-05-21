@@ -20,7 +20,6 @@ export class HorariosPostgresRepository implements AddHorariosRepository {
       const dataToUpdate: any = {
         entradaManha: horarioData.entradaManha,
         saidaManha: horarioData.saidaManha,
-        dif_min: horarioData.dif_min,
         dataInicio: date,
       };
 
@@ -62,8 +61,6 @@ export class HorariosPostgresRepository implements AddHorariosRepository {
         saidaTarde: updateHorarios.saidaTarde || undefined,
         entradaExtra: updateHorarios.entradaExtra || undefined,
         saidaExtra: updateHorarios.saidaExtra || undefined,
-        dif_min: updateHorarios.dif_min,
-        saldoAtual: updateHorarios.saldoAtual || undefined,
       };
 
       return HorariosModel;
