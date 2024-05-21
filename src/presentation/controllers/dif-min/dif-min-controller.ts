@@ -44,14 +44,3 @@ export class DifMinController implements Controller {
     }
   }
 }
-
-// função para calcular e negativar o dia não trabalhado
-function calcularMinutosTrabalho(inicio: string, fim: string): number {
-  const [horaInicio, minutoInicio] = inicio.split(":").map(Number);
-  const [horaFim, minutoFim] = fim.split(":").map(Number);
-
-  const minutosInicio = horaInicio * 60 + minutoInicio;
-  const minutosFim = horaFim * 60 + minutoFim;
-
-  return minutosFim - minutosInicio;
-}
