@@ -1,6 +1,16 @@
-import { HorariosMemoryModel } from "@domain/models/horariosMemory";
+import { HorariosMemoryModel } from "@domain/models/horarios-memory";
 
 export interface AddHorariosMemoryModel {
+  recebeDia: {
+    saldoAnterior?: number | undefined;
+    data?: Date | undefined;
+    nome?: string | undefined;
+    matricula?: string | undefined;
+    setor?: string | undefined;
+    expediente?: string | undefined;
+    mes?: string | undefined;
+    status: string;
+  };
   id: string;
   entradaManha: string;
   saidaManha: string;
