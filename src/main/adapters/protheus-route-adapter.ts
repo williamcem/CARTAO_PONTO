@@ -305,6 +305,8 @@ export async function importarArquivoCartao(req: { file?: Express.Multer.File | 
         cargaHorNoturna += BuscarHorarioNortunoEmMinutos(moment(data), dataEntrada, dataSaida);
       }
 
+      cargaHor = cargaHorPrimeiroPeriodo + cargaHorSegundoPeriodo;
+
       cartao.dias.push({
         status: { descricao: descricaoStatus, id: Number(codStatus) },
         data: dataAtual.toDate(),
