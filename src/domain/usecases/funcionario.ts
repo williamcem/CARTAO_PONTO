@@ -31,6 +31,10 @@ export interface AddFuncionarioUpsertModel {
   email?: {
     nome: string;
   };
+  localidade: {
+    codigo: string;
+    nome: string;
+  };
 }
 
 export interface AddFuncionarios {

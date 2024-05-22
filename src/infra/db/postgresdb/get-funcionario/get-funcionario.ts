@@ -10,23 +10,20 @@ export class FuncionarioPostgresRepository implements GetFuncionarioIdent {
     this.prisma = prisma;
   }
 
-  public async list(identificacao: string): Promise<GetFuncionarioModel[]> {
-    try {
-      const funcionario = await this.prisma.funcionario.findUnique({
-        where: { identificacao },
-      });
+  public async findFisrt(identificacao: string, localidade: string): Promise<GetFuncionarioModel | undefined> {
+    const funcionario = await this.prisma.funcionario.findFirst({
+      where: { identificacao: { endsWith: identificacao }, localidadeId: localidade },
+      include: {
+        cartao: {
+          include: { cartao_dia: { include: { cartao_dia_lancamentos: true, cartao_dia_status: true } }, cartao_status: true },
+        },
+      },
+    });
 
-      // Verifica se o funcionário foi encontrado
-      if (!funcionario) {
-        throw new Error("Identificador não encontrado");
-      }
+    // Verifica se o funcionário foi encontrado
+    if (!funcionario) return undefined;
 
-      // Retorna o funcionário encontrado em um array
-      return [funcionario];
-    } catch (error) {
-      console.error("Erro ao buscar o identificador", error);
-      // Lança a exceção novamente para que o chamador possa lidar com ela
-      throw error;
-    }
+    // Retorna o funcionário encontrado em um array
+    return funcionario;
   }
 }

@@ -44,6 +44,7 @@ model funcionario {
   turnoId        Int
   centroCustoId  Int
   funcaoId       Int
+  localidadeId   String
   dataNascimento DateTime
   dataAdmissao   DateTime
   dataDemissao   DateTime?
@@ -55,6 +56,14 @@ model funcionario {
   contatos     contato[]
   emails       email[]
   cartao       cartao[]
+
+  localidade localidade @relation(fields: [localidadeId], references: [codigo])
+}
+
+model localidade {
+  codigo       String        @id @unique
+  nome         String
+  funcionarios funcionario[]
 }
 
 model turno {

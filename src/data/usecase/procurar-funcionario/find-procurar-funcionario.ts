@@ -1,5 +1,5 @@
-import { GetFuncionarioModel, ListarFuncionario } from "../../../presentation/controllers/procurar-funcionário/procurra-funcionario-protocols";
+import { GetFuncionarioModel } from "../../../presentation/controllers/procurar-funcionário/procurra-funcionario-protocols";
 
 export interface GetFuncionarioIdent {
-  list(funcionarioData: string): Promise<GetFuncionarioModel[]>;
+  findFisrt(funcionarioData: string, localidade: string): Promise<GetFuncionarioModel | undefined>;
 }

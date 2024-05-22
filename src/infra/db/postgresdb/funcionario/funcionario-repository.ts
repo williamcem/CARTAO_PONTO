@@ -56,6 +56,12 @@ export class FuncionarioPostgresRepository implements FuncionarioRepository {
               },
             }
           : undefined,
+        localidade: {
+          connectOrCreate: {
+            where: { codigo: funcionario.localidade.codigo },
+            create: { codigo: funcionario.localidade.codigo, nome: funcionario.localidade.nome },
+          },
+        },
       },
       update: {
         dataAdmissao: funcionario.dataAdmissao,
