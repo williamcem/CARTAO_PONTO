@@ -1,8 +1,8 @@
 import { Controller, HttpRequest, HttpResponse } from "./horarios-memory-protocols";
 import { AddMemoryHorarios } from "../../../domain/usecases/add-horarios-memory";
 import { HorariosMemoryRepository } from "../../../infra/db/postgresdb/horarios-memory-repository/horarios-memory-repository";
-import { calcularTotalMinutos, arredondarParteDecimal } from "./utils";
-import { HorariosMemoryModel } from "../../../domain/models/horariosMemory";
+import { BuscarHorarioNortunoEmMinutos, arredondarParteDecimal, arredondarParteDecimalHoras } from "./utils";
+import { HorariosMemoryModel } from "../../../domain/models/horarios-memory";
 import moment from "moment";
 
 const horariosRepository = new HorariosMemoryRepository(); // Crie uma instância do repositório
@@ -136,14 +136,14 @@ export class HorariosMemoryController implements Controller {
           dif_min = 0;
         }
 
-        let difMinNotuno = 0;
+        let difMinNotunoTotal = 0;
 
         for (let index = 0; index <= 2; index++) {
           let horaEntrada = 0,
             horaSaida = 0,
             entradaData = undefined,
-            saidaData = undefined;
-          difMinNotuno = 0;
+            saidaData = undefined,
+            difMinNotuno = 0;
 
           // Verifica se o horário está dentro do intervalo do adicional noturno (22h às 5h)
           if (index === 0) {
@@ -228,21 +228,31 @@ export class HorariosMemoryController implements Controller {
               difMinNotuno = saidaData.diff(entradaData, "minutes");
             }
           }
+
+          difMinNotunoTotal += BuscarHorarioNortunoEmMinutos(
+            moment(horario.recebeDia.data),
+            moment(entradaData),
+            moment(saidaData),
+          );
         }
 
         //Após achar o adicionalNoturno tem que verificar se o dif_min já bateu os 120, se não bateu tem que completar, o que sobrar vira 100%
-        if (difMinNotuno > 0) {
-          adicionalNoturno = difMinNotuno * 1.14;
+        if (difMinNotunoTotal > 0) {
+          adicionalNoturno = difMinNotunoTotal * 1.14;
           adicionalNoturno = arredondarParteDecimal(adicionalNoturno);
 
           // Calcula o dif_min100 se o dif_min ultrapassar 120 minutos
           if (dif_min > 120) {
-            dif_min = dif_min - difMinNotuno;
+            dif_min = dif_min - difMinNotunoTotal;
           }
           //Se for dif min for igual dif min noturno irá zerar o dif_min
-          if (difMinNotuno === dif_min) dif_min = 0;
+          if (difMinNotunoTotal === dif_min) dif_min = 0;
 
           const faltaPara120 = 120 - dif_min;
+
+          if (dif_min > difMinNotunoTotal) {
+            dif_min = dif_min - difMinNotunoTotal;
+          }
 
           if (faltaPara120 > 0) {
             if (adicionalNoturno > faltaPara120) {
@@ -359,21 +369,51 @@ export class HorariosMemoryController implements Controller {
       horariosComCalculos.map((horario) => {
         horarios.push({
           id: horario.id,
+          date: horario.recebeDia?.data || new Date(),
+          status: horario.status,
           entradaManha: horario.entradaManha,
           saidaManha: horario.saidaManha,
-          adicionalNoturno: horario.adicionalNoturno,
-          adicionalNoturno100: horario.adicionalNoturno100,
+          entradaTarde: horario.entradaTarde,
+          saidaTarde: horario.saidaTarde,
+          entradaExtra: horario.entradaExtra,
+          saidaExtra: horario.saidaExtra,
           dif_min: horario.dif_min,
           dif_min100: horario.dif_min100,
-          entradaExtra: horario.entradaExtra,
-          entradaTarde: horario.entradaTarde,
-          saidaExtra: horario.saidaExtra,
-          saidaTarde: horario.saidaTarde,
-          status: horario.status,
-          date: horario.recebeDia?.data || new Date(),
+          adicionalNoturno: horario.adicionalNoturno,
+          adicionalNoturno100: horario.adicionalNoturno100,
         });
         return horario;
       });
+
+      const novoResumo = {
+        movimentacao: {
+          60: resumo.movimentacao60 + resumo.movimentacaoNoturno60,
+          100: resumo.movimentacao100 + resumo.movimentacaoNoturno100,
+        },
+        saldoAnterior: {
+          60: resumo.saldoAnterior,
+          100: 0,
+        },
+        soma: {
+          60: resumo.movimentacao60 + resumo.movimentacaoNoturno60 + (resumo.saldoAnterior || 0),
+          100: resumo.movimentacao100 + resumo.movimentacaoNoturno100,
+        },
+        horas: {
+          diurnas: {
+            60: arredondarParteDecimalHoras(resumo.movimentacao60 / 60),
+            100: arredondarParteDecimalHoras(resumo.movimentacao100 / 60),
+          },
+          noturnas: {
+            60: arredondarParteDecimalHoras(resumo.movimentacaoNoturno60 / 60),
+            100: arredondarParteDecimalHoras(resumo.movimentacaoNoturno100 / 60),
+          },
+        },
+      };
+
+      if (novoResumo.horas.diurnas[60] < 0) novoResumo.horas.diurnas[60] = 0;
+      if (novoResumo.horas.diurnas[100] < 0) novoResumo.horas.diurnas[100] = 0;
+      if (novoResumo.horas.noturnas[60] < 0) novoResumo.horas.noturnas[60] = 0;
+      if (novoResumo.horas.noturnas[60] < 0) novoResumo.horas.noturnas[100] = 0;
 
       // 3. Retornar os horários com os cálculos para o cliente
       return {
@@ -382,7 +422,7 @@ export class HorariosMemoryController implements Controller {
           message: "Horários com cálculos adicionados em memória com sucesso",
           horarios,
           funcionario,
-          resumo,
+          resumo: novoResumo,
         },
       };
     } catch (error) {
