@@ -1,6 +1,6 @@
 import { PrismaClient } from "@prisma/client";
 import { prisma } from "../../../database/Prisma";
-import { AddCartaoUpsertModel, AddCartoes } from "@domain/usecases/cartao";
+import { AddCartaoUpsertModel, AddCartoes } from "../../../../domain/usecases/add-cartao";
 
 export class CartaoPostgresRepository implements AddCartoes {
   private prisma: PrismaClient;
