@@ -111,8 +111,8 @@ export async function importarArquivoFuncionario(req: { file?: Express.Multer.Fi
           ,
           identificacao,
           nome,
-          ,
-          ,
+          codigoLocalidade,
+          descricaoLocalidade,
           ,
           descricaoTurno,
           codCentroCusto,
@@ -157,6 +157,10 @@ export async function importarArquivoFuncionario(req: { file?: Express.Multer.Fi
           funcao: { nome: descricaoFuncao },
           identificacao,
           turno: { nome: descricaoTurno },
+          localidade: {
+            codigo: codigoLocalidade,
+            nome: descricaoLocalidade,
+          },
         });
 
         if (!saved) {
