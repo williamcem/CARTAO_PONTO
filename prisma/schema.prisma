@@ -128,7 +128,7 @@ model cartao {
 }
 
 model cartao_status {
-  id   Int    @id @default(autoincrement())
+  id   Int    @id
   nome String @unique
 
   cartao cartao[]
@@ -159,11 +159,12 @@ model cartao_dia_status {
 }
 
 model cartao_dia_lancamento {
-  id            Int      @id @default(autoincrement())
+  id            Int       @id @default(autoincrement())
   periodoId     Int
-  entrada       DateTime
-  saida         DateTime
-  statusId      Int
+  entrada       DateTime?
+  saida         DateTime?
+  diferenca     Int       @default(0)
+  statusId      Int       @default(1)
   cartao_dia_id Int
 
   cartao_dia_lancamento_periodo cartao_dia_lancamento_periodo @relation(fields: [periodoId], references: [id], onDelete: Cascade)
@@ -174,13 +175,13 @@ model cartao_dia_lancamento {
 }
 
 model cartao_dia_lancamento_periodo {
-  id                     Int                     @id @default(autoincrement())
+  id                     Int                     @id
   nome                   String                  @unique
   cartao_dia_lancamentos cartao_dia_lancamento[]
 }
 
 model cartao_dia_lancamento_status {
-  id                     Int                     @id @default(autoincrement())
+  id                     Int                     @id
   nome                   String                  @unique
   cartao_dia_lancamentos cartao_dia_lancamento[]
 }
