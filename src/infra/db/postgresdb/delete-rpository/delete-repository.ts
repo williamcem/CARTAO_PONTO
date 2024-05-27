@@ -12,20 +12,10 @@ export class DeletePostgresRepository implements DelDeleteRepository {
 
   async deleteById(deleteData: DelDeleteModel): Promise<void> {
     try {
-      const { id } = deleteData; // Extrair o ID do objeto deleteData
-      await this.prisma.dia.updateMany({
+      const { cartao_dia_id } = deleteData; // Extrair os campos entrada e saida do objeto deleteData
+      await this.prisma.cartao_dia_lancamento.deleteMany({
         where: {
-          id: id, // Usar o ID fornecido
-        },
-        data: {
-          entradaManha: "", // Define o campo como vazio (string vazia)
-          saidaManha: "",
-          entradaTarde: "",
-          saidaTarde: "",
-          entradaExtra: "",
-          saidaExtra: "",
-          dif_min: 0,
-          saldoAtual: 0,
+          cartao_dia_id,
         },
       });
     } catch (error) {

@@ -1,7 +1,7 @@
 import { DeleteModel } from "../../domain/models/delete";
 
 export interface DelDeleteModel {
-  id: string;
+  cartao_dia_id: number;
 }
 
 export interface DelDelete {

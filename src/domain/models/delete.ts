@@ -1,3 +1,3 @@
 export interface DeleteModel {
-  id: string;
+  cartao_dia_id: number;
 }
