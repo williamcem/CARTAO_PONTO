@@ -1,6 +1,5 @@
 import { HttpResponse, Controller, HttpRequest } from "./procurra-funcionario-protocols";
-import { serverError, ok, badRequest, notFoundRequest } from "../../helpers/http-helpers";
-import { FuncionarioPostgresRepository } from "../../../infra/db/postgresdb/get-funcionario/get-funcionario";
+import { serverError, ok, badRequest } from "../../helpers/http-helpers";
 import { FuncionarioParamError } from "../../errors/Funcionario-param-error";
 import { LancarDiaPostgresRepository } from "@infra/db/postgresdb/lancar-dia/lancar-dia";
 
@@ -16,12 +15,34 @@ export class LancarDiaController implements Controller {
       if (!saida) return badRequest(new FuncionarioParamError("Falta saida!"));
       if (!cartao_dia_id) return badRequest(new FuncionarioParamError("Falta sequencia do cartão!"));
 
+      const entradaDate = new Date(entrada);
+      const saidaDate = new Date(saida);
+
+      if (isNaN(entradaDate.getTime()) || isNaN(saidaDate.getTime())) {
+        return badRequest(new FuncionarioParamError("Formato de data inválido!"));
+      }
+
+      // Verificar se há conflitos de períodos
+      const conflictingPeriodos = await this.lancarDiaPostgresRepository.findConflictingPeriodos(
+        entradaDate,
+        saidaDate,
+        cartao_dia_id,
+        periodoId,
+      );
+      if (conflictingPeriodos.length > 0) {
+        return badRequest(new FuncionarioParamError("Período já existente!"));
+      }
+
+      // Calculando a diferença em minutos entre entrada e saída
+      const diferenca = this.calcularDiferencaMinutos(entradaDate, saidaDate);
+
       const saved = await this.lancarDiaPostgresRepository.upsert({
         cartao_dia_id,
-        entrada,
+        entrada: entradaDate,
         periodoId,
-        saida,
+        saida: saidaDate,
         statusId: 1,
+        diferenca,
       });
 
       if (!saved) throw "Erro ao salvar lançamento!";
@@ -31,5 +52,12 @@ export class LancarDiaController implements Controller {
       console.error(error);
       return serverError();
     }
+  }
+
+  private calcularDiferencaMinutos(entrada: Date, saida: Date): number {
+    const diferencaMs = saida.getTime() - entrada.getTime();
+    // Convertendo a diferença de milissegundos para minutos arredondando para cima
+    const diferencaMinutos = Math.ceil(diferencaMs / (1000 * 60));
+    return diferencaMinutos;
   }
 }
