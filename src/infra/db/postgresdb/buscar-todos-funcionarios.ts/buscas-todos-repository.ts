@@ -17,6 +17,11 @@ export class BuscarTodosPostgresRepository implements BuscraTodosRepository {
         include: {
           turno: true, // Inclui a tabela 'turno' nos resultados
           localidade: true,
+          centro_custo: true,
+          funcao: true,
+          contatos: true,
+          emails: true,
+          endereco: true,
         },
         where: {
           identificacao: { endsWith: funcionarioData.identificacao },
