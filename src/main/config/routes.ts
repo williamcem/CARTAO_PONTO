@@ -11,8 +11,8 @@ import saldo from "../routes/horarios/saldo-routes";
 import upload from "../routes/horarios/upload-routes";
 import lancarDia from "../routes/horarios/lancar-dia";
 import procurarLocalidade from "../routes/horarios/procurar-localidade";
-/* import uploadfuncionario from "../routes/horarios/upload-routes";
-import uploadcartao from "../routes/horarios/upload-routes"; */
+import lancarfalta from "../routes/horarios/lancar-falta";
+
 
 export const setupRoutes = (app: Express): void => {
   const router = Router();
@@ -28,4 +28,5 @@ export const setupRoutes = (app: Express): void => {
   todosfuncionarios(router);
   lancarDia(router);
   procurarLocalidade(router);
+  lancarfalta(router);
 };
