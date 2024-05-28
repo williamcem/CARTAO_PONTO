@@ -8,7 +8,7 @@ export class LancarDiaController implements Controller {
 
   async handle(httpRequest: HttpRequest): Promise<HttpResponse> {
     try {
-      const { periodoId, entrada, saida, cartao_dia_id } = httpRequest?.body;
+      const { periodoId, entrada, saida, cartao_dia_id, user } = httpRequest?.body;
 
       if (!periodoId) return badRequest(new FuncionarioParamError("Falta id do periodo!"));
       if (!entrada) return badRequest(new FuncionarioParamError("Falta entrada!"));
@@ -20,6 +20,21 @@ export class LancarDiaController implements Controller {
 
       if (isNaN(entradaDate.getTime()) || isNaN(saidaDate.getTime())) {
         return badRequest(new FuncionarioParamError("Formato de data inválido!"));
+      }
+
+      // Verificar a data do cartao_dia e cartao_dia_lancamentos
+      const cartaoDia = await this.lancarDiaPostgresRepository.findCartaoDiaById(cartao_dia_id);
+      if (!cartaoDia) {
+        return badRequest(new FuncionarioParamError("Cartão do dia não encontrado!"));
+      }
+
+      const cartaoDiaDate = new Date(cartaoDia.data);
+      const entradaDateStr = entradaDate.toISOString().split("T")[0];
+      const saidaDateStr = saidaDate.toISOString().split("T")[0];
+      const cartaoDiaDateStr = cartaoDiaDate.toISOString().split("T")[0];
+
+      if (cartaoDiaDateStr !== entradaDateStr || cartaoDiaDateStr !== saidaDateStr) {
+        return badRequest(new FuncionarioParamError("Data divergente entre o cartão do dia e o lançamento!"));
       }
 
       // Verificar se há conflitos de períodos
