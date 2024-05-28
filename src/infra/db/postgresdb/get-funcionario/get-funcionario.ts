@@ -15,15 +15,32 @@ export class FuncionarioPostgresRepository implements GetFuncionarioIdent {
       where: { identificacao: { endsWith: identificacao }, localidadeId: localidade },
       include: {
         cartao: {
-          include: { cartao_dia: { include: { cartao_dia_lancamentos: true, cartao_dia_status: true } }, cartao_status: true },
+          include: {
+            cartao_dia: {
+              include: {
+                cartao_dia_lancamentos: {
+                  include: {
+                    cartao_dia_lancamento_status: true, // Inclui a tabela 'cartao_dia_lancamento_status'
+                  },
+                },
+                cartao_dia_status: true,
+              },
+              orderBy: { id: "asc" },
+            },
+            cartao_status: true,
+          },
+          orderBy: { id: "asc" },
         },
+        turno: true, // Inclui a tabela 'turno' nos resultados
+        localidade: true, // Inclui a tabela 'localidade' nos resultados
       },
+      orderBy: { id: "asc" },
     });
 
     // Verifica se o funcionário foi encontrado
     if (!funcionario) return undefined;
 
-    // Retorna o funcionário encontrado em um array
+    // Retorna o funcionário mapeado
     return funcionario;
   }
 }
