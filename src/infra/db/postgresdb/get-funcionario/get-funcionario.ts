@@ -10,7 +10,7 @@ export class FuncionarioPostgresRepository implements GetFuncionarioIdent {
     this.prisma = prisma;
   }
 
-  public async findFisrt(identificacao: string, localidade: string): Promise<GetFuncionarioModel | undefined> {
+  public async findFisrt(identificacao: string, localidade: string): Promise<any> {
     const funcionario = await this.prisma.funcionario.findFirst({
       where: { identificacao: { endsWith: identificacao }, localidadeId: localidade },
       include: {
