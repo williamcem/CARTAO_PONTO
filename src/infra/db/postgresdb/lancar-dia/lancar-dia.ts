@@ -18,7 +18,7 @@ export class LancarDiaPostgresRepository implements LancarDia {
     diferenca: number;
   }): Promise<boolean> {
     return Boolean(
-      await prisma.cartao_dia_lancamento.upsert({
+      await this.prisma.cartao_dia_lancamento.upsert({
         where: { cartao_dia_id_periodoId: { cartao_dia_id: input.cartao_dia_id, periodoId: input.periodoId } },
         create: {
           entrada: input.entrada,
@@ -47,6 +47,12 @@ export class LancarDiaPostgresRepository implements LancarDia {
         periodoId: { not: periodoId },
         AND: [{ entrada: { lt: saida } }, { saida: { gt: entrada } }],
       },
+    });
+  }
+
+  public async findCartaoDiaById(cartao_dia_id: number): Promise<any> {
+    return await this.prisma.cartao_dia.findUnique({
+      where: { id: cartao_dia_id },
     });
   }
 }
