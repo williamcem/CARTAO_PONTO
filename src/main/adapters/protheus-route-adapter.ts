@@ -94,10 +94,12 @@ export async function importarArquivoFuncionario(
   res: Response,
 ) {
   try {
+    console.log(req.body, "bateu");
     if (!req.file?.buffer) {
-      return new MissingParamError("Falta arquivo!");
+      return res.status(400).send({ error: "Falta arquivo" });
     }
 
+    console.log(req.body, "bateu");
     if (!req?.body?.userName) return res.status(400).send({ error: "Falta usuário" });
 
     const arquivo = Buffer.from(req.file.buffer).toString("utf-8");
@@ -189,7 +191,7 @@ export async function importarArquivoCartao(
 ) {
   try {
     if (!req.file?.buffer) {
-      return new MissingParamError("Falta arquivo!");
+      return res.status(400).send({ error: "Falta arquivo" });
     }
 
     if (!req?.body?.userName) return res.status(400).send({ error: "Falta usuário" });
