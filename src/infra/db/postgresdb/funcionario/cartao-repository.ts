@@ -8,6 +8,7 @@ export class CartaoPostgresRepository implements AddCartoes {
   constructor() {
     this.prisma = prisma;
   }
+
   public async upsert(input: AddCartaoUpsertModel): Promise<boolean> {
     const saved = await this.prisma.cartao.upsert({
       create: {
@@ -16,6 +17,7 @@ export class CartaoPostgresRepository implements AddCartoes {
         saldoAnterior60: input.saldoAnterior60,
         funcionarioId: input.funcionarioId,
         statusId: input.status.id,
+        userName: input.userName,
       },
       update: {
         referencia: input.referencia,
@@ -23,6 +25,7 @@ export class CartaoPostgresRepository implements AddCartoes {
         saldoAnterior60: input.saldoAnterior60,
         funcionarioId: input.funcionarioId,
         statusId: input.status.id,
+        userName: input.userName,
       },
       where: { funcionarioId_referencia: { referencia: input.referencia, funcionarioId: input.funcionarioId } },
     });

@@ -13,6 +13,7 @@ export class LancamentoFaltaPostgresRepository implements LancarFaltaIdent {
     periodoId: number;
     statusId: number;
     cartaoDiaId: number;
+    userName: string;
   }): Promise<{ success: boolean; movimentacao60?: number }> {
     // Verifica se o statusId é igual a 3
     if (input.statusId === 3) {
@@ -22,6 +23,7 @@ export class LancamentoFaltaPostgresRepository implements LancarFaltaIdent {
           cartao_dia_id: input.cartaoDiaId,
           periodoId: input.periodoId,
           statusId: 3, // Status de falta
+          userName: input.userName,
         },
       });
 
@@ -56,11 +58,13 @@ export class LancamentoFaltaPostgresRepository implements LancarFaltaIdent {
           cartao_dia_id: input.cartaoDiaId,
           periodoId: input.periodoId,
           statusId: input.statusId,
+          userName: input.userName,
         },
         update: {
           cartao_dia_id: input.cartaoDiaId,
           periodoId: input.periodoId,
           statusId: input.statusId,
+          userName: input.userName,
         },
       });
 
@@ -75,11 +79,13 @@ export class LancamentoFaltaPostgresRepository implements LancarFaltaIdent {
         cartao_dia_id: input.cartaoDiaId,
         periodoId: input.periodoId,
         statusId: input.statusId,
+        userName: input.userName,
       },
       update: {
         cartao_dia_id: input.cartaoDiaId,
         periodoId: input.periodoId,
         statusId: input.statusId,
+        userName: input.userName,
       },
     });
 

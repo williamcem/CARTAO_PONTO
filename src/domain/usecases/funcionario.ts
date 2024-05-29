@@ -35,6 +35,7 @@ export interface AddFuncionarioUpsertModel {
     codigo: string;
     nome: string;
   };
+  userName: string;
 }
 
 export interface AddFuncionarios {

@@ -62,6 +62,7 @@ export class FuncionarioPostgresRepository implements FuncionarioRepository {
             create: { codigo: funcionario.localidade.codigo, nome: funcionario.localidade.nome },
           },
         },
+        userName: funcionario.userName,
       },
       update: {
         dataAdmissao: funcionario.dataAdmissao,
@@ -104,6 +105,7 @@ export class FuncionarioPostgresRepository implements FuncionarioRepository {
               },
             }
           : undefined,
+        userName: funcionario.userName,
       },
     });
 

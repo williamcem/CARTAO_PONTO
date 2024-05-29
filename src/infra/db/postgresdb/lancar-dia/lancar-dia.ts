@@ -16,6 +16,7 @@ export class LancarDiaPostgresRepository implements LancarDia {
     cartao_dia_id: number;
     statusId: number;
     diferenca: number;
+    userName: string;
   }): Promise<boolean> {
     return Boolean(
       await this.prisma.cartao_dia_lancamento.upsert({
@@ -27,6 +28,7 @@ export class LancarDiaPostgresRepository implements LancarDia {
           cartao_dia_id: input.cartao_dia_id,
           statusId: input.statusId,
           diferenca: input.diferenca,
+          userName: input.userName,
         },
         update: {
           entrada: input.entrada,
@@ -35,6 +37,7 @@ export class LancarDiaPostgresRepository implements LancarDia {
           cartao_dia_id: input.cartao_dia_id,
           statusId: input.statusId,
           diferenca: input.diferenca,
+          userName: input.userName,
         },
       }),
     );

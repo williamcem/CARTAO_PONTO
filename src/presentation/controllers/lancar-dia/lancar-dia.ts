@@ -8,12 +8,13 @@ export class LancarDiaController implements Controller {
 
   async handle(httpRequest: HttpRequest): Promise<HttpResponse> {
     try {
-      const { periodoId, entrada, saida, cartao_dia_id, user } = httpRequest?.body;
+      const { periodoId, entrada, saida, cartao_dia_id, userName } = httpRequest?.body;
 
       if (!periodoId) return badRequest(new FuncionarioParamError("Falta id do periodo!"));
       if (!entrada) return badRequest(new FuncionarioParamError("Falta entrada!"));
       if (!saida) return badRequest(new FuncionarioParamError("Falta saida!"));
       if (!cartao_dia_id) return badRequest(new FuncionarioParamError("Falta sequencia do cartão!"));
+      if (!userName) return badRequest(new FuncionarioParamError("Falta usuário para lançar cartão"));
 
       const entradaDate = new Date(entrada);
       const saidaDate = new Date(saida);
@@ -58,6 +59,7 @@ export class LancarDiaController implements Controller {
         saida: saidaDate,
         statusId: 1,
         diferenca,
+        userName,
       });
 
       if (!saved) throw "Erro ao salvar lançamento!";

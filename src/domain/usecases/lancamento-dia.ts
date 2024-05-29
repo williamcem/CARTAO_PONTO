@@ -5,6 +5,7 @@ export interface LancamentoDia {
   saida: Date;
   periodo: number;
   id: number;
+  userName: string;
 }
 
 export interface lancarDia {

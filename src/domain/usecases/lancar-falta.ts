@@ -4,6 +4,7 @@ export interface LnacarFalta {
   periodoId: number;
   cartaoDiaId: number;
   statusId: number;
+  userName: string;
 }
 
 export interface LancarFaltaDia {

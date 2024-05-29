@@ -1,4 +1,4 @@
-import { CartaoUpsertModel } from "../models/cartao"
+import { CartaoUpsertModel } from "../models/cartao";
 
 export interface AddCartaoUpsertModel {
   identificacao: string;
@@ -20,6 +20,7 @@ export interface AddCartaoUpsertModel {
       descricao: string;
     };
   }[];
+  userName: string;
 }
 
 export interface AddCartoes {
