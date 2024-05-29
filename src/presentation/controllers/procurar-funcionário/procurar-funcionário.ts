@@ -47,7 +47,7 @@ export class GetFuncionarioController implements Controller {
         let dif_total = 0;
         let noturno = 0;
         for (const lancamento of cartao_dia.cartao_dia_lancamentos) {
-          if (lancamento.statusId === 1 && lancamento.statusId === 3) {
+          if (lancamento.statusId === 1 || lancamento.statusId === 3) {
             dif_total += moment(lancamento.saida).diff(lancamento.entrada, "minutes");
             noturno += BuscarHorarioNortunoEmMinutos(
               moment(cartao_dia.data),
@@ -125,9 +125,9 @@ export class GetFuncionarioController implements Controller {
         });
 
         // Ajuste final: se movimentacao60 for negativa, define como "-"
-        /*         if (cartao_dia.movimentacao60 <= 0 && status === 1) {
+        if (cartao_dia.movimentacao60 <= 0 && status === 1) {
           cartao_dia.movimentacao60 = "-";
-        } */
+        }
       }
     }
   }
