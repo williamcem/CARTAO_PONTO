@@ -3,4 +3,5 @@ export interface LancamentoDiaModel {
   saida: Date;
   periodo: number;
   id: number;
+  userName: string;
 }
