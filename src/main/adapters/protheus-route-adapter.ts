@@ -89,11 +89,16 @@ export async function processarArquivo(req: { file?: Express.Multer.File | undef
     .on("error", (error) => {});
 }
 
-export async function importarArquivoFuncionario(req: { file?: Express.Multer.File | undefined }, res: Response) {
+export async function importarArquivoFuncionario(
+  req: { file?: Express.Multer.File | undefined; body: { userName: string } },
+  res: Response,
+) {
   try {
     if (!req.file?.buffer) {
       return new MissingParamError("Falta arquivo!");
     }
+
+    if (!req?.body?.userName) return res.status(400).send({ error: "Falta usuário" });
 
     const arquivo = Buffer.from(req.file.buffer).toString("utf-8");
 
@@ -161,6 +166,7 @@ export async function importarArquivoFuncionario(req: { file?: Express.Multer.Fi
             codigo: codigoLocalidade,
             nome: descricaoLocalidade,
           },
+          userName: (req?.body?.userName || "").toUpperCase(),
         });
 
         if (!saved) {
@@ -177,11 +183,16 @@ export async function importarArquivoFuncionario(req: { file?: Express.Multer.Fi
   }
 }
 
-export async function importarArquivoCartao(req: { file?: Express.Multer.File | undefined }, res: Response) {
+export async function importarArquivoCartao(
+  req: { file?: Express.Multer.File | undefined; body: { userName: string } },
+  res: Response,
+) {
   try {
     if (!req.file?.buffer) {
       return new MissingParamError("Falta arquivo!");
     }
+
+    if (!req?.body?.userName) return res.status(400).send({ error: "Falta usuário" });
 
     const arquivo = Buffer.from(req.file.buffer).toString("utf-8");
 
@@ -211,6 +222,7 @@ export async function importarArquivoCartao(req: { file?: Express.Multer.File | 
           descricao: string;
         };
       }[];
+      userName: string;
     } = {
       identificacao: "",
       funcionarioId: 0,
@@ -219,6 +231,7 @@ export async function importarArquivoCartao(req: { file?: Express.Multer.File | 
       saldoAnterior100: 0,
       status: { id: 1, descricao: "IMPORTADO" },
       dias: [],
+      userName: (req?.body?.userName || "").toUpperCase(),
     };
 
     for (const dia of cartaoDias) {
