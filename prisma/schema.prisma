@@ -48,6 +48,9 @@ model funcionario {
   dataNascimento DateTime
   dataAdmissao   DateTime
   dataDemissao   DateTime?
+  createAt       DateTime? @default(now())
+  updateAt       DateTime? @updatedAt
+  userName       String?
 
   turno        turno        @relation(fields: [turnoId], references: [id], onDelete: Cascade)
   centro_custo centro_custo @relation(fields: [centroCustoId], references: [id], onDelete: Cascade)
@@ -113,12 +116,15 @@ model email {
 }
 
 model cartao {
-  id               Int      @id @default(autoincrement())
+  id               Int       @id @default(autoincrement())
   funcionarioId    Int
   referencia       DateTime
   saldoAnterior60  Int
   saldoAnterior100 Int
   statusId         Int
+  createAt         DateTime? @default(now())
+  updateAt         DateTime? @updatedAt
+  userName         String?
 
   funcionario   funcionario    @relation(fields: [funcionarioId], references: [id], onDelete: Cascade)
   cartao_dia    cartao_dia[]
@@ -145,6 +151,9 @@ model cartao_dia {
   cargaHorSegundoPeriodo  Int
   cargaHorariaCompleta    String
   cargaHorariaNoturna     Int                     @default(0)
+  createAt                DateTime?               @default(now())
+  updateAt                DateTime?               @updatedAt
+  userName                String?
   cartao_dia_status       cartao_dia_status       @relation(fields: [statusId], references: [id], onDelete: Cascade)
   cartao                  cartao                  @relation(fields: [cartaoId], references: [id], onDelete: Cascade)
   cartao_dia_lancamentos  cartao_dia_lancamento[]
@@ -166,6 +175,9 @@ model cartao_dia_lancamento {
   diferenca     Int       @default(0)
   statusId      Int       @default(1)
   cartao_dia_id Int
+  createAt      DateTime? @default(now())
+  updateAt      DateTime? @updatedAt
+  userName      String?
 
   cartao_dia_lancamento_periodo cartao_dia_lancamento_periodo @relation(fields: [periodoId], references: [id], onDelete: Cascade)
   cartao_dia                    cartao_dia                    @relation(fields: [cartao_dia_id], references: [id])
