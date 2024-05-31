@@ -107,75 +107,73 @@ export async function importarArquivoFuncionario(
 
     const errors: { identificacao: string; nome: string }[] = [];
 
-    Promise.all(
-      funcionarios.map(async (funcionario, i) => {
-        const [
-          ,
-          ,
-          filial,
-          ,
-          identificacao,
-          nome,
-          codigoLocalidade,
-          descricaoLocalidade,
-          ,
-          descricaoTurno,
-          codCentroCusto,
-          descricaoCentroCusto,
-          codFuncao,
-          descricaoFuncao,
-          dataNascimento,
-          dataAdmissao,
-          dataDemissao,
-          rua,
-          numero,
-          complemento,
-          bairro,
-          cidade,
-          estado,
-          cep,
-          ddd,
-          telefone,
-          email,
-        ] = funcionario.split(";");
+    let i = 0;
+    for (const funcionario of funcionarios) {
+      const [
+        ,
+        ,
+        filial,
+        ,
+        identificacao,
+        nome,
+        codigoLocalidade,
+        descricaoLocalidade,
+        ,
+        descricaoTurno,
+        codCentroCusto,
+        descricaoCentroCusto,
+        codFuncao,
+        descricaoFuncao,
+        dataNascimento,
+        dataAdmissao,
+        dataDemissao,
+        rua,
+        numero,
+        complemento,
+        bairro,
+        cidade,
+        estado,
+        cep,
+        ddd,
+        telefone,
+        email,
+      ] = funcionario.split(";");
 
-        if (i === 1) if (!nome) throw "Arquivo inválido!";
+      if (i === 1) if (!nome) throw "Arquivo inválido!";
 
-        if (!identificacao) return funcionario;
+      i++;
+      if (!identificacao) continue;
 
-        const novaDataAdmissao = new Date(`${dataAdmissao.slice(0, 4)}-${dataAdmissao.slice(4, 6)}-${dataAdmissao.slice(6, 8)}`);
-        const novaDataDemissao = new Date(`${dataDemissao.slice(0, 4)}-${dataDemissao.slice(4, 6)}-${dataDemissao.slice(6, 8)}`);
-        const novaDataNascimento = new Date(
-          `${dataNascimento.slice(0, 4)}-${dataNascimento.slice(4, 6)}-${dataNascimento.slice(6, 8)}`,
-        );
+      const novaDataAdmissao = new Date(`${dataAdmissao.slice(0, 4)}-${dataAdmissao.slice(4, 6)}-${dataAdmissao.slice(6, 8)}`);
+      const novaDataDemissao = new Date(`${dataDemissao.slice(0, 4)}-${dataDemissao.slice(4, 6)}-${dataDemissao.slice(6, 8)}`);
+      const novaDataNascimento = new Date(
+        `${dataNascimento.slice(0, 4)}-${dataNascimento.slice(4, 6)}-${dataNascimento.slice(6, 8)}`,
+      );
 
-        const saved = await funcionarioRepository.upsert({
-          nome,
-          centroCusto: { nome: descricaoCentroCusto },
-          contato: ddd && telefone ? { numero: `${ddd} ${telefone}` } : undefined,
-          dataAdmissao: novaDataAdmissao,
-          dataDemissao: dataDemissao ? novaDataDemissao : undefined,
-          dataNascimento: novaDataNascimento,
-          email: email.replace("\r", "").trim() ? { nome: email.replace("\r", "").trim() } : undefined,
-          endereco: { cep, bairro, cidade, complemento, estado, numero, rua },
-          filial,
-          funcao: { nome: descricaoFuncao },
-          identificacao,
-          turno: { nome: descricaoTurno },
-          localidade: {
-            codigo: codigoLocalidade,
-            nome: descricaoLocalidade,
-          },
-          userName: (req?.body?.userName || "").toUpperCase(),
-        });
+      const saved = await funcionarioRepository.upsert({
+        nome,
+        centroCusto: { nome: descricaoCentroCusto },
+        contato: ddd && telefone ? { numero: `${ddd} ${telefone}` } : undefined,
+        dataAdmissao: novaDataAdmissao,
+        dataDemissao: dataDemissao ? novaDataDemissao : undefined,
+        dataNascimento: novaDataNascimento,
+        email: email.replace("\r", "").trim() ? { nome: email.replace("\r", "").trim() } : undefined,
+        endereco: { cep, bairro, cidade, complemento, estado, numero, rua },
+        filial,
+        funcao: { nome: descricaoFuncao },
+        identificacao,
+        turno: { nome: descricaoTurno },
+        localidade: {
+          codigo: codigoLocalidade,
+          nome: descricaoLocalidade,
+        },
+        userName: (req?.body?.userName || "").toUpperCase(),
+      });
 
-        if (!saved) {
-          errors.push({ identificacao, nome });
-        }
-
-        return undefined;
-      }),
-    );
+      if (!saved) {
+        errors.push({ identificacao, nome });
+      }
+    }
 
     return res.json({ message: "Arquivo importado com sucesso", errors });
   } catch (error) {
