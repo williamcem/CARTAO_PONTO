@@ -12,7 +12,7 @@ import upload from "../routes/horarios/upload-routes";
 import lancarDia from "../routes/horarios/lancar-dia";
 import procurarLocalidade from "../routes/horarios/procurar-localidade";
 import lancarfalta from "../routes/horarios/lancar-falta";
-
+import deletecartao from "../routes/horarios/delete-cartao-routes";
 
 export const setupRoutes = (app: Express): void => {
   const router = Router();
@@ -29,4 +29,5 @@ export const setupRoutes = (app: Express): void => {
   lancarDia(router);
   procurarLocalidade(router);
   lancarfalta(router);
+  deletecartao(router);
 };
