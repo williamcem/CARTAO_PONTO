@@ -125,7 +125,7 @@ export class GetFuncionarioController implements Controller {
         });
 
         // Ajuste final: se movimentacao60 for negativa, define como "-"
-        if (cartao_dia.movimentacao60 <= 0 && status === 1) {
+        if (cartao_dia.movimentacao60 < 0 && status === 1) {
           cartao_dia.movimentacao60 = "-";
         }
       }
