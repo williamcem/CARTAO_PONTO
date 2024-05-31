@@ -180,8 +180,8 @@ model cartao_dia_lancamento {
   userName      String?
 
   cartao_dia_lancamento_periodo cartao_dia_lancamento_periodo @relation(fields: [periodoId], references: [id], onDelete: Cascade)
-  cartao_dia                    cartao_dia                    @relation(fields: [cartao_dia_id], references: [id])
-  cartao_dia_lancamento_status  cartao_dia_lancamento_status? @relation(fields: [statusId], references: [id])
+  cartao_dia                    cartao_dia                    @relation(fields: [cartao_dia_id], references: [id], onDelete: Cascade)
+  cartao_dia_lancamento_status  cartao_dia_lancamento_status? @relation(fields: [statusId], references: [id], onDelete: Cascade)
 
   @@unique([cartao_dia_id, periodoId])
 }
