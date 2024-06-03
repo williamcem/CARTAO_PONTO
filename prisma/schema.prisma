@@ -151,6 +151,7 @@ model cartao_dia {
   cargaHorSegundoPeriodo  Int
   cargaHorariaCompleta    String
   cargaHorariaNoturna     Int                     @default(0)
+  tratado                 Boolean                 @default(false)
   createAt                DateTime?               @default(now())
   updateAt                DateTime?               @updatedAt
   userName                String?
