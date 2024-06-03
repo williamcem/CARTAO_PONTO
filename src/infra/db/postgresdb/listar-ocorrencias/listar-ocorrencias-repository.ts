@@ -40,6 +40,7 @@ export class OcorrenciaPostgresRepository implements ListarOcorrencias {
 
     return {
       funcionarios: funcionarios.map((funcionario) => ({
+        nome: funcionario.nome,
         identificacao: funcionario.identificacao,
         cartao: funcionario.cartao,
       })),
