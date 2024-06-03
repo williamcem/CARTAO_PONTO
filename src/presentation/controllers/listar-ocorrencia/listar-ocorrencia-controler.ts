@@ -22,7 +22,7 @@ export class OcorrenciaController implements Controller {
         return notFoundRequest({ message: "Localidade não encontrada", name: "Error" });
       }
 
-      const output: { nome: string; data: Date; movimentacao60: number }[] = [];
+      const output: { identi: string; data: Date; movimentacao60: number }[] = [];
 
       for (const funcionario of ocorrencias.funcionarios) {
         const response = await this.getFuncionarioController.handle({
@@ -35,7 +35,7 @@ export class OcorrenciaController implements Controller {
           for (const cartao_dia of cartao.cartao_dia) {
             if (cartao_dia.movimentacao60 === "-") {
               output.push({
-                nome: funcionario.identificacao,
+                identi: funcionario.identificacao,
                 data: cartao_dia.data,
                 movimentacao60: cartao_dia.movimentacao60,
               });
