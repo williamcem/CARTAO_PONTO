@@ -30,11 +30,11 @@ export class LancarDiaController implements Controller {
       }
 
       const cartaoDiaDate = new Date(cartaoDia.data);
+      const cartaoDiaDateStr = cartaoDiaDate.toISOString().split("T")[0];
       const entradaDateStr = entradaDate.toISOString().split("T")[0];
       const saidaDateStr = saidaDate.toISOString().split("T")[0];
-      const cartaoDiaDateStr = cartaoDiaDate.toISOString().split("T")[0];
 
-      if (cartaoDiaDateStr !== entradaDateStr || cartaoDiaDateStr !== saidaDateStr) {
+      if (entradaDate < cartaoDiaDate || saidaDate < cartaoDiaDate) {
         return badRequest(new FuncionarioParamError("Data divergente entre o cartão do dia e o lançamento!"));
       }
 
