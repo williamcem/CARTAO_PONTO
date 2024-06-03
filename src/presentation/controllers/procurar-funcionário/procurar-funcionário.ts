@@ -11,7 +11,7 @@ export class GetFuncionarioController implements Controller {
 
   async handle(httpRequest: HttpRequest): Promise<HttpResponse> {
     try {
-      const { identificacao, localidade } = httpRequest?.query;
+      const { identificacao, localidade, mostraSaldo } = httpRequest?.query;
 
       if (!identificacao) return badRequest(new FuncionarioParamError("identificacao não fornecido!"));
       if (!localidade) return badRequest(new FuncionarioParamError("localidade não fornecido!"));
@@ -22,7 +22,7 @@ export class GetFuncionarioController implements Controller {
       if (!funcionario) return notFoundRequest({ message: "Identificador não encontrado", name: "Error" });
 
       // Calcula a diferença total, adiciona a cada cartao_dia, e calcula movimentacoes
-      this.adicionarDiferencasEMovimentacoes(funcionario);
+      this.adicionarDiferencasEMovimentacoes(funcionario, mostraSaldo);
 
       // Retorna o(s) funcionário(s) encontrado(s) juntamente com a mensagem e o resumo
       this.calcularResumo(funcionario);
@@ -33,7 +33,7 @@ export class GetFuncionarioController implements Controller {
     }
   }
 
-  private adicionarDiferencasEMovimentacoes(funcionario: any): void {
+  private adicionarDiferencasEMovimentacoes(funcionario: any, mostraSaldo: boolean): void {
     // eslint-disable-next-line @typescript-eslint/prefer-for-of
     for (let i = 0; i < funcionario.cartao.length; i++) {
       const cartao = funcionario.cartao[i];
@@ -125,7 +125,7 @@ export class GetFuncionarioController implements Controller {
         });
 
         // Ajuste final: se movimentacao60 for negativa, define como "-"
-        if (cartao_dia.movimentacao60 < 0 && status === 1) {
+        if (!mostraSaldo && cartao_dia.movimentacao60 < 0 && status === 1) {
           cartao_dia.movimentacao60 = "-";
         }
       }
