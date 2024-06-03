@@ -20,3 +20,8 @@ export const ok = (data: any): HttpResponse => ({
   statusCode: 200,
   body: data,
 });
+
+/* const sendError = (message: string, error: "Bad Request" | "Not Found" | "Server Error"): HttpResponse => {
+  const output: HttpResponse;
+};
+ */
