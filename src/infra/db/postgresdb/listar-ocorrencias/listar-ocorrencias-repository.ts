@@ -9,7 +9,7 @@ export class OcorrenciaPostgresRepository implements ListarOcorrencias {
     this.prisma = prisma;
   }
 
-  public async find(localidade: string): Promise<{ funcionarios: { identificacao: string; cartao: any }[] }> {
+  public async find(localidade: string): Promise<{ funcionarios: { identificacao: string; cartao: any; nome: string }[] }> {
     const funcionarios = await this.prisma.funcionario.findMany({
       where: { localidadeId: localidade },
       include: {
@@ -40,9 +40,9 @@ export class OcorrenciaPostgresRepository implements ListarOcorrencias {
 
     return {
       funcionarios: funcionarios.map((funcionario) => ({
-        nome: funcionario.nome,
         identificacao: funcionario.identificacao,
         cartao: funcionario.cartao,
+        nome: funcionario.nome,
       })),
     };
   }

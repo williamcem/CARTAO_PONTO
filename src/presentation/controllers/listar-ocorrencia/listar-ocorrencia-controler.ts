@@ -22,7 +22,8 @@ export class OcorrenciaController implements Controller {
         return notFoundRequest({ message: "Localidade não encontrada", name: "Error" });
       }
 
-      const output: { identi: string; data: Date; movimentacao60: number }[] = [];
+      const output: { identificaccao: string; data: Date; movimentacao60: number; nome: string; id: number; tratado: boolean }[] =
+        [];
 
       for (const funcionario of ocorrencias.funcionarios) {
         const response = await this.getFuncionarioController.handle({
@@ -33,18 +34,22 @@ export class OcorrenciaController implements Controller {
 
         for (const cartao of data.cartao) {
           for (const cartao_dia of cartao.cartao_dia) {
-            if (cartao_dia.movimentacao60 === "-") {
+            console.log("cartao_dia.tradado", cartao_dia.tratado);
+            if (cartao_dia.movimentacao60 < 0 && cartao_dia.tratado === false) {
               output.push({
-                identi: funcionario.identificacao,
+                identificaccao: funcionario.identificacao,
                 data: cartao_dia.data,
                 movimentacao60: cartao_dia.movimentacao60,
+                nome: funcionario.nome,
+                id: cartao_dia.id,
+                tratado: cartao_dia.tratado,
               });
             }
           }
         }
       }
 
-      return ok({ message: "Localidade encontrada com sucesso", data: ocorrencias, output });
+      return ok({ message: "Localidade encontrada com sucesso", data: output });
     } catch (error) {
       console.error(error);
       return serverError();
