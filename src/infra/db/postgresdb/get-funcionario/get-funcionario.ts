@@ -1,6 +1,6 @@
 import { PrismaClient } from "@prisma/client";
+
 import { GetFuncionarioIdent } from "../../../../data/usecase/procurar-funcionario/find-procurar-funcionario";
-import { GetFuncionarioModel } from "../../../../domain/models/get-funcionário";
 import { prisma } from "../../../database/Prisma";
 
 export class FuncionarioPostgresRepository implements GetFuncionarioIdent {
