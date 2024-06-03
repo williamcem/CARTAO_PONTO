@@ -68,6 +68,11 @@ export class LancamentoFaltaPostgresRepository implements LancarFaltaIdent {
         },
       });
 
+      await this.prisma.cartao_dia.update({
+        where: { id: input.cartaoDiaId },
+        data: { tratado: true, userName: input.userName },
+      });
+
       // Retorna true se a operação upsert foi bem-sucedida
       return { success: Boolean(result), movimentacao60 };
     }
