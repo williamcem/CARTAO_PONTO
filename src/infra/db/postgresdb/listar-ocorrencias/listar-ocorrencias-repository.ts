@@ -46,4 +46,21 @@ export class OcorrenciaPostgresRepository implements ListarOcorrencias {
       })),
     };
   }
+
+  public async findCartaoDiaByIds(ids: number[]): Promise<any[]> {
+    const cartaoDias = await this.prisma.cartao_dia.findMany({
+      where: {
+        id: { in: ids },
+      },
+      include: {
+        cartao_dia_lancamentos: {
+          include: {
+            cartao_dia_lancamento_status: true,
+          },
+        },
+        cartao_dia_status: true,
+      },
+    });
+    return cartaoDias;
+  }
 }
