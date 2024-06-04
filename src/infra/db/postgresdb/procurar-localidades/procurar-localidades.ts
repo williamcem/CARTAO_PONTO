@@ -1,6 +1,7 @@
 import { PrismaClient } from "@prisma/client";
-import { prisma } from "../../../database/Prisma";
+
 import { ProcurarLocalidadeIdent } from "../../../../data/usecase/procurar-funcionario/procurar-localidades";
+import { prisma } from "../../../database/Prisma";
 
 export class LocalidadePostgresRepository implements ProcurarLocalidadeIdent {
   private prisma: PrismaClient;
