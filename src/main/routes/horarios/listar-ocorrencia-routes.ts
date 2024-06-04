@@ -1,4 +1,5 @@
 import { Router } from "express";
+
 import { adaptRoute } from "../../adapters/express-route-adapter";
 import { makeListarOcorrenciasController } from "../../factories/listar-ocorrencia";
 
