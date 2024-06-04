@@ -1,6 +1,7 @@
-import { HttpResponse, Controller } from "./procurra-funcionario-protocols";
-import { serverError, ok } from "../../helpers/http-helpers";
 import { LocalidadePostgresRepository } from "@infra/db/postgresdb/procurar-localidades/procurar-localidades";
+
+import { ok, serverError } from "../../helpers/http-helpers";
+import { Controller, HttpResponse } from "./procurra-funcionario-protocols";
 
 export class ProcurarLocalidadeController implements Controller {
   constructor(private readonly localidadePostgresRepository: LocalidadePostgresRepository) {}
