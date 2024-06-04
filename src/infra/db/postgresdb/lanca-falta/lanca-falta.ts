@@ -38,7 +38,6 @@ export class LancamentoFaltaPostgresRepository implements LancarFaltaIdent {
         _sum: { diferenca: true },
         where: { cartao_dia_id: input.cartaoDiaId },
       });
-      console.log(difTotalResult);
       const difTotal = difTotalResult._sum?.diferenca || 0;
 
       // Obtém a cargaHor atual do cartao_dia

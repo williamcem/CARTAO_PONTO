@@ -64,7 +64,6 @@ export class GetFuncionarioController implements Controller {
               dif_total += cartao_dia.cargaHorSegundoPeriodo;
             }
           }
-          console.log(dif_total);
         }
 
         // Calcula movimentacao60 como a subtração entre cargaHor e dif_total
