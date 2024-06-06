@@ -8,7 +8,7 @@ datasource db {
 }
 
 model funcionario {
-  id             Int       @id @unique @default(autoincrement())
+  id             Int       @id @default(autoincrement())
   filial         String
   identificacao  String    @unique
   nome           String
@@ -180,8 +180,8 @@ model funcionarios_afastados {
   statusId      Int
   userName      String?
 
-  funcionario                   funcionario                   @relation(fields: [funcionarioId], references: [id])
-  funcionarios_afastados_status funcionarios_afastados_status @relation(fields: [statusId], references: [id])
+  funcionario                   funcionario?                  @relation(fields: [funcionarioId], references: [id])
+  funcionarios_afastados_status funcionarios_afastados_status @relation(fields: [statusId], references: [id],onDelete: Cascade)
 
   @@unique([inicio, funcionarioId, statusId])
 }
