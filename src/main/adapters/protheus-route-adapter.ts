@@ -4,6 +4,7 @@ import { Response } from "express";
 import moment from "moment";
 import stream from "stream";
 
+import { AfastamentoRepository } from "@infra/db/postgresdb/afastamento/afastamento -repository";
 import { CartaoPostgresRepository } from "@infra/db/postgresdb/funcionario/cartao-repository";
 import { FuncionarioPostgresRepository } from "@infra/db/postgresdb/funcionario/funcionario-repository";
 import { UploadPostgresRepository } from "@infra/db/postgresdb/uplod-repository/upload-protheus";
@@ -332,6 +333,78 @@ export async function importarArquivoCartao(
         cargaHorSegundoPeriodo,
         cargaHorNoturna,
       });
+    }
+
+    return res.json({ message: "Arquivo importado com sucesso", errors });
+  } catch (error) {
+    console.log("error", error);
+    return res.send(error).status(400);
+  }
+}
+
+export async function importarArquivosAfastamento(
+  req: { file?: Express.Multer.File | undefined; body: { userName: string } },
+  res: Response,
+) {
+  try {
+    if (!req.file?.buffer) {
+      return res.status(400).send({ error: "falta arquivo" });
+    }
+
+    if (!req?.body.userName) return res.status(400).send({ error: "Falta usuário" });
+
+    const arquivo = Buffer.from(req.file.buffer).toString("utf-8");
+
+    const afastamento = arquivo.split("\n");
+    const funcionarioPostgresRepository = new FuncionarioPostgresRepository();
+
+    const afastamentoRepository = new AfastamentoRepository();
+    const errors: { identificacao: string; descricao: string }[] = [];
+
+    for (const afastado of afastamento) {
+      const [, , identificacao, cadStatus, descricaoStatus, inicioAfastamento, fimAfastamento, totalAfastamento] =
+        afastado.split(";");
+
+      if (!identificacao) continue;
+
+      const existeFuncionario = await funcionarioPostgresRepository.findFisrt({ identificacao });
+
+      if (!existeFuncionario) {
+        errors.push({ identificacao, descricao: `Funcionário não encontrado pela identificacao ${identificacao}` });
+
+        continue;
+      }
+
+      let funcionarios_afastadaos: {
+        identificacao: string;
+        inicio: Date;
+        fim: Date | undefined;
+        total: number;
+        funcionarioId: number;
+        userName: string;
+        status: {
+          id: number;
+          nome: string;
+        };
+      } = {
+        identificacao,
+        inicio: new Date(`${inicioAfastamento.slice(0, 4)}-${inicioAfastamento.slice(4, 6)}-${inicioAfastamento.slice(6, 8)}`),
+        fim: !fimAfastamento
+          ? undefined
+          : new Date(`${fimAfastamento.slice(0, 4)}-${fimAfastamento.slice(4, 6)}-${fimAfastamento.slice(6, 8)}`),
+        total: Number(totalAfastamento),
+        funcionarioId: existeFuncionario.id,
+        userName: (req?.body?.userName
+           || "").toUpperCase(),
+        status: {
+          id: Number(cadStatus),
+          nome: descricaoStatus.toUpperCase(),
+        },
+      };
+
+      if (funcionarios_afastadaos.identificacao !== "") {
+        await afastamentoRepository.add(funcionarios_afastadaos);
+      }
     }
 
     return res.json({ message: "Arquivo importado com sucesso", errors });
