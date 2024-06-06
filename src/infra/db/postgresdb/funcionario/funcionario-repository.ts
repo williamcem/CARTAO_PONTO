@@ -1,7 +1,9 @@
 import { PrismaClient } from "@prisma/client";
-import { prisma } from "../../../database/Prisma";
-import { FuncionarioRepository } from "../../../../data/usecase/funcionario/funcionario-repository";
+
 import { AddFuncionarioUpsertModel } from "@domain/usecases/funcionario";
+
+import { FuncionarioRepository } from "../../../../data/usecase/funcionario/funcionario-repository";
+import { prisma } from "../../../database/Prisma";
 
 export class FuncionarioPostgresRepository implements FuncionarioRepository {
   private prisma: PrismaClient;
