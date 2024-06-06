@@ -33,6 +33,9 @@ export class FuncionarioPostgresRepository implements GetFuncionarioIdent {
         },
         turno: true, // Inclui a tabela 'turno' nos resultados
         localidade: true, // Inclui a tabela 'localidade' nos resultados
+        afastamento: {
+          include: { funcionarios_afastados_status: true },
+        },
       },
       orderBy: { id: "asc" },
     });
