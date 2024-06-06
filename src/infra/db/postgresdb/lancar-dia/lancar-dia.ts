@@ -1,4 +1,5 @@
 import { PrismaClient } from "@prisma/client";
+
 import { LancarDia } from "../../../../data/usecase/lancar-dia/lancar-dia";
 import { prisma } from "../../../database/Prisma";
 
