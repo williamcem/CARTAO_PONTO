@@ -7,35 +7,6 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-model dia {
-  id             String       @id @unique
-  receberDadosId String       @unique
-  entradaManha   String
-  saidaManha     String
-  entradaTarde   String?
-  saidaTarde     String?
-  entradaExtra   String?
-  saidaExtra     String?
-  dif_min        Int
-  saldoAtual     Int?
-  dataInicio     DateTime     @default(now()) // Definindo o campo dataInicio como opcional e preenchido automaticamente
-  receberdados   receberdados @relation(fields: [receberDadosId], references: [id])
-}
-
-model receberdados {
-  id            String   @id @unique
-  mes           String
-  data          DateTime
-  diaSemana     String
-  status        String
-  nome          String
-  matricula     String
-  setor         String
-  expediente    String
-  saldoanterior Int
-  dia           dia?
-}
-
 model funcionario {
   id             Int       @id @unique @default(autoincrement())
   filial         String
@@ -52,13 +23,14 @@ model funcionario {
   updateAt       DateTime? @updatedAt
   userName       String?
 
-  turno        turno        @relation(fields: [turnoId], references: [id], onDelete: Cascade)
-  centro_custo centro_custo @relation(fields: [centroCustoId], references: [id], onDelete: Cascade)
-  funcao       funcao       @relation(fields: [funcaoId], references: [id], onDelete: Cascade)
+  turno        turno                    @relation(fields: [turnoId], references: [id], onDelete: Cascade)
+  centro_custo centro_custo             @relation(fields: [centroCustoId], references: [id], onDelete: Cascade)
+  funcao       funcao                   @relation(fields: [funcaoId], references: [id], onDelete: Cascade)
   endereco     endereco?
   contatos     contato[]
   emails       email[]
   cartao       cartao[]
+  afastamento  funcionarios_afastados[]
 
   localidade localidade @relation(fields: [localidadeId], references: [codigo])
 }
@@ -197,4 +169,25 @@ model cartao_dia_lancamento_status {
   id                     Int                     @id
   nome                   String                  @unique
   cartao_dia_lancamentos cartao_dia_lancamento[]
+}
+
+model funcionarios_afastados {
+  id            Int       @id @default(autoincrement())
+  inicio        DateTime
+  fim           DateTime?
+  total         Int
+  funcionarioId Int
+  statusId      Int
+  userName      String?
+
+  funcionario                   funcionario                   @relation(fields: [funcionarioId], references: [id])
+  funcionarios_afastados_status funcionarios_afastados_status @relation(fields: [statusId], references: [id])
+
+  @@unique([inicio, funcionarioId, statusId])
+}
+
+model funcionarios_afastados_status {
+  id                     Int                      @id
+  nome                   String                   @unique
+  funcionarios_afastados funcionarios_afastados[]
 }
