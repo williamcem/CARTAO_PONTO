@@ -1,4 +1,3 @@
-// Definição da interface LancarFaltaIdent
 export interface LancarFaltaIdent {
   upsert(input: {
     periodoId: number;
