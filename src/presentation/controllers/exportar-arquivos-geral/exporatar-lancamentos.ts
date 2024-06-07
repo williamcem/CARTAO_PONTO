@@ -18,10 +18,10 @@ export class ExportarController implements Controller {
         // Enviar o arquivo como resposta
         resolve({
           statusCode: 200,
-          body: { filename },
+          body: "Arquivo exportado com sucesso",
         });
 
-/*         // Excluir o arquivo após a resposta (opcional, ou você pode fazer isso em outra parte do código se necessário)
+        /*         // Excluir o arquivo após a resposta (opcional, ou você pode fazer isso em outra parte do código se necessário)
         fs.unlink(filename!, (err: NodeJS.ErrnoException | null) => {
           if (err) {
             console.error("Erro ao excluir arquivo:", err);
