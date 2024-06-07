@@ -4,6 +4,7 @@ import todosfuncionarios from "../routes/horarios/buscar-todos-funcionarios";
 import deletecartao from "../routes/horarios/delete-cartao-routes";
 import deletar from "../routes/horarios/delete-routes";
 import falta from "../routes/horarios/dif-min-routes";
+import exportarlancamentos from "../routes/horarios/export-routes";
 import funcionario from "../routes/horarios/get-funcionario";
 import horarios from "../routes/horarios/horarios-routes";
 import horariosMemory from "../routes/horarios/horraio-memory-routes";
@@ -34,4 +35,5 @@ export const setupRoutes = (app: Express): void => {
   deletecartao(router);
   ocorrencia(router);
   statuslancamento(router);
+  exportarlancamentos(router);
 };
