@@ -1,4 +1,5 @@
 import { PrismaClient } from "@prisma/client";
+
 import { ListarOcorrencias } from "../../../../data/usecase/listar-ocorrencias/add-listar-ocorrencias";
 import { prisma } from "../../../database/Prisma";
 

@@ -1,6 +1,7 @@
 import { PrismaClient } from "@prisma/client";
-import { prisma } from "../../../database/Prisma";
+
 import { AddCartaoUpsertModel, AddCartoes } from "../../../../domain/usecases/add-cartao";
+import { prisma } from "../../../database/Prisma";
 
 export class CartaoPostgresRepository implements AddCartoes {
   private prisma: PrismaClient;
@@ -42,7 +43,10 @@ export class CartaoPostgresRepository implements AddCartoes {
           periodoDescanso: dia.periodoDescanso,
           cargaHorariaNoturna: dia.cargaHorNoturna,
           cartao_dia_status: {
-            connectOrCreate: { create: { id: dia.status.id, nome: dia.status.descricao }, where: { id: dia.status.id } },
+            connectOrCreate: {
+              create: { id: dia.status.id, nome: dia.status.descricao },
+              where: { id: dia.status.id },
+            },
           },
           cartao: { connect: { id: saved.id } },
         },
@@ -55,7 +59,10 @@ export class CartaoPostgresRepository implements AddCartoes {
           periodoDescanso: dia.periodoDescanso,
           cargaHorariaNoturna: dia.cargaHorNoturna,
           cartao_dia_status: {
-            connectOrCreate: { create: { id: dia.status.id, nome: dia.status.descricao }, where: { id: dia.status.id } },
+            connectOrCreate: {
+              create: { id: dia.status.id, nome: dia.status.descricao },
+              where: { id: dia.status.id },
+            },
           },
           cartao: { connect: { id: saved.id } },
         },

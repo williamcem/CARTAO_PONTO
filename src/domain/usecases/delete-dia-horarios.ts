@@ -1,4 +1,4 @@
-import { DeleteModel } from "../../domain/models/delete";
+import { DeleteModel } from "../models/delete-dia-horarios";
 
 export interface DelDeleteModel {
   cartao_dia_id: number;

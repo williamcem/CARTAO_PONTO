@@ -1,4 +1,4 @@
-import { GetFuncionarioModel } from "../../domain/models/get-funcionário";
+import { GetFuncionarioModel } from "../models/get-funcionário";
 
 export interface GetFuncionario {
   identificacao: string;

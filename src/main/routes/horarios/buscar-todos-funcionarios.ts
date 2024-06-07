@@ -1,4 +1,5 @@
 import { Router } from "express";
+
 import { adaptRoute } from "../../adapters/express-route-adapter";
 import { makeBuscarTodosController } from "../../factories/buscar-todos-funcionarios";
 

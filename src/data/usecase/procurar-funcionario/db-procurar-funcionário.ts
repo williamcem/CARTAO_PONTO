@@ -1,5 +1,5 @@
-import { ListarFuncionario } from "../../../domain/usecases/get-funcionario";
 import { GetFuncionarioModel } from "../../../domain/models/get-funcionário";
+import { ListarFuncionario } from "../../../domain/usecases/get-funcionario";
 import { GetFuncionarioIdent } from "./find-procurar-funcionario";
 
 export class DbGetFuncionario implements ListarFuncionario {

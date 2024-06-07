@@ -1,4 +1,4 @@
-import { GetOcorrenciaModel } from "../../domain/models/listar-ocorrencia";
+import { GetOcorrenciaModel } from "../models/listar-ocorrencia";
 
 export interface GetOcorrencia {
   localidade: number;

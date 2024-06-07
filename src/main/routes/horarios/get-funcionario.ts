@@ -1,4 +1,5 @@
 import { Router } from "express";
+
 import { adaptRoute } from "../../adapters/express-route-adapter";
 import { makeGetFuncionarioController } from "../../factories/get-funcionario";
 

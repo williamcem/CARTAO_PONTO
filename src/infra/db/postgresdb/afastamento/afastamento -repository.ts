@@ -26,7 +26,10 @@ export class AfastamentoRepository implements AddAfastados {
           fim: input.fim,
           userName: input.userName,
           funcionarios_afastados_status: {
-            connectOrCreate: { where: { id: input.status.id }, create: { id: input.status.id, nome: input.status.nome } },
+            connectOrCreate: {
+              where: { id: input.status.id },
+              create: { id: input.status.id, nome: input.status.nome },
+            },
           },
           funcionario: { connect: { id: input.funcionarioId } },
         },
@@ -37,7 +40,10 @@ export class AfastamentoRepository implements AddAfastados {
           funcionario: { connect: { id: input.funcionarioId } },
           userName: input.userName,
           funcionarios_afastados_status: {
-            connectOrCreate: { where: { nome: input.status.nome }, create: { id: input.status.id, nome: input.status.nome } },
+            connectOrCreate: {
+              where: { nome: input.status.nome },
+              create: { id: input.status.id, nome: input.status.nome },
+            },
           },
         },
       });

@@ -1,6 +1,6 @@
-import { HttpResponse, Controller, HttpRequest } from "../buscar-todos-funcionarios/buscar-todos-protocols";
-import { serverError, ok } from "../../helpers/http-helpers";
 import { BuscarTodosPostgresRepository } from "../../../infra/db/postgresdb/buscar-todos-funcionarios.ts/buscas-todos-repository";
+import { ok, serverError } from "../../helpers/http-helpers";
+import { Controller, HttpRequest, HttpResponse } from "./buscar-todos-protocols";
 
 export class BuscarTodosFuncionarioController implements Controller {
   constructor(private readonly funcionarioPostgresRepository: BuscarTodosPostgresRepository) {}

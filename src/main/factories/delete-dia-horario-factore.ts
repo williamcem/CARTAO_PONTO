@@ -1,7 +1,7 @@
-import { DeleteController } from "../../presentation/controllers/deletar/delete-controller";
-import { DeletePostgresRepository } from "../../infra/db/postgresdb/delete-rpository/delete-repository";
+import { DbAddDelete } from "../../data/usecase/delete-dia-horarios/db-add-delete";
+import { DeletePostgresRepository } from "../../infra/db/postgresdb/delete-dia-horario-repository/delete-dia-horario-repository";
+import { DeleteController } from "../../presentation/controllers/deletar/delete-dia-horarios-controller";
 import { Controller } from "../../presentation/protocols";
-import { DbAddDelete } from "../../data/usecase/delete/db-add-delete";
 import { LogControllerDecorator } from "../decorators/log";
 
 export const makeDeleteController = (): Controller => {

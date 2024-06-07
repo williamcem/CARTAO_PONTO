@@ -1,4 +1,5 @@
 import { PrismaClient } from "@prisma/client";
+
 import { LancarFaltaIdent } from "../../../../data/usecase/lancar-falta/lancar-falta";
 import { prisma } from "../../../database/Prisma";
 

@@ -1,4 +1,4 @@
-import { LancarFaltaModel } from "../../domain/models/lancar-falta";
+import { LancarFaltaModel } from "../models/lancar-falta";
 
 export interface LnacarFalta {
   periodoId: number;

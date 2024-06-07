@@ -1,94 +1,11 @@
-import { randomUUID } from "crypto";
-import csv from "csv-parser";
 import { Response } from "express";
 import moment from "moment";
-import stream from "stream";
 
 import { AfastamentoRepository } from "@infra/db/postgresdb/afastamento/afastamento -repository";
 import { CartaoPostgresRepository } from "@infra/db/postgresdb/funcionario/cartao-repository";
 import { FuncionarioPostgresRepository } from "@infra/db/postgresdb/funcionario/funcionario-repository";
-import { UploadPostgresRepository } from "@infra/db/postgresdb/uplod-repository/upload-protheus";
 
-import { MissingParamError } from "../../presentation/errors";
-import { BuscarHorarioNortunoEmMinutos } from "./../../presentation/controllers/horarios-memory/utils";
-
-export async function processarArquivo(req: { file?: Express.Multer.File | undefined }, res: Response) {
-  if (!req.file?.buffer) {
-    return new MissingParamError("Falta arquivo!");
-  }
-
-  const arquivo = Buffer.from(req.file.buffer);
-  const bufferStream = new stream.PassThrough();
-
-  bufferStream.end(arquivo);
-
-  const dadosExtraidos: {
-    MES: string;
-    DATA: string;
-    STATUS: string;
-    NOME: string;
-    MATRÍCULA: string;
-    SETOR: string;
-    EXPEDIENTE: string;
-    SALDOANTERIOR: string;
-  }[] = []; // Define o tipo explícito para dadosExtraidos como um array de objetos
-
-  bufferStream
-    .pipe(
-      csv({
-        separator: "!",
-        mapHeaders: ({ header, index }) => {
-          return header.trim();
-        },
-        mapValues({ header, index, value }) {
-          value = String(value).trim();
-          return value;
-        },
-      }),
-    )
-    .on("data", (row) => {
-      dadosExtraidos.push(row);
-    })
-    .on("end", async () => {
-      const uploadPostgresRepository = new UploadPostgresRepository();
-
-      const novoDados: {
-        id: string;
-        mes: string;
-        data: Date;
-        diaSemana: string;
-        status: string;
-        nome: string;
-        matricula: string;
-        setor: string;
-        expediente: string;
-        saldoanterior: number;
-      }[] = [];
-
-      dadosExtraidos.map((item, i, array) => {
-        if (i !== array.length - 1) {
-          const [date, diaSemana] = item.DATA.split(" ");
-          const [dia, mes, ano] = date.split("/");
-          novoDados.push({
-            mes: item.MES,
-            data: new Date(`${ano}-${mes}-${dia}`),
-            diaSemana,
-            status: item.STATUS,
-            nome: item.NOME,
-            matricula: item.MATRÍCULA,
-            setor: item.SETOR,
-            expediente: item.EXPEDIENTE,
-            saldoanterior: Number(item.SALDOANTERIOR),
-            id: randomUUID(),
-          });
-        }
-        return item;
-      });
-
-      return res.send(await uploadPostgresRepository.add(novoDados));
-    })
-    .on("error", (error) => {});
-}
+import { BuscarHorarioNortunoEmMinutos } from "../../presentation/controllers/procurar-funcionário/utils";
 
 export async function importarArquivoFuncionario(
   req: { file?: Express.Multer.File | undefined; body: { userName: string } },
@@ -394,8 +311,7 @@ export async function importarArquivosAfastamento(
           : new Date(`${fimAfastamento.slice(0, 4)}-${fimAfastamento.slice(4, 6)}-${fimAfastamento.slice(6, 8)}`),
         total: Number(totalAfastamento),
         funcionarioId: existeFuncionario.id,
-        userName: (req?.body?.userName
-           || "").toUpperCase(),
+        userName: (req?.body?.userName || "").toUpperCase(),
         status: {
           id: Number(cadStatus),
           nome: descricaoStatus.toUpperCase(),

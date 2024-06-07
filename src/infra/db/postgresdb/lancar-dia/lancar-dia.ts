@@ -44,7 +44,12 @@ export class LancarDiaPostgresRepository implements LancarDia {
     );
   }
 
-  public async findConflictingPeriodos(entrada: Date, saida: Date, cartao_dia_id: number, periodoId: number): Promise<any[]> {
+  public async findConflictingPeriodos(
+    entrada: Date,
+    saida: Date,
+    cartao_dia_id: number,
+    periodoId: number,
+  ): Promise<any[]> {
     return await this.prisma.cartao_dia_lancamento.findMany({
       where: {
         cartao_dia_id,

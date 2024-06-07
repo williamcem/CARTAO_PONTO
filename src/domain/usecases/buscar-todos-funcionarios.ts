@@ -1,4 +1,4 @@
-import { GetTodosFuncionariosModel } from "../../domain/models/buscar-todos-funcionarios";
+import { GetTodosFuncionariosModel } from "../models/buscar-todos-funcionarios";
 
 export interface BuscarTodosFuncionarios {
   identificacao?: string;

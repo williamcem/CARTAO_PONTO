@@ -1,5 +1,5 @@
-import { BuscarTodos, BuscarTodosFuncionarios } from "../../../domain/usecases/buscar-todos-funcionarios";
 import { GetTodosFuncionariosModel } from "../../../domain/models/buscar-todos-funcionarios";
+import { BuscarTodos, BuscarTodosFuncionarios } from "../../../domain/usecases/buscar-todos-funcionarios";
 import { BuscraTodosRepository } from "./add-buscar-todos-funcionarios";
 
 export class DbBuscarTodos implements BuscarTodos {

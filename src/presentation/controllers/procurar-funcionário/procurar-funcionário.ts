@@ -170,7 +170,10 @@ export class GetFuncionarioController implements Controller {
           100: somaMovimentacao100 + somaMovimentacaoNoturna100,
         },
         soma: { 60: saldoAnterior["60"] + somaMovimentacao60, 100: saldoAnterior["100"] + somaMovimentacao100 },
-        horas: { diurno: { 60: horasDiurno60, 100: horasDiurno100 }, noturno: { 60: horasNoturno60, 100: horasNoturno100 } },
+        horas: {
+          diurno: { 60: horasDiurno60, 100: horasDiurno100 },
+          noturno: { 60: horasNoturno60, 100: horasNoturno100 },
+        },
         saldoAnterior,
       };
     }

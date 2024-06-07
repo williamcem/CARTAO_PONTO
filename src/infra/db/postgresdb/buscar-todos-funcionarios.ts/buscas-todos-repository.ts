@@ -1,8 +1,9 @@
 import { PrismaClient } from "@prisma/client";
+
 import { BuscraTodosRepository } from "../../../../data/usecase/buscar-todos-funcionários/add-buscar-todos-funcionarios";
 import { GetTodosFuncionariosModel } from "../../../../domain/models/buscar-todos-funcionarios";
-import { prisma } from "../../../database/Prisma";
 import { BuscarTodosFuncionarios } from "../../../../presentation/controllers/buscar-todos-funcionarios/buscar-todos-protocols";
+import { prisma } from "../../../database/Prisma";
 
 export class BuscarTodosPostgresRepository implements BuscraTodosRepository {
   private prisma: PrismaClient;

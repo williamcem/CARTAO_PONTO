@@ -1,9 +1,10 @@
+import { FuncionarioPostgresRepository } from "@infra/db/postgresdb/get-funcionario/get-funcionario";
+
 import { OcorrenciaPostgresRepository } from "../../infra/db/postgresdb/listar-ocorrencias/listar-ocorrencias-repository";
-import { LogControllerDecorator } from "../decorators/log";
-import { Controller } from "../../presentation/protocols";
 import { OcorrenciaController } from "../../presentation/controllers/listar-ocorrencia/listar-ocorrencia-controler";
 import { GetFuncionarioController } from "../../presentation/controllers/procurar-funcionário/procurar-funcionário";
-import { FuncionarioPostgresRepository } from "@infra/db/postgresdb/get-funcionario/get-funcionario";
+import { Controller } from "../../presentation/protocols";
+import { LogControllerDecorator } from "../decorators/log";
 
 export const makeListarOcorrenciasController = (): Controller => {
   const ocorrenciaPostgresRepository = new OcorrenciaPostgresRepository();

@@ -1,7 +1,7 @@
-import { HttpRequest, HttpResponse, Controller } from "../deletar/delete-protocols";
-import { DbAddDelete } from "../../../data/usecase/delete/db-add-delete";
-import { serverError, ok, badRequest } from "../../../presentation/helpers/http-helpers";
+import { DbAddDelete } from "../../../data/usecase/delete-dia-horarios/db-add-delete";
 import { FuncionarioParamError } from "../../errors/Funcionario-param-error";
+import { badRequest, ok, serverError } from "../../helpers/http-helpers";
+import { Controller, HttpRequest, HttpResponse } from "./delete-protocols";
 
 export class DeleteController implements Controller {
   private readonly dbAddDelete: DbAddDelete;
