@@ -11,7 +11,7 @@ export class ListarStatusController implements Controller {
       const lancamentos = await this.localidadePostgresRepository.list();
 
       // Envolver o resultado em um objeto chamado data
-      return ok({ data: lancamentos });
+      return ok({ lancamentos });
     } catch (error) {
       console.error(error);
       return serverError();
