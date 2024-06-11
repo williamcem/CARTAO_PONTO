@@ -1,6 +1,6 @@
 import fs from "fs";
 
-import { exportarDadosParaArquivo } from "../../../main/exportacoes/exportar-dados";
+import { exportarDadosParaArquivo } from "../../../main/exportacoes-geral/exportar-dados";
 import { Controller, HttpResponse } from "./export-protocols";
 
 export class ExportarController implements Controller {

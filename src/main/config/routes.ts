@@ -3,7 +3,8 @@ import { Express, Router } from "express";
 import todosfuncionarios from "../routes/horarios/buscar-todos-funcionarios";
 import deletecartao from "../routes/horarios/delete-cartao-routes";
 import deletar from "../routes/horarios/delete-dia-horarios-routes";
-import exportarlancamentos from "../routes/horarios/export-routes";
+import exportarDemitidoslancamentos from "../routes/horarios/export-demitidos-routes";
+import exportarlancamentos from "../routes/horarios/export-geral-routes";
 import funcionario from "../routes/horarios/get-funcionario";
 import lancarDia from "../routes/horarios/lancar-dia";
 import lancarfalta from "../routes/horarios/lancar-falta";
@@ -26,4 +27,5 @@ export const setupRoutes = (app: Express): void => {
   ocorrencia(router);
   statuslancamento(router);
   exportarlancamentos(router);
+  exportarDemitidoslancamentos(router);
 };
