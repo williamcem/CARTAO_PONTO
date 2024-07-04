@@ -11,6 +11,7 @@ import funcionario from "../routes/horarios/get-funcionario-routes";
 import lancarDia from "../routes/horarios/lancar-dia-routes";
 import listarAtestado from "../routes/horarios/listar-atestados-routes";
 import descricacao from "../routes/horarios/listar-descricacao-routes";
+import ocorrenciageral from "../routes/horarios/listar-ocorrencia-geral-routes";
 import ocorrencia from "../routes/horarios/listar-ocorrencia-routes";
 import tipoevento from "../routes/horarios/listar-solucoes-eventos-routes";
 import procurarLocalidade from "../routes/horarios/procurar-localidade-routes";
@@ -36,4 +37,5 @@ export const setupRoutes = (app: Express): void => {
   eventos(router);
   solucaoeventos(router);
   tipoevento(router);
+  ocorrenciageral(router);
 };
