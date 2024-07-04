@@ -1,4 +1,5 @@
 import { OcorrenciaPostgresRepository } from "../../../infra/db/postgresdb/listar-ocorrencias/listar-ocorrencias-repository";
+import { FuncionarioParamError } from "../../errors/Funcionario-param-error";
 import { badRequest, notFoundRequest, ok, serverError } from "../../helpers/http-helpers";
 import { Controller, HttpRequest, HttpResponse } from "./listar-ocorrencias-protocols";
 
@@ -7,13 +8,13 @@ export class OcorrenciaController implements Controller {
 
   async handle(httRequest: HttpRequest): Promise<HttpResponse> {
     try {
-      const { localidade } = httRequest?.query;
+      const { identificacao } = httRequest?.query;
 
-      if (!localidade) {
-        return badRequest(new Error("Localidade não informada"));
+      if (!identificacao) {
+        return badRequest(new FuncionarioParamError("Identificação não informada"));
       }
 
-      const data = await this.ocorrenciaPostgresRepository.find(localidade);
+      const data = await this.ocorrenciaPostgresRepository.find(identificacao);
 
       if (data.funcionarios.length === 0) {
         return notFoundRequest(new Error("Nenhum funcionário encontrado"));

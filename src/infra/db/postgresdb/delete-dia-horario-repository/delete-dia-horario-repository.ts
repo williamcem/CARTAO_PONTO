@@ -22,13 +22,10 @@ export class DeletePostgresRepository implements DelDeleteRepository {
         },
       });
 
-      // Atualizar o campo 'tratado' para false na tabela cartao_dia
-      await this.prisma.cartao_dia.update({
+      // Deletar eventos correspondentes na tabela eventos
+      await this.prisma.eventos.deleteMany({
         where: {
-          id: cartao_dia_id,
-        },
-        data: {
-          tratado: false,
+          cartaoDiaId: cartao_dia_id,
         },
       });
     } catch (error) {
