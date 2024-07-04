@@ -1,77 +1,57 @@
 import { OcorrenciaPostgresRepository } from "../../../infra/db/postgresdb/listar-ocorrencias/listar-ocorrencias-repository";
-import { FuncionarioParamError } from "../../errors/Funcionario-param-error";
 import { badRequest, notFoundRequest, ok, serverError } from "../../helpers/http-helpers";
-import { GetFuncionarioController } from "../procurar-funcionário/procurar-funcionário";
-import { Controller, HttpRequest, HttpResponse } from "./listar-ocorrencia-protocols";
+import { Controller, HttpRequest, HttpResponse } from "./listar-ocorrencias-protocols";
 
 export class OcorrenciaController implements Controller {
-  constructor(
-    private readonly ocorrenciaPostgresRepository: OcorrenciaPostgresRepository,
-    private readonly getFuncionarioController: GetFuncionarioController,
-  ) {}
+  constructor(private readonly ocorrenciaPostgresRepository: OcorrenciaPostgresRepository) {}
 
   async handle(httRequest: HttpRequest): Promise<HttpResponse> {
     try {
       const { localidade } = httRequest?.query;
 
-      if (!localidade) return badRequest(new FuncionarioParamError("localidade não fornecido!"));
-
-      const ocorrencias = await this.ocorrenciaPostgresRepository.find(localidade);
-
-      if (!ocorrencias || ocorrencias.funcionarios.length === 0) {
-        return notFoundRequest({ message: "Localidade não encontrada", name: "Error" });
+      if (!localidade) {
+        return badRequest(new Error("Localidade não informada"));
       }
 
-      const output: { identificacao: string; data: Date; movimentacao60: number; nome: string; id: number; tratado: boolean }[] =
-        [];
-      const ids: number[] = [];
-      const funcionarioMap: {
-        [key: number]: {
-          identificacao: string;
-          data: Date;
-          movimentacao60: number;
-          nome: string;
-          id: number;
-          tratado: boolean;
-        };
-      } = {};
+      const data = await this.ocorrenciaPostgresRepository.find(localidade);
 
-      for (const funcionario of ocorrencias.funcionarios) {
-        const response = await this.getFuncionarioController.handle({
-          query: { identificacao: funcionario.identificacao, localidade, mostraSaldo: true },
+      if (data.funcionarios.length === 0) {
+        return notFoundRequest(new Error("Nenhum funcionário encontrado"));
+      }
+
+      const output: {
+        identificacao: string;
+        nome: string;
+        dias: {
+          data: Date;
+          eventos: any[];
+          lancamentos: {
+            periodoId: number;
+            entrada: Date | null;
+            saida: Date | null;
+          }[];
+        }[];
+        resumo: string;
+      }[] = [];
+
+      data.funcionarios.map((funcionario) => {
+        if (funcionario.dias.length === 0) return undefined;
+
+        output.push({
+          nome: funcionario.nome,
+          identificacao: funcionario.identificacao,
+          dias: funcionario.dias.map((dia) => ({
+            data: dia.data,
+            eventos: dia.eventos,
+            lancamentos: dia.lancamentos,
+          })),
+          resumo: "aguarde", // Placeholder for any additional data
         });
 
-        const data = response.body.data;
+        return undefined;
+      });
 
-        for (const cartao of data.cartao) {
-          for (const cartao_dia of cartao.cartao_dia) {
-            if (cartao_dia.movimentacao60 < 0 && cartao_dia.tratado === false) {
-              const info = {
-                identificacao: funcionario.identificacao,
-                data: cartao_dia.data,
-                movimentacao60: cartao_dia.movimentacao60,
-                nome: funcionario.nome,
-                id: cartao_dia.id,
-                tratado: cartao_dia.tratado,
-              };
-              output.push(info);
-              ids.push(cartao_dia.id);
-              funcionarioMap[cartao_dia.id] = info;
-            }
-          }
-        }
-      }
-
-      if (ids.length > 0) {
-        const cartaoDias = await this.ocorrenciaPostgresRepository.findCartaoDiaByIds(ids);
-        const cartaoDiasWithInfo = cartaoDias.map((cartaoDia) => ({
-          ...cartaoDia,
-          funcionarioInfo: funcionarioMap[cartaoDia.id],
-        }));
-        return ok({ message: "Localidade encontrada com sucesso", data: cartaoDiasWithInfo });
-      }
-
-      return ok({ message: "Localidade encontrada com sucesso", data: output });
+      return ok(output);
     } catch (error) {
       console.error(error);
       return serverError();

@@ -1,6 +1,6 @@
 import { PrismaClient } from "@prisma/client";
 
-import { DelDeleteCartoaRepository } from "../../../../data/usecase/delete-cartoa/add-delete-cartoa-repository";
+import { DelDeleteCartoaRepository } from "../../../../data/usecase/delete-cartao/add-delete-cartoa-repository";
 import { DelDeleteCartoa } from "../../../../domain/usecases/delete-cartao";
 import { prisma } from "../../../database/Prisma";
 

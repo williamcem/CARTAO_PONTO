@@ -1,4 +1,4 @@
-import { DbAddDeleteCartao } from "../../../data/usecase/delete-cartoa/db-add-dele-cartoa";
+import { DbAddDeleteCartao } from "../../../data/usecase/delete-cartao/db-add-dele-cartoa";
 import { FuncionarioParamError } from "../../errors/Funcionario-param-error";
 import { badRequest, ok, serverError } from "../../helpers/http-helpers";
 import { Controller, HttpRequest, HttpResponse } from "./delete-cartao-protocools";

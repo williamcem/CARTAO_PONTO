@@ -8,7 +8,9 @@ export interface AddFuncionarioUpsertModel {
   dataAdmissao: Date;
   dataDemissao?: Date;
   turno: {
+    id?: number;
     nome: string;
+    cod_turno: string;
   };
   centroCusto: {
     nome: string;

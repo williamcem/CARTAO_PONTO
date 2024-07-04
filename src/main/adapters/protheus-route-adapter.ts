@@ -4,8 +4,91 @@ import moment from "moment";
 import { AfastamentoRepository } from "@infra/db/postgresdb/afastamento/afastamento -repository";
 import { CartaoPostgresRepository } from "@infra/db/postgresdb/funcionario/cartao-repository";
 import { FuncionarioPostgresRepository } from "@infra/db/postgresdb/funcionario/funcionario-repository";
+import { GrupoDeTrabalhoRepositoryPrisma } from "@infra/db/postgresdb/grupo-trabalho/grupo-trabalho-repository";
 
 import { BuscarHorarioNortunoEmMinutos } from "../../presentation/controllers/procurar-funcionário/utils";
+
+export async function importarArquivoGrupoTrabalho(
+  req: { file?: Express.Multer.File | undefined; body: { userName: string } },
+  res: Response,
+) {
+  try {
+    if (!req.file?.buffer) {
+      return res.status(400).send({ error: "Falta arquivo" });
+    }
+
+    if (!req?.body?.userName) return res.status(400).send({ error: "Falta usuário" });
+
+    const arquivo = Buffer.from(req.file.buffer).toString("utf-8");
+    const grupos = arquivo.split("\n");
+    const grupoDeTrabalhoRepositoryPrisma = new GrupoDeTrabalhoRepositoryPrisma();
+
+    for (const grupo of grupos) {
+      const [
+        ,
+        ,
+        codigoTurno,
+        descricaoTurno,
+        statusTurno,
+        ,
+        diaSemana,
+        tipoDia,
+        HoraPrimeiraEntrada,
+        HoraPrimeirasaida,
+        HoraSegundaEntrada,
+        HoraSegundaSaida,
+        HoraTerceiraEntrada,
+        HoraTerceiraSaida,
+        HoraQuartaEntrada,
+        HoraQuartaSaida,
+        TotalHorasPrimeiroPeriodo,
+        TotalHorasSegundoPeriodo,
+        TotalHorasTerceiroPeriodo,
+        TotalHorasQuartoPeriodo,
+        TotalHorasPrimeiroIntervalo,
+        TotalHorasSegundoIntervalo,
+        TotalHorasTerceiroIntervalo,
+        TotalHorasTrabalhadas,
+        TotalHorasIntervalo,
+        TotalHorasDia,
+      ] = grupo.split(";");
+
+      if (!codigoTurno) continue;
+
+      const saved = await grupoDeTrabalhoRepositoryPrisma.upsert({
+        cod_turno: codigoTurno,
+        descri_turno: descricaoTurno,
+        status_turno: statusTurno,
+        dia_semana: diaSemana,
+        tipo_dia: tipoDia,
+        hora_1_entrada: HoraPrimeiraEntrada,
+        hora_1_saida: HoraPrimeirasaida,
+        hora_2_entrada: HoraSegundaEntrada,
+        hora_2_saida: HoraSegundaSaida,
+        hora_3_entrada: HoraTerceiraEntrada,
+        hora_3_saida: HoraTerceiraSaida,
+        hora_4_entrada: HoraQuartaEntrada,
+        hora_4_saida: HoraQuartaSaida,
+        total_horas_1_periodo: TotalHorasPrimeiroPeriodo,
+        total_horas_2_periodo: TotalHorasSegundoPeriodo,
+        total_horas_3_periodo: TotalHorasTerceiroPeriodo,
+        total_horas_4_periodo: TotalHorasQuartoPeriodo,
+        total_horas_1_intervalo: TotalHorasPrimeiroIntervalo,
+        total_horas_2_intervalo: TotalHorasSegundoIntervalo,
+        total_horas_3_intervalo: TotalHorasTerceiroIntervalo,
+        total_horas_trabalhadas: TotalHorasTrabalhadas,
+        total_horas_intervalo: TotalHorasIntervalo,
+        total_horas_dia: TotalHorasDia,
+        userName: (req?.body?.userName || "").toUpperCase(),
+      });
+    }
+
+    return res.json({ message: "Arquivo importado com sucesso" });
+  } catch (error) {
+    console.error("Erro importar arquivo:", error);
+    return res.status(400).json({ error: "Erro ao importar arquivo" });
+  }
+}
 
 export async function importarArquivoFuncionario(
   req: { file?: Express.Multer.File | undefined; body: { userName: string } },
@@ -36,7 +119,7 @@ export async function importarArquivoFuncionario(
         nome,
         codigoLocalidade,
         descricaoLocalidade,
-        ,
+        codigoTurnoTrabalho,
         descricaoTurno,
         codCentroCusto,
         descricaoCentroCusto,
@@ -68,6 +151,8 @@ export async function importarArquivoFuncionario(
         `${dataNascimento.slice(0, 4)}-${dataNascimento.slice(4, 6)}-${dataNascimento.slice(6, 8)}`,
       );
 
+      const codigoTurnoFormatado = "009" + codigoTurnoTrabalho.padStart(3, "0");
+
       const saved = await funcionarioRepository.upsert({
         nome,
         centroCusto: { nome: descricaoCentroCusto },
@@ -80,13 +165,17 @@ export async function importarArquivoFuncionario(
         filial,
         funcao: { nome: descricaoFuncao },
         identificacao,
-        turno: { nome: descricaoTurno },
+        turno: {
+          nome: descricaoTurno,
+          cod_turno: codigoTurnoFormatado,
+        },
         localidade: {
           codigo: codigoLocalidade,
           nome: descricaoLocalidade,
         },
         userName: (req?.body?.userName || "").toUpperCase(),
       });
+      console.log(codigoTurnoFormatado);
 
       if (!saved) {
         errors.push({ identificacao, nome });

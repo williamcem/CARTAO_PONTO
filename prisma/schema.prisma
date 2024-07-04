@@ -31,8 +31,10 @@ model funcionario {
   emails       email[]
   cartao       cartao[]
   afastamento  funcionarios_afastados[]
+  eventos      eventos[]
 
-  localidade localidade @relation(fields: [localidadeId], references: [codigo])
+  localidade           localidade             @relation(fields: [localidadeId], references: [codigo])
+  atestado_funcionario atestado_funcionario[]
 }
 
 model localidade {
@@ -42,8 +44,10 @@ model localidade {
 }
 
 model turno {
-  id           Int           @id @unique @default(autoincrement())
-  nome         String        @unique
+  id        Int    @id @unique @default(autoincrement())
+  nome      String
+  cod_turno String @unique
+
   funcionarios funcionario[]
 }
 
@@ -130,6 +134,7 @@ model cartao_dia {
   cartao_dia_status       cartao_dia_status       @relation(fields: [statusId], references: [id], onDelete: Cascade)
   cartao                  cartao                  @relation(fields: [cartaoId], references: [id], onDelete: Cascade)
   cartao_dia_lancamentos  cartao_dia_lancamento[]
+  eventos                 eventos[]
 
   @@unique([cartaoId, data])
 }
@@ -181,7 +186,7 @@ model funcionarios_afastados {
   userName      String?
 
   funcionario                   funcionario?                  @relation(fields: [funcionarioId], references: [id])
-  funcionarios_afastados_status funcionarios_afastados_status @relation(fields: [statusId], references: [id],onDelete: Cascade)
+  funcionarios_afastados_status funcionarios_afastados_status @relation(fields: [statusId], references: [id], onDelete: Cascade)
 
   @@unique([inicio, funcionarioId, statusId])
 }
@@ -190,4 +195,75 @@ model funcionarios_afastados_status {
   id                     Int                      @id
   nome                   String                   @unique
   funcionarios_afastados funcionarios_afastados[]
+}
+
+model atestado_funcionario {
+  id               Int      @id @default(autoincrement())
+  nome_funcionario String
+  identificacao    String
+  inicio           DateTime
+  fim              DateTime
+  saida            Int?
+  retorno          Int?
+  tipo             String
+  grupo_cid        String
+  descricao        String
+  userName         String?
+  funcionarioId    Int?
+
+  funcionario funcionario? @relation(fields: [funcionarioId], references: [id])
+}
+
+model descricaco_cid {
+  id         Int    @id @default(autoincrement())
+  grupo_cid  String
+  descricaco String
+}
+
+model eventos {
+  id            Int     @id @default(autoincrement())
+  cartaoDiaId   Int
+  hora          String
+  funcionarioId Int
+  minutos       Int
+  tipoId        Int?
+  tratado       Boolean @default(false)
+
+  tipo_eventos tipo_eventos? @relation(fields: [tipoId], references: [id], onDelete: Cascade)
+  funcionario  funcionario   @relation(fields: [funcionarioId], references: [id])
+  cartao_dia   cartao_dia?   @relation(fields: [cartaoDiaId], references: [id])
+}
+
+model tipo_eventos {
+  id      Int       @id @default(autoincrement())
+  nome    String
+  eventos eventos[]
+}
+
+model grupo_trabalho {
+  id                      Int     @id @default(autoincrement())
+  cod_turno               String
+  descri_turno            String
+  status_turno            String
+  dia_semana              String
+  tipo_dia                String
+  hora_1_entrada          String
+  hora_1_saida            String
+  hora_2_entrada          String
+  hora_2_saida            String
+  hora_3_entrada          String
+  hora_3_saida            String
+  hora_4_entrada          String
+  hora_4_saida            String
+  total_horas_1_periodo   String
+  total_horas_2_periodo   String
+  total_horas_3_periodo   String
+  total_horas_4_periodo   String
+  total_horas_1_intervalo String
+  total_horas_2_intervalo String
+  total_horas_3_intervalo String
+  total_horas_trabalhadas String
+  total_horas_intervalo   String
+  total_horas_dia         String
+  userName                String?
 }

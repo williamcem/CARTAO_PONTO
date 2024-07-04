@@ -23,6 +23,9 @@ export class BuscarTodosPostgresRepository implements BuscraTodosRepository {
           contatos: true,
           emails: true,
           endereco: true,
+          afastamento: {
+            include: { funcionarios_afastados_status: true}
+          }
         },
         where: {
           identificacao: { endsWith: funcionarioData.identificacao },
@@ -35,7 +38,7 @@ export class BuscarTodosPostgresRepository implements BuscraTodosRepository {
         ...funcionario,
         periodoDeTrabalho: {
           id: funcionario.turno.id,
-          descricacoDoTurno: funcionario.turno.nome, // Renomeia o campo 'nome' para 'periodo'
+          descricaoDoTurno: funcionario.turno.nome, // Renomeia o campo 'nome' para 'periodo'
         },
         turno: undefined, // Remove o campo turno original
       }));

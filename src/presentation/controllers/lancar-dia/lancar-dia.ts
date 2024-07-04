@@ -2,7 +2,7 @@ import { LancarDiaPostgresRepository } from "@infra/db/postgresdb/lancar-dia/lan
 
 import { FuncionarioParamError } from "../../errors/Funcionario-param-error";
 import { badRequest, ok, serverError } from "../../helpers/http-helpers";
-import { Controller, HttpRequest, HttpResponse } from "./procurra-funcionario-protocols";
+import { Controller, HttpRequest, HttpResponse } from "./lancar-dia-protocols";
 
 export class LancarDiaController implements Controller {
   constructor(private readonly lancarDiaPostgresRepository: LancarDiaPostgresRepository) {}

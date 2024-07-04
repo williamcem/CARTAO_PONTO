@@ -38,8 +38,8 @@ export class FuncionarioPostgresRepository implements FuncionarioRepository {
         },
         turno: {
           connectOrCreate: {
-            create: { nome: funcionario.turno.nome },
-            where: { nome: funcionario.turno.nome },
+            create: { nome: funcionario.turno.nome, cod_turno: funcionario.turno.cod_turno },
+            where: { id: funcionario.turno.id, cod_turno: funcionario.turno.cod_turno },
           },
         },
         contatos: funcionario.contato
@@ -87,8 +87,8 @@ export class FuncionarioPostgresRepository implements FuncionarioRepository {
         },
         turno: {
           connectOrCreate: {
-            create: { nome: funcionario.turno.nome },
-            where: { nome: funcionario.turno.nome },
+            create: { nome: funcionario.turno.nome, cod_turno: funcionario.turno.cod_turno },
+            where: { id: funcionario.turno.id, cod_turno: funcionario.turno.cod_turno },
           },
         },
         contatos: funcionario.contato
