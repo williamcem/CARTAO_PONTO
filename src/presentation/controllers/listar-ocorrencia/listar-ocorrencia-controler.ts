@@ -8,13 +8,16 @@ export class OcorrenciaController implements Controller {
 
   async handle(httRequest: HttpRequest): Promise<HttpResponse> {
     try {
-      const { identificacao } = httRequest?.query;
+      const { identificacao, localidade } = httRequest?.query;
 
+      if (!localidade) {
+        return badRequest(new FuncionarioParamError("Localidade não fornecida"));
+      }
       if (!identificacao) {
-        return badRequest(new FuncionarioParamError("Identificação não informada"));
+        return badRequest(new FuncionarioParamError("Identificação não fornecida"));
       }
 
-      const data = await this.ocorrenciaPostgresRepository.find(identificacao);
+      const data = await this.ocorrenciaPostgresRepository.find(identificacao, localidade);
 
       if (data.funcionarios.length === 0) {
         return notFoundRequest(new Error("Nenhum funcionário encontrado"));

@@ -1,4 +1,5 @@
 import { PrismaClient } from "@prisma/client";
+
 import { ListarOcorrencias } from "../../../../data/usecase/listar-ocorrencias/add-listar-ocorrencias";
 import { prisma } from "../../../database/Prisma";
 
@@ -9,7 +10,10 @@ export class OcorrenciaPostgresRepository implements ListarOcorrencias {
     this.prisma = prisma;
   }
 
-  public async find(identificacao: string): Promise<{
+  public async find(
+    identificacao: string,
+    localidade: string,
+  ): Promise<{
     funcionarios: {
       identificacao: string;
       nome: string;
@@ -17,7 +21,10 @@ export class OcorrenciaPostgresRepository implements ListarOcorrencias {
     }[];
   }> {
     const funcionarios = await this.prisma.funcionario.findMany({
-      where: { identificacao: identificacao },
+      where: {
+        identificacao: identificacao,
+        localidadeId: localidade,
+      },
       include: {
         cartao: {
           include: {

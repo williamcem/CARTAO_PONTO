@@ -1,5 +1,14 @@
 export interface ListarOcorrencias {
-  find(localidade: string): Promise<{ funcionarios: { identificacao: string }[] }>;
+  find(
+    identificacao: string,
+    localidade: string,
+  ): Promise<{
+    funcionarios: {
+      identificacao: string;
+      nome: string;
+      dias: { data: Date; eventos: any[]; lancamentos: { periodoId: number; entrada: Date | null; saida: Date | null }[] }[];
+    }[];
+  }>;
 }
 
 export interface ListarOcorrenciasGeral {
