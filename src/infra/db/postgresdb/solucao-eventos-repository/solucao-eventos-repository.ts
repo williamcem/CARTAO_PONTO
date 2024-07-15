@@ -22,7 +22,7 @@ export class SolucaoEventoRepository implements AdicionarSolucao {
     }
 
     let minutos;
-    if (tipoId === 3) {
+    if (tipoId === 3 || tipoId === 7) {
       minutos = 0;
     } else if (tipoId === 5 || tipoId === 6) {
       minutos = Math.abs(eventoOriginal.minutos);

@@ -1,13 +1,14 @@
 import { CriarEventosPostgresRepository } from "../../../infra/db/postgresdb/eventos/eventos-repository";
 import { ok, serverError } from "../../helpers/http-helpers";
-import { Controller, HttpResponse } from "./eventos-protocols";
+import { Controller, HttpRequest, HttpResponse } from "./eventos-protocols";
 
 export class CriarEventosController implements Controller {
   constructor(private readonly criarEventosPostgresRepository: CriarEventosPostgresRepository) {}
 
-  async handle(): Promise<HttpResponse> {
+  async handle(req: HttpRequest): Promise<HttpResponse> {
     try {
-      const eventosCriados = await this.criarEventosPostgresRepository.add();
+      console.log("req.query.identificacao", req.query.identificacao);
+      const eventosCriados = await this.criarEventosPostgresRepository.add({ identificao: req.query.identificacao });
 
       if (!eventosCriados) throw "Erro ao criar eventos!";
 

@@ -1,12 +1,43 @@
 export interface ResumoModel {
-  movimentacao60: number;
-  movimentacao100: number;
-  movimentacaoNoturna60: number;
-  movimentacaoNoturna100: number;
-  saldoAnterior60: number;
-  saldoAnterior100: number;
-  horasDiurnas60: number;
-  horasDiurnas100: number;
-  horasNoturnas60: number;
-  horasNoturnas100: number;
+  identificacao: string;
+  cartao: {
+    referencia: string;
+    dias: {
+      data: string;
+      periodoDescanso: number;
+      cargaHor: number;
+      cargaHorariaCompleta: string;
+      cargaHorariaNoturna: number;
+      ResumoDia: {
+        movimentacao60: number | string;
+        movimentacao100: number | string;
+        movimentacaoNoturna60: number | string;
+        movimentacaoNoturna100: number | string;
+      };
+    }[];
+  }[];
+  Resumo: {
+    movimentacao: {
+      sessenta: number;
+      cem: number;
+    };
+    soma: {
+      sessenta: number;
+      cem: number;
+    };
+    horas: {
+      diurnas: {
+        sessenta: number;
+        cem: number;
+      };
+      noturnas: {
+        sessenta: number;
+        cem: number;
+      };
+    };
+    saldoAnterior: {
+      sessenta: number;
+      cem: number;
+    };
+  };
 }

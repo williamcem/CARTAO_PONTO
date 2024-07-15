@@ -38,17 +38,17 @@ export function calcularAdicionalNoturno(horarioEsperado: moment.Moment, horario
   return arredondarParteDecimal(adicionalNoturno);
 }
 
-export function criarEventoAdicionalNoturno(
-  horarioEsperado: moment.Moment,
-  horarioReal: moment.Moment,
-  minutosTotaisEsperados: number,
-  lancamento: any,
-): any {
+export function criarEventoAdicionalNoturno(horarioEsperado: moment.Moment, horarioReal: moment.Moment, lancamento: any): any {
   const minutosAdicionalNoturno = calcularAdicionalNoturno(horarioEsperado, horarioReal, lancamento);
   if (minutosAdicionalNoturno !== 0) {
+    const hora =
+      minutosAdicionalNoturno > 0
+        ? `${horarioEsperado.format("HH:mm")} - ${horarioReal.format("HH:mm")}`
+        : `${horarioReal.format("HH:mm")} - ${horarioEsperado.format("HH:mm")}`;
+
     return {
       cartaoDiaId: lancamento.cartao_dia.id,
-      hora: `${horarioEsperado.format("HH:mm")} - ${horarioReal.format("HH:mm")}`,
+      hora,
       tipoId: 4,
       funcionarioId: lancamento.cartao_dia.cartao.funcionario.id,
       minutos: minutosAdicionalNoturno,

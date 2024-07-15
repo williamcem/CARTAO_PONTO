@@ -2,6 +2,7 @@ import { Express, Router } from "express";
 
 import todosfuncionarios from "../routes/horarios/buscar-todos-funcionarios-routes";
 import cadastrarAtestado from "../routes/horarios/cadastrar-atestado";
+import calcularresumo from "../routes/horarios/calcular-resumo-routes";
 import eventos from "../routes/horarios/criar-eventos";
 import deletecartao from "../routes/horarios/delete-cartao-routes";
 import deletar from "../routes/horarios/delete-dia-horarios-routes";
@@ -15,7 +16,8 @@ import ocorrenciageral from "../routes/horarios/listar-ocorrencia-geral-routes";
 import ocorrencia from "../routes/horarios/listar-ocorrencia-routes";
 import tipoevento from "../routes/horarios/listar-solucoes-eventos-routes";
 import procurarLocalidade from "../routes/horarios/procurar-localidade-routes";
-import solucaoeventos from "../routes/horarios/solucao-eventos";
+import retornarsolucao from "../routes/horarios/retornar-solucao-routes";
+import solucaoeventos from "../routes/horarios/solucao-eventos-routes";
 import upload from "../routes/horarios/upload-routes-routes";
 
 export const setupRoutes = (app: Express): void => {
@@ -38,4 +40,6 @@ export const setupRoutes = (app: Express): void => {
   solucaoeventos(router);
   tipoevento(router);
   ocorrenciageral(router);
+  calcularresumo(router);
+  retornarsolucao(router);
 };

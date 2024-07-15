@@ -33,7 +33,7 @@ model funcionario {
   afastamento  funcionarios_afastados[]
   eventos      eventos[]
 
-  localidade           localidade             @relation(fields: [localidadeId], references: [codigo])
+  localidade           localidade             @relation(fields: [localidadeId], references: [codigo], onDelete: Cascade)
   atestado_funcionario atestado_funcionario[]
 }
 
@@ -230,7 +230,7 @@ model eventos {
 
   tipo_eventos tipo_eventos? @relation(fields: [tipoId], references: [id], onDelete: Cascade)
   funcionario  funcionario   @relation(fields: [funcionarioId], references: [id])
-  cartao_dia   cartao_dia?   @relation(fields: [cartaoDiaId], references: [id])
+  cartao_dia   cartao_dia?   @relation(fields: [cartaoDiaId], references: [id], onDelete: Cascade)
 }
 
 model tipo_eventos {

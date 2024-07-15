@@ -1,6 +1,6 @@
 import { PrismaClient } from "@prisma/client";
 
-import { ListarDescricaco } from "../../../../data/usecase/add-listar-descricacao/add-listar-descricacao";
+import { ListarDescricaco } from "../../../../data/usecase/add-listar-descricacao/add-listar-descricao";
 import { prisma } from "../../../database/Prisma";
 
 export class ListarDescricacoRepsository implements ListarDescricaco {
