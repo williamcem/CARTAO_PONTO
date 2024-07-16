@@ -28,6 +28,7 @@ export class CriarEventosPostgresRepository implements AdicionarEventos {
       where: {
         cartao_dia: { cartao: { funcionario: { identificacao: input?.identificacao } } },
       },
+      orderBy: [{ cartao_dia: { cartao: { funcionarioId: "asc" } } }, { cartao_dia_id: "asc" }, { periodoId: "asc" }],
     });
 
     const eventosData = this.gerarEventos({ lancamentos });
@@ -85,12 +86,16 @@ export class CriarEventosPostgresRepository implements AdicionarEventos {
     }[];
   }) {
     const eventos: any[] = [];
-    const eventosExcendentes: any[] = [];
-    let excedeu = false;
+    let eventosExcendentes: any[] = [];
 
     // VERIFICAR SE EXISTE EXCEDENTE EM ALGUM PERIODO
-
+    let excedeu = false;
     input.lancamentos.forEach((lancamento, index, lancamentosArray) => {
+      if (index === 0 || input.lancamentos[index - 1].cartao_dia.id !== lancamento.cartao_dia.id) {
+        excedeu = false;
+        eventosExcendentes = [];
+      }
+
       if (!lancamento.entrada || !lancamento.saida) return;
 
       const entrada = this.pegarLancamento({ data: lancamento.entrada });
@@ -138,6 +143,14 @@ export class CriarEventosPostgresRepository implements AdicionarEventos {
         }
       }
 
+      if (excedeu) {
+        eventosExcendentes.forEach((value) => {
+          eventos.push(value);
+        });
+
+        eventosExcendentes = [];
+      }
+
       // const excedentePositivo = saida.diff(horarioSaidaEsperado, "minutes");
       // if (Math.abs(excedentePositivo) > 5) {
       //   console.log("AQUI")
@@ -148,12 +161,6 @@ export class CriarEventosPostgresRepository implements AdicionarEventos {
     // VERIFICAR SE EXCEDEU
 
     console.log(eventos, "____", eventosExcendentes);
-
-    if (excedeu) {
-      eventosExcendentes.forEach((value) => {
-        eventos.push(value);
-      });
-    }
 
     // SE SIM - REGISTRAR EVENTOS
 
@@ -221,6 +228,7 @@ export class CriarEventosPostgresRepository implements AdicionarEventos {
       funcionarioId: lancamento.cartao_dia.cartao.funcionario.id,
       minutos: saida.diff(entrada, "minutes"),
     };
+
     eventos.push(eventoPeriodo1);
     console.log(`Evento criado: ${eventoPeriodo1.hora} - Tipo: ${eventoPeriodo1.tipoId} - Minutos: ${eventoPeriodo1.minutos}`);
 
@@ -231,6 +239,10 @@ export class CriarEventosPostgresRepository implements AdicionarEventos {
       funcionarioId: lancamento.cartao_dia.cartao.funcionario.id,
       minutos: horarioEntradaEsperado1.diff(entrada, "minutes"),
     };
+    if (eventoExcedentePositivo.minutos < 0) {
+      eventoExcedentePositivo.tipoId = 2;
+    }
+
     if (eventoExcedentePositivo.minutos < 0) {
       eventoExcedentePositivo.hora = `${horarioEntradaEsperado1.format("HH:mm")} - ${entrada.format("HH:mm")}`;
     }
