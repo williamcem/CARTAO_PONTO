@@ -49,7 +49,7 @@ export class ConfirmarLancaDiaController implements Controller {
       if (!dia) return badRequest(new FuncionarioParamError("Dia do cartão não localizado!"));
 
       dia.lancamentos.map((lancamento) => {
-        if (lancamento.validadoPeloOperado) error = "Lançamento já validado!";
+        if (lancamento.validadoPeloOperador) error = "Lançamento já validado!";
       });
 
       if (error) return badRequest(new FuncionarioParamError(error));

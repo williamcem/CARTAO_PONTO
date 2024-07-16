@@ -13,7 +13,7 @@ export class ConfirmarLancaDiaPostgresRepository implements ConfirmarLancaDia {
   public async findFisrt(input: { id: number }): Promise<
     | {
         id: number;
-        lancamentos: { id: number; entrada: Date | null; saida: Date | null; validadoPeloOperado: boolean; periodoId: number }[];
+        lancamentos: { id: number; entrada: Date | null; saida: Date | null; validadoPeloOperador: boolean; periodoId: number }[];
       }
     | undefined
   > {
@@ -27,7 +27,7 @@ export class ConfirmarLancaDiaPostgresRepository implements ConfirmarLancaDia {
         id: lancamento.id,
         entrada: lancamento.entrada,
         saida: lancamento.saida,
-        validadoPeloOperado: lancamento.validadoPeloOperado,
+        validadoPeloOperador: lancamento.validadoPeloOperador,
         periodoId: lancamento.periodoId,
       })),
     };
@@ -36,7 +36,7 @@ export class ConfirmarLancaDiaPostgresRepository implements ConfirmarLancaDia {
   public async update(input: { id: number }[]): Promise<boolean> {
     const query: prismaPromise[] = [];
     input.map((a) => {
-      query.push(this.prisma.cartao_dia_lancamento.update({ where: { id: a.id }, data: { validadoPeloOperado: true } }));
+      query.push(this.prisma.cartao_dia_lancamento.update({ where: { id: a.id }, data: { validadoPeloOperador: true } }));
     });
 
     return Boolean((await this.prisma.$transaction(query)).length);

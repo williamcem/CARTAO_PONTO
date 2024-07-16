@@ -145,17 +145,17 @@ model cartao_dia_status {
 }
 
 model cartao_dia_lancamento {
-  id                  Int       @id @default(autoincrement())
-  periodoId           Int
-  entrada             DateTime?
-  saida               DateTime?
-  diferenca           Int       @default(0)
-  statusId            Int       @default(1)
-  cartao_dia_id       Int
-  validadoPeloOperado Boolean   @default(false)
-  createAt            DateTime? @default(now())
-  updateAt            DateTime? @updatedAt
-  userName            String?
+  id                   Int       @id @default(autoincrement())
+  periodoId            Int
+  entrada              DateTime?
+  saida                DateTime?
+  diferenca            Int       @default(0)
+  statusId             Int       @default(1)
+  cartao_dia_id        Int
+  validadoPeloOperador Boolean   @default(false)
+  createAt             DateTime? @default(now())
+  updateAt             DateTime? @updatedAt
+  userName             String?
 
   cartao_dia_lancamento_periodo cartao_dia_lancamento_periodo @relation(fields: [periodoId], references: [id], onDelete: Cascade)
   cartao_dia                    cartao_dia                    @relation(fields: [cartao_dia_id], references: [id], onDelete: Cascade)
