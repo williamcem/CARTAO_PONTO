@@ -33,8 +33,6 @@ export class CriarEventosPostgresRepository implements AdicionarEventos {
 
     const eventosData = this.gerarEventos({ lancamentos });
 
-    console.log({ eventosData });
-
     const validEventosData = eventosData.filter((evento) => evento.cartaoDiaId && evento.hora);
 
     const existingEvents = await this.prisma.eventos.findMany({
@@ -150,19 +148,7 @@ export class CriarEventosPostgresRepository implements AdicionarEventos {
 
         eventosExcendentes = [];
       }
-
-      // const excedentePositivo = saida.diff(horarioSaidaEsperado, "minutes");
-      // if (Math.abs(excedentePositivo) > 5) {
-      //   console.log("AQUI")
-      //   excedenteForaDoIntervalo = true;
-      // }
     });
-
-    // VERIFICAR SE EXCEDEU
-
-    console.log(eventos, "____", eventosExcendentes);
-
-    // SE SIM - REGISTRAR EVENTOS
 
     return eventos;
   }
@@ -257,7 +243,6 @@ export class CriarEventosPostgresRepository implements AdicionarEventos {
     }
 
     if (excedeu) {
-      // eventosExcendentes.push(eventoExcedentePositivo);
       console.log(
         `Evento criado: ${eventoExcedentePositivo.hora} - Tipo: ${eventoExcedentePositivo.tipoId} - Minutos: ${eventoExcedentePositivo.minutos}`,
       );
@@ -315,7 +300,6 @@ export class CriarEventosPostgresRepository implements AdicionarEventos {
       }
 
       if (excedeu) {
-        // eventosExcendentes.push(eventoExcedentePositivo);
         console.log(
           `Evento criado000000000: ${eventoExcedentePositivo.hora} - Tipo: ${eventoExcedentePositivo.tipoId} - Minutos: ${eventoExcedentePositivo.minutos}`,
         );
@@ -354,7 +338,6 @@ export class CriarEventosPostgresRepository implements AdicionarEventos {
       }
 
       if (excedeu) {
-        // eventosExcendentes.push(eventoExcedentePositivo);
         console.log(
           `Evento criado: ${eventoExcedentePositivo.hora} - Tipo: ${eventoExcedentePositivo.tipoId} - Minutos: ${eventoExcedentePositivo.minutos}`,
         );
