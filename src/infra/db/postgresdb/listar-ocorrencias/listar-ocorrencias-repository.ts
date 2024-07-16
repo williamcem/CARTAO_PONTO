@@ -86,6 +86,7 @@ export class OcorrenciaPostgresRepository implements ListarOcorrencias {
       where: {
         identificacao: identificacao,
         localidadeId: localidade,
+        cartao: { every: { cartao_dia: { every: { cartao_dia_lancamentos: { every: { validadoPeloOperador: true } } } } } },
       },
       include: {
         cartao: {
