@@ -239,6 +239,7 @@ export class CriarEventosPostgresRepository implements AdicionarEventos {
       funcionarioId: lancamento.cartao_dia.cartao.funcionario.id,
       minutos: horarioEntradaEsperado1.diff(entrada, "minutes"),
     };
+
     if (eventoExcedentePositivo.minutos < 0) {
       eventoExcedentePositivo.tipoId = 2;
     }
