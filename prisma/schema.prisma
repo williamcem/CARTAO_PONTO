@@ -183,6 +183,7 @@ model funcionarios_afastados {
   funcionarioId Int
   statusId      Int
   userName      String?
+  diaId         Int
 
   funcionario                   funcionario?                  @relation(fields: [funcionarioId], references: [id])
   funcionarios_afastados_status funcionarios_afastados_status @relation(fields: [statusId], references: [id], onDelete: Cascade)
@@ -197,20 +198,55 @@ model funcionarios_afastados_status {
 }
 
 model atestado_funcionario {
-  id               Int      @id @default(autoincrement())
-  nome_funcionario String
-  identificacao    String
-  inicio           DateTime
-  fim              DateTime
-  saida            Int?
-  retorno          Int?
-  tipo             String
-  grupo_cid        String
-  descricao        String
-  userName         String?
-  funcionarioId    Int?
+  id                 Int      @id @default(autoincrement())
+  inicio             DateTime
+  fim                DateTime
+  grupo_cid          String?
+  acidente_trabalho  Boolean
+  proprio            Boolean
+  tipoAcompanhanteId Int?
+  descricao          String?
+  userName           String?
+  funcionarioId      Int?
+  tipoId             Int?
+  statusId           Int?
+  idade_paciente     Int?
+  ocupacaoId         Int?
+  observacao         String
 
-  funcionario funcionario? @relation(fields: [funcionarioId], references: [id])
+  tipos_documentos  tipos_documentos?  @relation(fields: [tipoId], references: [id])
+  funcionario       funcionario?       @relation(fields: [funcionarioId], references: [id])
+  tipo_acompanhante tipo_acompanhante? @relation(fields: [tipoAcompanhanteId], references: [id])
+  tipo_ocupacao     tipo_ocupacao?     @relation(fields: [ocupacaoId], references: [id])
+  tipo_status       tipo_status?       @relation(fields: [statusId], references: [id])
+}
+
+model tipos_documentos {
+  id   Int    @id
+  nome String @unique
+
+  atestado_funcionario atestado_funcionario[]
+}
+
+model tipo_acompanhante {
+  id   Int    @id
+  nome String @unique
+
+  atestado_funcionario atestado_funcionario[]
+}
+
+model tipo_ocupacao {
+  id   Int    @id
+  nome String @unique
+
+  atestado_funcionario atestado_funcionario[]
+}
+
+model tipo_status {
+  id   Int    @id
+  nome String @unique
+
+  atestado_funcionario atestado_funcionario[]
 }
 
 model descricaco_cid {
