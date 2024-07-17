@@ -17,7 +17,10 @@ export class OcorrenciaGeralPostgresRepository implements ListarOcorrenciasGeral
     }[];
   }> {
     const funcionarios = await this.prisma.funcionario.findMany({
-      where: { localidadeId: localidade },
+      where: {
+        localidadeId: localidade,
+        cartao: { some: { cartao_dia: { some: { cartao_dia_lancamentos: { some: { validadoPeloOperador: true } } } } } },
+      },
       include: {
         cartao: {
           include: {
