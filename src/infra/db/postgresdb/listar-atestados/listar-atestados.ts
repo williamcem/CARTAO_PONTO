@@ -11,6 +11,19 @@ export class ListarAtestadoRepsository implements ListarAtestado {
   }
 
   public async list(): Promise<{ id: number }[]> {
-    return await this.prisma.atestado_funcionario.findMany();
+    return await this.prisma.atestado_funcionario.findMany({
+      where: {
+        tipo_status: {
+          id: 1, // Assumindo que 'tipo_status' é uma relação e você quer filtrar pelo campo 'id' dentro dela
+        },
+      },
+      include: {
+        funcionario: true,
+        tipo_acompanhante: true,
+        tipo_ocupacao: true,
+        tipo_status: true,
+        tipos_documentos: true,
+      },
+    });
   }
 }
