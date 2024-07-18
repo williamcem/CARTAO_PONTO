@@ -200,9 +200,9 @@ model funcionarios_afastados_status {
 }
 
 model atestado_funcionario {
-  id                 Int      @id @default(autoincrement())
-  inicio             DateTime
-  fim                DateTime
+  id                 Int       @id @default(autoincrement())
+  inicio             DateTime?
+  fim                DateTime?
   grupo_cid          String?
   acidente_trabalho  Boolean
   proprio            Boolean
