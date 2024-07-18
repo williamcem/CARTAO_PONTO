@@ -88,7 +88,7 @@ export class ConfirmarLancaDiaController implements Controller {
 
       if (!updated) serverError();
 
-      return ok({ message: "Salvo com sucesso" });
+      return ok({ message: "Horários confirmados com sucesso" });
     } catch (error) {
       console.error(error);
       return serverError();

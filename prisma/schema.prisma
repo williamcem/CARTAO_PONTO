@@ -134,6 +134,7 @@ model cartao_dia {
   cartao                  cartao                  @relation(fields: [cartaoId], references: [id], onDelete: Cascade)
   cartao_dia_lancamentos  cartao_dia_lancamento[]
   eventos                 eventos[]
+  atestado_abonos         atestado_abono[]
 
   @@unique([cartaoId, data])
 }
@@ -199,27 +200,40 @@ model funcionarios_afastados_status {
 }
 
 model atestado_funcionario {
-  id                 Int      @id @default(autoincrement())
-  inicio             DateTime
-  fim                DateTime
+  id                 Int       @id @default(autoincrement())
+  inicio             DateTime?
+  fim                DateTime?
   grupo_cid          String?
   acidente_trabalho  Boolean
   proprio            Boolean
   tipoAcompanhanteId Int?
   descricao          String?
   userName           String?
-  funcionarioId      Int?
-  tipoId             Int?
-  statusId           Int?
+  funcionarioId      Int
+  tipoId             Int
+  statusId           Int
   idade_paciente     Int?
   ocupacaoId         Int?
   observacao         String
 
-  tipos_documentos  tipos_documentos?  @relation(fields: [tipoId], references: [id])
-  funcionario       funcionario?       @relation(fields: [funcionarioId], references: [id])
+  tipos_documentos  tipos_documentos   @relation(fields: [tipoId], references: [id])
+  funcionario       funcionario        @relation(fields: [funcionarioId], references: [id])
   tipo_acompanhante tipo_acompanhante? @relation(fields: [tipoAcompanhanteId], references: [id])
   tipo_ocupacao     tipo_ocupacao?     @relation(fields: [ocupacaoId], references: [id])
   tipo_status       tipo_status?       @relation(fields: [statusId], references: [id])
+  atestado_abonos   atestado_abono[]
+}
+
+model atestado_abono {
+  id                   Int                  @id @default(autoincrement())
+  atestadoId           Int
+  cartaoDiaId          Int
+  minutos              Int
+  userName             String
+  atestado_funcionario atestado_funcionario @relation(fields: [atestadoId], references: [id])
+  cartao_dia           cartao_dia           @relation(fields: [cartaoDiaId], references: [id])
+
+  @@unique([cartaoDiaId, atestadoId])
 }
 
 model tipos_documentos {
