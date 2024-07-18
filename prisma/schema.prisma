@@ -232,6 +232,8 @@ model atestado_abono {
   userName             String
   atestado_funcionario atestado_funcionario @relation(fields: [atestadoId], references: [id])
   cartao_dia           cartao_dia           @relation(fields: [cartaoDiaId], references: [id])
+
+  @@unique([cartaoDiaId, atestadoId])
 }
 
 model tipos_documentos {
