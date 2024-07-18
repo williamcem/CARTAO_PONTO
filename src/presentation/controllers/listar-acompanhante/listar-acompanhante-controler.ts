@@ -1,10 +1,10 @@
-import { ListarLancamentoRepsository } from "@infra/db/postgresdb/listar-status-lancamento-repository/listar-status-lancamento-repository";
+import { ListarAcompanahanteRepsository } from "@infra/db/postgresdb/listar-acompanhante/listar-acompanhante-repository";
 
 import { ok, serverError } from "../../helpers/http-helpers";
 import { Controller, HttpResponse } from "./listar-acompanhante-protocols";
 
-export class ListarStatusController implements Controller {
-  constructor(private readonly localidadePostgresRepository: ListarLancamentoRepsository) {}
+export class ListarAcompanhanteController implements Controller {
+  constructor(private readonly localidadePostgresRepository: ListarAcompanahanteRepsository) {}
 
   async handle(): Promise<HttpResponse> {
     try {

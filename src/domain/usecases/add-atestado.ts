@@ -2,6 +2,7 @@ import { AtestadoModel } from "../models/atestado";
 
 export interface AddAtestadoModel {
   id?: number;
+  data: Date;
   inicio: Date;
   fim: Date;
   grupo_cid?: string;
@@ -13,9 +14,9 @@ export interface AddAtestadoModel {
   tipoAcompanhanteId?: number;
   idade_paciente?: number;
   acidente_trabalho: boolean;
-  proprio: boolean;
-  observacao: string;
+  acao: number;
   statusId: number;
+  observacao: string;
 }
 
 export interface AddAtestado {

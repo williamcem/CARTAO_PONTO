@@ -21,18 +21,17 @@ export class AtestadoController implements Controller {
         tipoAcompanhanteId,
         idade_paciente,
         acidente_trabalho,
-        proprio,
-        aprovado,
+        acao,
         observacao,
         statusId,
+        data,
       } = httpRequest.body;
 
-      if (!inicio) return badRequest(new FuncionarioParamError("Falta inicio dio atestado!"));
-      if (!fim) return badRequest(new FuncionarioParamError("Falta fim do atestado!"));
       if (!userName) return badRequest(new FuncionarioParamError("Falta Usuário!"));
       if (!tipoId) return badRequest(new FuncionarioParamError("Falta o tipo do atestado!"));
       if (!funcionarioId) return badRequest(new FuncionarioParamError("Falta funcionárioId!"));
-      if (!observacao) return badRequest(new FuncionarioParamError("Falta observação!"));
+      if (!acao) return badRequest(new FuncionarioParamError("Falta escolher a ação caso seja recusado!"));
+      if (!data) return badRequest(new FuncionarioParamError("Falta a data do atestado!"));
 
       const atestadoSalvo = await this.atestadoRepository.add({
         inicio,
@@ -46,9 +45,10 @@ export class AtestadoController implements Controller {
         tipoAcompanhanteId,
         idade_paciente,
         acidente_trabalho,
-        proprio,
-        observacao,
+        acao,
         statusId,
+        data,
+        observacao,
       });
 
       if (!atestadoSalvo) throw "Erro ao salvar atestado!";

@@ -199,13 +199,13 @@ var AtestadoRepository = class {
     try {
       const savedAtestado = await this.prisma.atestado_funcionario.create({
         data: {
+          data: input.data,
           inicio: input.inicio,
           fim: input.fim,
           descricao: input.descricao,
           userName: input.userName,
-          acidente_trabalho: false,
-          proprio: false,
-          observacao: input.observacao,
+          acidente_trabalho: input.acidente_trabalho,
+          acao: input.acao,
           idade_paciente: input.idade_paciente,
           grupo_cid: input.grupo_cid,
           tipoAcompanhanteId: input.tipoAcompanhanteId,
@@ -213,10 +213,6 @@ var AtestadoRepository = class {
           ocupacaoId: input.ocupacaoId,
           tipoId: input.tipoId,
           statusId: 1
-          // funcionario: { connect: { id: input.funcionarioId } },
-          // tipos_documentos: { connect: { id: input.tipoId } },
-          // tipo_ocupacao: { connect: { id: input.ocupacaoId } },
-          // tipo_status: { connect: { id: 1 } },
         }
       });
       return !!savedAtestado;
@@ -254,23 +250,21 @@ var AtestadoController = class {
         tipoAcompanhanteId,
         idade_paciente,
         acidente_trabalho,
-        proprio,
-        aprovado,
+        acao,
         observacao,
-        statusId
+        statusId,
+        data
       } = httpRequest.body;
-      if (!inicio)
-        return badRequest(new FuncionarioParamError("Falta inicio dio atestado!"));
-      if (!fim)
-        return badRequest(new FuncionarioParamError("Falta fim do atestado!"));
       if (!userName)
         return badRequest(new FuncionarioParamError("Falta Usu\xE1rio!"));
       if (!tipoId)
         return badRequest(new FuncionarioParamError("Falta o tipo do atestado!"));
       if (!funcionarioId)
         return badRequest(new FuncionarioParamError("Falta funcion\xE1rioId!"));
-      if (!observacao)
-        return badRequest(new FuncionarioParamError("Falta observa\xE7\xE3o!"));
+      if (!acao)
+        return badRequest(new FuncionarioParamError("Falta escolher a a\xE7\xE3o caso seja recusado!"));
+      if (!data)
+        return badRequest(new FuncionarioParamError("Falta a data do atestado!"));
       const atestadoSalvo = await this.atestadoRepository.add({
         inicio,
         fim,
@@ -283,9 +277,10 @@ var AtestadoController = class {
         tipoAcompanhanteId,
         idade_paciente,
         acidente_trabalho,
-        proprio,
-        observacao,
-        statusId
+        acao,
+        statusId,
+        data,
+        observacao
       });
       if (!atestadoSalvo)
         throw "Erro ao salvar atestado!";
@@ -309,6 +304,133 @@ var route2 = (router) => {
   router.post("/cadastrar-atestado", adaptRoute(makeCadastrarAtestadosController()));
 };
 var cadastrar_atestado_default = route2;
+
+// src/infra/db/postgresdb/atestado-aprovado-repository/atestado-aprovado-repository.ts
+var AtestadoAprovadoRepository = class {
+  prisma;
+  constructor() {
+    this.prisma = prisma;
+  }
+  async addInicioFim(input) {
+    try {
+      const savedAtestado = await this.prisma.atestado_funcionario.update({
+        where: {
+          id: input.id
+        },
+        data: {
+          inicio: input.inicio,
+          fim: input.fim,
+          statusId: 2
+        }
+      });
+      return !!savedAtestado;
+    } catch (error) {
+      console.error("Erro ao atualizar atestado:", error);
+      return false;
+    }
+  }
+};
+
+// src/presentation/controllers/cadastrar-atestado-aprovado/cadastrar-atestado-aprovado.ts
+var AtestadoAprovadoController = class {
+  constructor(atestadoAprovadoRepository) {
+    this.atestadoAprovadoRepository = atestadoAprovadoRepository;
+  }
+  async handle(httpRequest) {
+    try {
+      const { id, inicio, fim, statusId } = httpRequest.body;
+      if (!id)
+        return badRequest(new FuncionarioParamError("Falta o ID do atestado!"));
+      if (!inicio)
+        return badRequest(new FuncionarioParamError("Falta a data de in\xEDcio!"));
+      if (!fim)
+        return badRequest(new FuncionarioParamError("Falta a data de fim!"));
+      const result = await this.atestadoAprovadoRepository.addInicioFim({ id, inicio, fim, statusId });
+      if (!result)
+        throw new Error("Erro ao atualizar atestado!");
+      return ok({ message: "Atestado atualizado com sucesso" });
+    } catch (error) {
+      console.error("Erro ao atualizar atestado:", error);
+      return serverError();
+    }
+  }
+};
+
+// src/main/factories/cadastrar-atestado-aprovado.ts
+var makeCadastrarAtestadoAprovadoController = () => {
+  const atestadoAprovadoRepository = new AtestadoAprovadoRepository();
+  const atestadoAprovadoController = new AtestadoAprovadoController(atestadoAprovadoRepository);
+  return new LogControllerDecorator(atestadoAprovadoController);
+};
+
+// src/main/routes/horarios/cadastrar-atestado-aprovado-routes.ts
+var route3 = (router) => {
+  router.put("/cadastrar-atestado-aprovado", adaptRoute(makeCadastrarAtestadoAprovadoController()));
+};
+var cadastrar_atestado_aprovado_routes_default = route3;
+
+// src/infra/db/postgresdb/atestado-recusado-repository/atestado-recusado-repository.ts
+var AtestadoRecusadoRepository = class {
+  prisma;
+  constructor() {
+    this.prisma = prisma;
+  }
+  async addObservacao(input) {
+    try {
+      const savedAtestado = await this.prisma.atestado_funcionario.update({
+        where: {
+          id: input.id
+        },
+        data: {
+          inicio: input.inicio,
+          fim: input.fim,
+          statusId: 3,
+          observacao: input.observacao
+        }
+      });
+      return !!savedAtestado;
+    } catch (error) {
+      console.error("Erro ao atualizar atestado:", error);
+      return false;
+    }
+  }
+};
+
+// src/presentation/controllers/cadastrar-atestado-recusado/cadastrar-atestado-recusado.ts
+var AtestadoRecusadoController = class {
+  constructor(atestadoAprovadoRepository) {
+    this.atestadoAprovadoRepository = atestadoAprovadoRepository;
+  }
+  async handle(httpRequest) {
+    try {
+      const { id, inicio, fim, statusId, observacao } = httpRequest.body;
+      if (!id)
+        return badRequest(new FuncionarioParamError("Falta o ID do atestado!"));
+      if (!observacao)
+        return badRequest(new FuncionarioParamError("Falta a data de fim!"));
+      const result = await this.atestadoAprovadoRepository.addObservacao({ id, inicio, fim, statusId, observacao });
+      if (!result)
+        throw new Error("Erro ao atualizar atestado!");
+      return ok({ message: "Atestado atualizado com sucesso" });
+    } catch (error) {
+      console.error("Erro ao atualizar atestado:", error);
+      return serverError();
+    }
+  }
+};
+
+// src/main/factories/cadastrar-atestado-recusado.ts
+var makeCadastrarAtestadoRecusadoController = () => {
+  const atestadoRecusadoRepository = new AtestadoRecusadoRepository();
+  const atestadoRecusadoController = new AtestadoRecusadoController(atestadoRecusadoRepository);
+  return new LogControllerDecorator(atestadoRecusadoController);
+};
+
+// src/main/routes/horarios/cadastrar-atestado-recusado-routes.ts
+var route4 = (router) => {
+  router.put("/cadastrar-atestado-recusado", adaptRoute(makeCadastrarAtestadoRecusadoController()));
+};
+var cadastrar_atestado_recusado_routes_default = route4;
 
 // src/infra/db/postgresdb/calcular-resumo/utils.ts
 var import_moment = __toESM(require("moment"), 1);
@@ -545,10 +667,134 @@ var makeCalcularresumoController = () => {
 };
 
 // src/main/routes/horarios/calcular-resumo-routes.ts
-var route3 = (router) => {
+var route5 = (router) => {
   router.get("/calcular-resumo", adaptRoute(makeCalcularresumoController()));
 };
-var calcular_resumo_routes_default = route3;
+var calcular_resumo_routes_default = route5;
+
+// src/presentation/controllers/confirmar-lanca-dia/confirmar-lanca-dia.ts
+var ConfirmarLancaDiaController = class {
+  constructor(confirmarLancaDiaPostgresRepository) {
+    this.confirmarLancaDiaPostgresRepository = confirmarLancaDiaPostgresRepository;
+  }
+  async handle(httpRequest) {
+    try {
+      const {
+        cartao_dia_id,
+        userName,
+        cartao_dia_lancamentos
+      } = httpRequest?.body;
+      if (!cartao_dia_id)
+        return badRequest(new FuncionarioParamError("Falta sequencia do cart\xE3o!"));
+      if (!userName)
+        return badRequest(new FuncionarioParamError("Falta usu\xE1rio para lan\xE7ar cart\xE3o"));
+      if (!cartao_dia_lancamentos)
+        return badRequest(new FuncionarioParamError("Falta objeto cartao_dia_lancamentos"));
+      if (cartao_dia_lancamentos.length == 0)
+        return badRequest(new FuncionarioParamError("Falta cartao_dia_lancamentos"));
+      let error = "";
+      cartao_dia_lancamentos.map((lancamento, index) => {
+        console.log(lancamento.periodoId, !Number(lancamento.periodoId));
+        console.log(lancamento.entrada, !new Date(lancamento.entrada).getTime());
+        console.log(lancamento.saida, !new Date(lancamento.saida).getTime());
+        if (!Number(lancamento.periodoId))
+          error = `${error}
+Falta periodo do lan\xE7amento no cartao_dia_lancamentos `;
+        if (!new Date(lancamento.entrada).getTime())
+          error = `${error}
+Data do lan\xE7amento de entrada inv\xE1lida no cartao_dia_lancamentos`;
+        if (!new Date(lancamento.saida).getTime())
+          error = `${error}
+Data do lan\xE7amento de sa\xEDda inv\xE1lida no cartao_dia_lancamentos`;
+        cartao_dia_lancamentos[index].entrada = new Date(cartao_dia_lancamentos[index].entrada);
+        cartao_dia_lancamentos[index].saida = new Date(cartao_dia_lancamentos[index].saida);
+      });
+      if (error)
+        return badRequest(new FuncionarioParamError(error));
+      const dia = await this.confirmarLancaDiaPostgresRepository.findFisrt({ id: Number(cartao_dia_id) });
+      if (!dia)
+        return badRequest(new FuncionarioParamError("Dia do cart\xE3o n\xE3o localizado!"));
+      dia.lancamentos.map((lancamento) => {
+        if (lancamento.validadoPeloOperador)
+          error = "Lan\xE7amento j\xE1 validado!";
+      });
+      if (error)
+        return badRequest(new FuncionarioParamError(error));
+      cartao_dia_lancamentos.map((lancamento) => {
+        const existDb = dia.lancamentos.find(
+          (lancamentoDb) => lancamentoDb.entrada?.getTime() === lancamento.entrada.getTime() && lancamentoDb.saida?.getTime() === lancamento.saida.getTime() && lancamento.periodoId === lancamentoDb.periodoId
+        );
+        if (!existDb)
+          error = `O ${lancamento.periodoId}\xBA per\xEDodo n\xE3o \xE9 igual do primeiro lan\xE7amento!`;
+      });
+      if (error)
+        return badRequest(new FuncionarioParamError(error));
+      dia.lancamentos.map((lancamentoDb) => {
+        const exist = cartao_dia_lancamentos.find(
+          (lancamento) => lancamento.entrada.getTime() === lancamentoDb.entrada?.getTime() && lancamento.saida.getTime() === lancamentoDb.saida?.getTime() && lancamento.periodoId === lancamentoDb.periodoId
+        );
+        if (!exist)
+          error = `O lan\xE7amento do ${lancamentoDb.periodoId}\xBA periodo n\xE3o informado!`;
+      });
+      if (error)
+        return badRequest(new FuncionarioParamError(error));
+      const updated = await this.confirmarLancaDiaPostgresRepository.update(
+        dia.lancamentos.map((lancamento) => ({
+          id: lancamento.id
+        }))
+      );
+      if (!updated)
+        serverError();
+      return ok({ message: "Salvo com sucesso" });
+    } catch (error) {
+      console.error(error);
+      return serverError();
+    }
+  }
+};
+
+// src/infra/db/postgresdb/confirmar-lanca-dia/confirmar-lancar-dia.ts
+var ConfirmarLancaDiaPostgresRepository = class {
+  prisma;
+  constructor() {
+    this.prisma = prisma;
+  }
+  async findFisrt(input) {
+    const result = await this.prisma.cartao_dia.findFirst({ where: { id: input.id }, include: { cartao_dia_lancamentos: true } });
+    if (!result)
+      return void 0;
+    return {
+      id: result.id,
+      lancamentos: result.cartao_dia_lancamentos.map((lancamento) => ({
+        id: lancamento.id,
+        entrada: lancamento.entrada,
+        saida: lancamento.saida,
+        validadoPeloOperador: lancamento.validadoPeloOperador,
+        periodoId: lancamento.periodoId
+      }))
+    };
+  }
+  async update(input) {
+    const query = [];
+    input.map((a) => {
+      query.push(this.prisma.cartao_dia_lancamento.update({ where: { id: a.id }, data: { validadoPeloOperador: true } }));
+    });
+    return Boolean((await this.prisma.$transaction(query)).length);
+  }
+};
+
+// src/main/factories/confirmar-lancar-dia.ts
+var makeConfirmarLancarDiaController = () => {
+  const confirmarLancaDiaPostgresRepository = new ConfirmarLancaDiaPostgresRepository();
+  const confirmarLancaDiaController = new ConfirmarLancaDiaController(confirmarLancaDiaPostgresRepository);
+  return new LogControllerDecorator(confirmarLancaDiaController);
+};
+
+// src/main/routes/horarios/confirmar-lanca-dia-routes.ts
+var route6 = (router) => {
+  router.put("/confirmar-lanca-dia", adaptRoute(makeConfirmarLancarDiaController()));
+};
+var confirmar_lanca_dia_routes_default = route6;
 
 // src/infra/db/postgresdb/eventos/eventos-repository.ts
 var import_moment4 = __toESM(require("moment"), 1);
@@ -851,12 +1097,8 @@ var CriarEventosPostgresRepository = class {
       console.log(
         `Evento criado: ${eventoExcedentePositivo.hora} - Tipo: ${eventoExcedentePositivo.tipoId} - Minutos: ${eventoExcedentePositivo.minutos}`
       );
-    } else {
-      const eventoPositivo = {
-        ...eventoExcedentePositivo,
-        tipoId: 9,
-        minutos: Math.abs(eventoExcedentePositivo.minutos)
-      };
+    } else if (eventoExcedentePositivo.minutos < 0) {
+      const eventoPositivo = { ...eventoExcedentePositivo, tipoId: 9, minutos: Math.abs(eventoExcedentePositivo.minutos) };
       eventos.push(eventoPositivo);
       console.log(
         `Evento positivo criado: ${eventoPositivo.hora} - Tipo: ${eventoPositivo.tipoId} - Minutos: ${eventoPositivo.minutos}`
@@ -1011,10 +1253,10 @@ var makeCriarEventosController = () => {
 };
 
 // src/main/routes/horarios/criar-eventos.ts
-var route4 = (router) => {
+var route7 = (router) => {
   router.post("/eventos", adaptRoute(makeCriarEventosController()));
 };
-var criar_eventos_default = route4;
+var criar_eventos_default = route7;
 
 // src/data/usecase/delete-cartao/db-add-dele-cartoa.ts
 var DbAddDeleteCartao = class {
@@ -1087,10 +1329,10 @@ var makeDeleteCartaoController = () => {
 };
 
 // src/main/routes/horarios/delete-cartao-routes.ts
-var route5 = (router) => {
+var route8 = (router) => {
   router.delete("/deletar-cartao", adaptRoute(makeDeleteCartaoController()));
 };
-var delete_cartao_routes_default = route5;
+var delete_cartao_routes_default = route8;
 
 // src/data/usecase/delete-dia-horarios/db-add-delete.ts
 var DbAddDelete = class {
@@ -1159,10 +1401,10 @@ var makeDeleteController = () => {
 };
 
 // src/main/routes/horarios/delete-dia-horarios-routes.ts
-var route6 = (router) => {
+var route9 = (router) => {
   router.delete("/deletar", adaptRoute(makeDeleteController()));
 };
-var delete_dia_horarios_routes_default = route6;
+var delete_dia_horarios_routes_default = route9;
 
 // src/main/expotações-demitidos/exportar-dados.ts
 var import_fs = __toESM(require("fs"), 1);
@@ -1301,10 +1543,10 @@ var ExportarDemitidosController = class {
 };
 
 // src/main/routes/horarios/export-demitidos-routes.ts
-var route7 = (router) => {
+var route10 = (router) => {
   router.post("/exportarDemitidos-lancamentos", adaptRoute(new ExportarDemitidosController()));
 };
-var export_demitidos_routes_default = route7;
+var export_demitidos_routes_default = route10;
 
 // src/main/exportacoes-geral/exportar-dados.ts
 var import_fs2 = __toESM(require("fs"), 1);
@@ -1415,10 +1657,10 @@ var ExportarController = class {
 };
 
 // src/main/routes/horarios/export-geral-routes.ts
-var route8 = (router) => {
+var route11 = (router) => {
   router.post("/exportar-lancamentos", adaptRoute(new ExportarController()));
 };
-var export_geral_routes_default = route8;
+var export_geral_routes_default = route11;
 
 // src/infra/db/postgresdb/get-funcionario/get-funcionario.ts
 var FuncionarioPostgresRepository = class {
@@ -1498,10 +1740,10 @@ var makeGetFuncionarioController = () => {
 };
 
 // src/main/routes/horarios/get-funcionario-routes.ts
-var route9 = (router) => {
+var route12 = (router) => {
   router.get("/funcionario", adaptRoute(makeGetFuncionarioController()));
 };
-var get_funcionario_routes_default = route9;
+var get_funcionario_routes_default = route12;
 
 // src/infra/db/postgresdb/lancar-dia/lancar-dia.ts
 var LancarDiaPostgresRepository = class {
@@ -1626,23 +1868,62 @@ var makeLancarDiaController = () => {
 };
 
 // src/main/routes/horarios/lancar-dia-routes.ts
-var route10 = (router) => {
+var route13 = (router) => {
   router.post("/lancar-dia", adaptRoute(makeLancarDiaController()));
 };
-var lancar_dia_routes_default = route10;
+var lancar_dia_routes_default = route13;
 
-// src/infra/db/postgresdb/listar-atestados/listar-atestados.ts
+// src/infra/db/postgresdb/listar-acompanhante/listar-acompanhante-repository.ts
+var ListarAcompanahanteRepsository = class {
+  prisma;
+  constructor() {
+    this.prisma = prisma;
+  }
+  async list() {
+    return await this.prisma.tipo_acompanhante.findMany();
+  }
+};
+
+// src/presentation/controllers/listar-acompanhante/listar-acompanhante-controler.ts
+var ListarAcompanhanteController = class {
+  constructor(localidadePostgresRepository) {
+    this.localidadePostgresRepository = localidadePostgresRepository;
+  }
+  async handle() {
+    try {
+      const lancamentos = await this.localidadePostgresRepository.list();
+      return ok({ lancamentos });
+    } catch (error) {
+      console.error(error);
+      return serverError();
+    }
+  }
+};
+
+// src/main/factories/listar-acompanhante.ts
+var makeListarAcompanhanteController = () => {
+  const listarAcompanahanteRepsository = new ListarAcompanahanteRepsository();
+  const listarAcompanhanteController = new ListarAcompanhanteController(listarAcompanahanteRepsository);
+  return new LogControllerDecorator(listarAcompanhanteController);
+};
+
+// src/main/routes/horarios/listar-acompanhante-routes.ts
+var route14 = (router) => {
+  router.get("/listar-acompanhante", adaptRoute(makeListarAcompanhanteController()));
+};
+var listar_acompanhante_routes_default = route14;
+
+// src/infra/db/postgresdb/listar-atestados-não-analisados/listar-atestados.ts
 var ListarAtestadoRepsository = class {
   prisma;
   constructor() {
     this.prisma = prisma;
   }
   async list() {
-    return await this.prisma.atestado_funcionario.findMany({
+    const atestados = await this.prisma.atestado_funcionario.findMany({
       where: {
         tipo_status: {
           id: 1
-          // Assumindo que 'tipo_status' é uma relação e você quer filtrar pelo campo 'id' dentro dela
         }
       },
       include: {
@@ -1650,9 +1931,29 @@ var ListarAtestadoRepsository = class {
         tipo_acompanhante: true,
         tipo_ocupacao: true,
         tipo_status: true,
-        tipos_documentos: true
+        tipos_documentos: true,
+        tipo_eventos: true
       }
     });
+    return atestados.map((atestado) => ({
+      data: atestado.data,
+      id: atestado.id,
+      inicio: atestado.inicio,
+      fim: atestado.fim,
+      grupo_cid: atestado.grupo_cid,
+      acidente_trabalho: atestado.acidente_trabalho,
+      descricao: atestado.descricao,
+      userName: atestado.userName,
+      funcionarioId: atestado.funcionarioId,
+      idade_paciente: atestado.idade_paciente,
+      nome: atestado.funcionario?.nome,
+      identificacao: atestado.funcionario?.identificacao,
+      nomeAcao: atestado.tipo_eventos?.nome,
+      nomeAcompanhante: atestado.tipo_acompanhante?.nome,
+      nomeOcupacao: atestado.tipo_ocupacao?.nome,
+      nomeStatus: atestado.tipo_status?.nome,
+      nomeDocumento: atestado.tipos_documentos?.nome
+    }));
   }
 };
 
@@ -1680,10 +1981,10 @@ var makeListarAtestadosController = () => {
 };
 
 // src/main/routes/horarios/listar-atestados-routes.ts
-var route11 = (router) => {
+var route15 = (router) => {
   router.get("/listar-atestado", adaptRoute(makeListarAtestadosController()));
 };
-var listar_atestados_routes_default = route11;
+var listar_atestados_routes_default = route15;
 
 // src/infra/db/postgresdb/listar-descricacao-repository/listar-descricacao-repository.ts
 var ListarDescricacoRepsository = class {
@@ -1720,10 +2021,50 @@ var makeDescricacoController = () => {
 };
 
 // src/main/routes/horarios/listar-descricacao-routes.ts
-var route12 = (router) => {
+var route16 = (router) => {
   router.get("/descricacao", adaptRoute(makeDescricacoController()));
 };
-var listar_descricacao_routes_default = route12;
+var listar_descricacao_routes_default = route16;
+
+// src/infra/db/postgresdb/listar-documento/listar-documento.ts
+var ListarDocumentoRepsository = class {
+  prisma;
+  constructor() {
+    this.prisma = prisma;
+  }
+  async list() {
+    return await this.prisma.tipos_documentos.findMany();
+  }
+};
+
+// src/presentation/controllers/listar-documento/listar-documento-controller.ts
+var ListarDocumentoController = class {
+  constructor(localidadePostgresRepository) {
+    this.localidadePostgresRepository = localidadePostgresRepository;
+  }
+  async handle() {
+    try {
+      const lancamentos = await this.localidadePostgresRepository.list();
+      return ok({ lancamentos });
+    } catch (error) {
+      console.error(error);
+      return serverError();
+    }
+  }
+};
+
+// src/main/factories/listar-documento.ts
+var makeListarDocumentoController = () => {
+  const listarDocumentoRepsository = new ListarDocumentoRepsository();
+  const listarDocumentoController = new ListarDocumentoController(listarDocumentoRepsository);
+  return new LogControllerDecorator(listarDocumentoController);
+};
+
+// src/main/routes/horarios/listar-documento-routes.ts
+var route17 = (router) => {
+  router.get("/listar-documento", adaptRoute(makeListarDocumentoController()));
+};
+var listar_documento_routes_default = route17;
 
 // src/infra/db/postgresdb/listar-filial-repository/listar-status-lancamento-repository.ts
 var ListarFilialRepsository = class {
@@ -1740,10 +2081,11 @@ var ListarFilialRepsository = class {
       }
     });
   }
-  async listByFilial(filial) {
+  // Novo método para listar por localidade
+  async listByLocalidade(localidade) {
     return await this.prisma.funcionario.findMany({
       where: {
-        filial
+        localidadeId: localidade
       },
       select: {
         id: true,
@@ -1755,12 +2097,14 @@ var ListarFilialRepsository = class {
           }
         }
       }
-    }).then((funcionarios) => funcionarios.map((func) => ({
-      id: func.id,
-      identificacao: func.identificacao,
-      nome: func.nome,
-      funcao: func.funcao.nome
-    })));
+    }).then(
+      (funcionarios) => funcionarios.map((func) => ({
+        id: func.id,
+        identificacao: func.identificacao,
+        nome: func.nome,
+        funcao: func.funcao.nome
+      }))
+    );
   }
 };
 
@@ -1771,11 +2115,11 @@ var ListarStatusController = class {
   }
   async handle(httpRequest) {
     try {
-      const { filial } = httpRequest.query;
-      if (!filial) {
-        return badRequest(new FuncionarioParamError("Filial n\xE3o fornecida"));
+      const { localidade } = httpRequest.query;
+      if (!localidade) {
+        return badRequest(new FuncionarioParamError("Localidade n\xE3o fornecida"));
       }
-      const funcionarios = await this.listarFilialRepsository.listByFilial(filial);
+      const funcionarios = await this.listarFilialRepsository.listByLocalidade(localidade);
       return ok({ funcionarios });
     } catch (error) {
       console.error(error);
@@ -1792,10 +2136,10 @@ var makeListarFilialController = () => {
 };
 
 // src/main/routes/horarios/listar-filial-routes.ts
-var route13 = (router) => {
+var route18 = (router) => {
   router.get("/listar-filial", adaptRoute(makeListarFilialController()));
 };
-var listar_filial_routes_default = route13;
+var listar_filial_routes_default = route18;
 
 // src/infra/db/postgresdb/listar-ocorrencias-geral/listar-ocorrencias-repository.ts
 var OcorrenciaGeralPostgresRepository = class {
@@ -1877,10 +2221,10 @@ var makeListarOcorrenciaGeralController = () => {
 };
 
 // src/main/routes/horarios/listar-ocorrencia-geral-routes.ts
-var route14 = (router) => {
+var route19 = (router) => {
   router.get("/ocorrencia-geral", adaptRoute(makeListarOcorrenciaGeralController()));
 };
-var listar_ocorrencia_geral_routes_default = route14;
+var listar_ocorrencia_geral_routes_default = route19;
 
 // src/infra/db/postgresdb/listar-ocorrencias/listar-ocorrencias-repository.ts
 var OcorrenciaPostgresRepository = class {
@@ -1940,7 +2284,8 @@ var OcorrenciaPostgresRepository = class {
     const funcionarios = await this.prisma.funcionario.findMany({
       where: {
         identificacao,
-        localidadeId: localidade
+        localidadeId: localidade,
+        cartao: { every: { cartao_dia: { every: { cartao_dia_lancamentos: { every: { validadoPeloOperador: true } } } } } }
       },
       include: {
         cartao: {
@@ -2068,10 +2413,50 @@ var makeListarOcorrenciasController = () => {
 };
 
 // src/main/routes/horarios/listar-ocorrencia-routes.ts
-var route15 = (router) => {
+var route20 = (router) => {
   router.get("/ocorrencia", adaptRoute(makeListarOcorrenciasController()));
 };
-var listar_ocorrencia_routes_default = route15;
+var listar_ocorrencia_routes_default = route20;
+
+// src/infra/db/postgresdb/listar-ocupacao/listar-ocupacao.ts
+var ListarOcupacaoRepsository = class {
+  prisma;
+  constructor() {
+    this.prisma = prisma;
+  }
+  async list() {
+    return await this.prisma.tipo_ocupacao.findMany();
+  }
+};
+
+// src/presentation/controllers/listar-ocupacao/listar-ocupacao-controller.ts
+var ListarOcupacaoController = class {
+  constructor(localidadePostgresRepository) {
+    this.localidadePostgresRepository = localidadePostgresRepository;
+  }
+  async handle() {
+    try {
+      const lancamentos = await this.localidadePostgresRepository.list();
+      return ok({ lancamentos });
+    } catch (error) {
+      console.error(error);
+      return serverError();
+    }
+  }
+};
+
+// src/main/factories/listar-ocupacao.ts
+var makeListarOcupacaoController = () => {
+  const listarOcupacaoRepsository = new ListarOcupacaoRepsository();
+  const listarOcupacaoController = new ListarOcupacaoController(listarOcupacaoRepsository);
+  return new LogControllerDecorator(listarOcupacaoController);
+};
+
+// src/main/routes/horarios/listar-ocupacao-routes.ts
+var route21 = (router) => {
+  router.get("/listar-ocupacao", adaptRoute(makeListarOcupacaoController()));
+};
+var listar_ocupacao_routes_default = route21;
 
 // src/infra/db/postgresdb/listar-solucoes-eventos/listar-solucoes-eventos.ts
 var SolucoesEventosPostgresRepository = class {
@@ -2113,10 +2498,101 @@ var makeTiposSolucoesController = () => {
 };
 
 // src/main/routes/horarios/listar-solucoes-eventos-routes.ts
-var route16 = (router) => {
+var route22 = (router) => {
   router.get("/tipo-evento", adaptRoute(makeTiposSolucoesController()));
 };
-var listar_solucoes_eventos_routes_default = route16;
+var listar_solucoes_eventos_routes_default = route22;
+
+// src/infra/db/postgresdb/listar-status-documento/listar-status-documento.ts
+var ListarStatusDocumentoRepsository = class {
+  prisma;
+  constructor() {
+    this.prisma = prisma;
+  }
+  async list() {
+    return await this.prisma.tipo_status.findMany({
+      where: {
+        id: {
+          in: [2, 3]
+        }
+      }
+    });
+  }
+};
+
+// src/presentation/controllers/listar-status-documento/listar-status-documento-controller.ts
+var ListarStatusDocumentoController = class {
+  constructor(localidadePostgresRepository) {
+    this.localidadePostgresRepository = localidadePostgresRepository;
+  }
+  async handle() {
+    try {
+      const lancamentos = await this.localidadePostgresRepository.list();
+      return ok({ lancamentos });
+    } catch (error) {
+      console.error(error);
+      return serverError();
+    }
+  }
+};
+
+// src/main/factories/listar-tipos-status-documento.ts
+var makeListarStatusDocumentoController = () => {
+  const listarStatusDocumentoRepsository = new ListarStatusDocumentoRepsository();
+  const listarStatusDocumentoController = new ListarStatusDocumentoController(listarStatusDocumentoRepsository);
+  return new LogControllerDecorator(listarStatusDocumentoController);
+};
+
+// src/main/routes/horarios/listar-status-documento-routes.ts
+var route23 = (router) => {
+  router.get("/listar-status-documento", adaptRoute(makeListarStatusDocumentoController()));
+};
+var listar_status_documento_routes_default = route23;
+
+// src/infra/db/postgresdb/listar-solucoes-atestado/listar-solucoes-atestado.ts
+var SolucoesAtestadoPostgresRepository = class {
+  prisma;
+  constructor() {
+    this.prisma = prisma;
+  }
+  async list() {
+    return await this.prisma.tipo_eventos.findMany({
+      where: {
+        id: {
+          in: [3, 5]
+        }
+      }
+    });
+  }
+};
+
+// src/presentation/controllers/listar-solucoes-atestado/listar-solucoes-atestado-controller.ts
+var ListarSolucoesAtestadoController = class {
+  constructor(solucoesEventosPostgresRepository) {
+    this.solucoesEventosPostgresRepository = solucoesEventosPostgresRepository;
+  }
+  async handle() {
+    try {
+      return ok(await this.solucoesEventosPostgresRepository.list());
+    } catch (error) {
+      console.error(error);
+      return serverError();
+    }
+  }
+};
+
+// src/main/factories/solucao-eventos-atestado.ts
+var makeSolucaoEventosAtestadoController = () => {
+  const solucoesAtestadoPostgresRepository = new SolucoesAtestadoPostgresRepository();
+  const listarSolucoesAtestadoController = new ListarSolucoesAtestadoController(solucoesAtestadoPostgresRepository);
+  return new LogControllerDecorator(listarSolucoesAtestadoController);
+};
+
+// src/main/routes/horarios/listar-status-solucao-atestado.ts
+var route24 = (router) => {
+  router.get("/listar-solucao-atestado", adaptRoute(makeSolucaoEventosAtestadoController()));
+};
+var listar_status_solucao_atestado_default = route24;
 
 // src/infra/db/postgresdb/procurar-localidades/procurar-localidades.ts
 var LocalidadePostgresRepository = class {
@@ -2152,10 +2628,10 @@ var makeProcurarLocalidadeController = () => {
 };
 
 // src/main/routes/horarios/procurar-localidade-routes.ts
-var route17 = (router) => {
+var route25 = (router) => {
   router.get("/localidades", adaptRoute(makeProcurarLocalidadeController()));
 };
-var procurar_localidade_routes_default = route17;
+var procurar_localidade_routes_default = route25;
 
 // src/infra/db/postgresdb/retorno-solucao/retorno-solucao-repository.ts
 var RetornoSolucaoRepository = class {
@@ -2202,10 +2678,10 @@ var makeRetornarSolucaoController = () => {
 };
 
 // src/main/routes/horarios/retornar-solucao-routes.ts
-var route18 = (router) => {
+var route26 = (router) => {
   router.post("/retornar-solucao", adaptRoute(makeRetornarSolucaoController()));
 };
-var retornar_solucao_routes_default = route18;
+var retornar_solucao_routes_default = route26;
 
 // src/infra/db/postgresdb/solucao-eventos-repository/solucao-eventos-repository.ts
 var SolucaoEventoRepository = class {
@@ -2244,6 +2720,33 @@ var SolucaoEventoRepository = class {
         // Define tratado como true no novo evento
       }
     });
+    if (tipoId === 3 || tipoId === 6) {
+      const eventosEntreMenos1EMenos5 = await this.prisma.eventos.findMany({
+        where: {
+          cartaoDiaId: eventoOriginal.cartaoDiaId,
+          minutos: { gte: -5, lte: -1 },
+          tratado: false
+        }
+      });
+      for (const evento of eventosEntreMenos1EMenos5) {
+        await this.prisma.eventos.update({
+          where: { id: evento.id },
+          data: { tratado: true }
+        });
+        console.log(`Hora do evento com minutos entre -1 e -5: ${evento.hora}`);
+        await this.prisma.eventos.create({
+          data: {
+            cartaoDiaId: evento.cartaoDiaId,
+            hora: evento.hora,
+            tipoId,
+            funcionarioId: evento.funcionarioId,
+            minutos: tipoId === 3 ? 0 : Math.abs(evento.minutos),
+            // Define minutos como 0 para tipoId 3 e positivo para tipoId 6
+            tratado: true
+          }
+        });
+      }
+    }
     return !!novoEvento;
   }
 };
@@ -2279,10 +2782,10 @@ var makeSolucaoEventosController = () => {
 };
 
 // src/main/routes/horarios/solucao-eventos-routes.ts
-var route19 = (router) => {
+var route27 = (router) => {
   router.post("/solucao-eventos", adaptRoute(makeSolucaoEventosController()));
 };
-var solucao_eventos_routes_default = route19;
+var solucao_eventos_routes_default = route27;
 
 // src/main/routes/horarios/upload-routes-routes.ts
 var import_multer = __toESM(require("multer"), 1);
@@ -2955,13 +3458,13 @@ async function importarArquivosAfastamento(req, res) {
 
 // src/main/routes/horarios/upload-routes-routes.ts
 var upload = (0, import_multer.default)();
-var route20 = (router) => {
+var route28 = (router) => {
   router.post("/uploadfuncionario", upload.single("arquivo"), (req, res) => importarArquivoFuncionario(req, res));
   router.post("/uploadcartao", upload.single("arquivo"), (req, res) => importarArquivoCartao(req, res));
   router.post("/uploadafastamento", upload.single("arquivo"), (req, res) => importarArquivosAfastamento(req, res));
   router.post("/uploadagrupotrabalho", upload.single("arquivo"), (req, res) => importarArquivoGrupoTrabalho(req, res));
 };
-var upload_routes_routes_default = route20;
+var upload_routes_routes_default = route28;
 
 // src/main/config/routes.ts
 var setupRoutes = (app2) => {
@@ -2987,6 +3490,14 @@ var setupRoutes = (app2) => {
   calcular_resumo_routes_default(router);
   retornar_solucao_routes_default(router);
   listar_filial_routes_default(router);
+  confirmar_lanca_dia_routes_default(router);
+  listar_acompanhante_routes_default(router);
+  listar_documento_routes_default(router);
+  listar_ocupacao_routes_default(router);
+  listar_status_documento_routes_default(router);
+  listar_status_solucao_atestado_default(router);
+  cadastrar_atestado_aprovado_routes_default(router);
+  cadastrar_atestado_recusado_routes_default(router);
 };
 
 // src/main/config/app.ts
