@@ -13,33 +13,40 @@ export class ListarFilialRepsository implements ListarFilial {
   // Corrigido para retornar uma lista de filiais
   public async listFilial(): Promise<{ filial: string }[]> {
     return await this.prisma.funcionario.findMany({
-      distinct: ['filial'],
+      distinct: ["filial"],
       select: {
-        filial: true
-      }
+        filial: true,
+      },
     });
   }
 
-  public async listByFilial(filial: string): Promise<{ id: number, identificacao: string, nome: string, funcao: string }[]> {
-    return await this.prisma.funcionario.findMany({
-      where: {
-        filial: filial
-      },
-      select: {
-        id: true,
-        identificacao: true,
-        nome: true,
-        funcao: {
-          select: {
-            nome: true
-          }
-        }
-      }
-    }).then(funcionarios => funcionarios.map(func => ({
-      id: func.id,
-      identificacao: func.identificacao,
-      nome: func.nome,
-      funcao: func.funcao.nome
-    })));
+  // Novo método para listar por localidade
+  public async listByLocalidade(
+    localidade: string,
+  ): Promise<{ id: number; identificacao: string; nome: string; funcao: string }[]> {
+    return await this.prisma.funcionario
+      .findMany({
+        where: {
+          localidadeId: localidade,
+        },
+        select: {
+          id: true,
+          identificacao: true,
+          nome: true,
+          funcao: {
+            select: {
+              nome: true,
+            },
+          },
+        },
+      })
+      .then((funcionarios) =>
+        funcionarios.map((func) => ({
+          id: func.id,
+          identificacao: func.identificacao,
+          nome: func.nome,
+          funcao: func.funcao.nome,
+        })),
+      );
   }
 }

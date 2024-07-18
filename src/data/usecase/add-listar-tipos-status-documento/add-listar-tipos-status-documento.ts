@@ -1,3 +1,3 @@
-export interface ListarLacamentos {
+export interface ListarTiposDocumentos {
   list(): Promise<{ nome: string }[]>;
 }

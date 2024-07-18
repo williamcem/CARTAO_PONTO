@@ -2,20 +2,20 @@ import { ListarFilialRepsository } from "@infra/db/postgresdb/listar-filial-repo
 
 import { FuncionarioParamError } from "../../errors/Funcionario-param-error";
 import { badRequest, ok, serverError } from "../../helpers/http-helpers";
-import { Controller, HttpRequest, HttpResponse } from "./listar-filial";
+import { Controller, HttpRequest, HttpResponse } from "./listar-filial-protocols";
 
 export class ListarStatusController implements Controller {
-  constructor(private readonly listarFilialRepsository: ListarFilialRepsository) { }
+  constructor(private readonly listarFilialRepsository: ListarFilialRepsository) {}
 
   async handle(httpRequest: HttpRequest): Promise<HttpResponse> {
     try {
-      const { filial } = httpRequest.query;
+      const { localidade } = httpRequest.query;
 
-      if (!filial) {
-        return badRequest(new FuncionarioParamError("Filial não fornecida"));
+      if (!localidade) {
+        return badRequest(new FuncionarioParamError("Localidade não fornecida"));
       }
 
-      const funcionarios = await this.listarFilialRepsository.listByFilial(filial);
+      const funcionarios = await this.listarFilialRepsository.listByLocalidade(localidade);
 
       return ok({ funcionarios });
     } catch (error) {

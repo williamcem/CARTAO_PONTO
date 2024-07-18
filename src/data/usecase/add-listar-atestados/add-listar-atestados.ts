@@ -5,3 +5,7 @@ export interface ListarAtestado {
 export interface ListarFilial {
   listFilial(): Promise<{ filial: string }[]>;
 }
+
+export interface ListarTodosAtestados {
+  listarTodos(): Promise<{ filial: string }[]>;
+}

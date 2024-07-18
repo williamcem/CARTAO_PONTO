@@ -1,9 +1,9 @@
 import { PrismaClient } from "@prisma/client";
 
-import {  } from "../../../../data/usecase/add-listar-tipos-acompanhante/add-listar-tipos-acompanhante";
+import { ListarAcompanhante } from "../../../../data/usecase/add-listar-tipos-acompanhante/add-listar-tipos-acompanhante";
 import { prisma } from "../../../database/Prisma";
 
-export class ListarAcompanahanteRepsository implements ListarLacamentos {
+export class ListarAcompanahanteRepsository implements ListarAcompanhante {
   private prisma: PrismaClient;
 
   constructor() {
@@ -14,4 +14,3 @@ export class ListarAcompanahanteRepsository implements ListarLacamentos {
     return await this.prisma.tipo_acompanhante.findMany();
   }
 }
-

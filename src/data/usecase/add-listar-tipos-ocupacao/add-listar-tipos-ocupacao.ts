@@ -1,3 +1,3 @@
-export interface ListarLacamentos {
+export interface ListarOcupacao {
   list(): Promise<{ nome: string }[]>;
 }

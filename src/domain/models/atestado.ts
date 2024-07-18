@@ -1,5 +1,6 @@
 export interface AtestadoModel {
   id?: number;
+  data: Date;
   inicio: Date;
   fim: Date;
   grupo_cid?: string;
@@ -11,7 +12,7 @@ export interface AtestadoModel {
   tipoAcompanhanteId?: number;
   idade_paciente?: number;
   acidente_trabalho: boolean;
-  proprio: boolean;
-  observacao: string;
+  acao: number;
   statusId: number;
+  observacao: string;
 }

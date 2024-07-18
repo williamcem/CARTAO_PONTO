@@ -199,12 +199,12 @@ model funcionarios_afastados_status {
 }
 
 model atestado_funcionario {
-  id                 Int      @id @default(autoincrement())
-  inicio             DateTime
-  fim                DateTime
+  id                 Int       @id @default(autoincrement())
+  inicio             DateTime?
+  data               DateTime
+  fim                DateTime?
   grupo_cid          String?
   acidente_trabalho  Boolean
-  proprio            Boolean
   tipoAcompanhanteId Int?
   descricao          String?
   userName           String?
@@ -213,13 +213,15 @@ model atestado_funcionario {
   statusId           Int?
   idade_paciente     Int?
   ocupacaoId         Int?
-  observacao         String
+  acao               Int
+  observacao         String?
 
   tipos_documentos  tipos_documentos?  @relation(fields: [tipoId], references: [id])
   funcionario       funcionario?       @relation(fields: [funcionarioId], references: [id])
   tipo_acompanhante tipo_acompanhante? @relation(fields: [tipoAcompanhanteId], references: [id])
   tipo_ocupacao     tipo_ocupacao?     @relation(fields: [ocupacaoId], references: [id])
   tipo_status       tipo_status?       @relation(fields: [statusId], references: [id])
+  tipo_eventos      tipo_eventos?      @relation(fields: [acao], references: [id])
 }
 
 model tipos_documentos {
@@ -271,9 +273,10 @@ model eventos {
 }
 
 model tipo_eventos {
-  id      Int       @id @default(autoincrement())
-  nome    String
-  eventos eventos[]
+  id                   Int                    @id @default(autoincrement())
+  nome                 String
+  eventos              eventos[]
+  atestado_funcionario atestado_funcionario[]
 }
 
 model grupo_trabalho {

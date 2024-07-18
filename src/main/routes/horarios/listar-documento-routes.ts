@@ -1,10 +1,10 @@
 import { Router } from "express";
 
 import { adaptRoute } from "../../adapters/express-route-adapter";
-import { makeListarAtestadosController } from "../../factories/listar-atestados";
+import { makeListarDocumentoController } from "../../factories/listar-documento";
 
 const route = (router: Router): void => {
-  router.post("/listar-atestado", adaptRoute(makeListarAtestadosController()));
+  router.get("/listar-documento", adaptRoute(makeListarDocumentoController()));
 };
 
 export default route;

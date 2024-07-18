@@ -36,6 +36,7 @@ export class SolucaoEventoRepository implements AdicionarSolucao {
       data: { tratado: true },
     });
 
+    // Cria o novo evento com os valores apropriados
     const novoEvento = await this.prisma.eventos.create({
       data: {
         cartaoDiaId: eventoOriginal.cartaoDiaId,
@@ -46,6 +47,38 @@ export class SolucaoEventoRepository implements AdicionarSolucao {
         tratado: true, // Define tratado como true no novo evento
       },
     });
+
+    // Verifica se é necessário criar eventos adicionais para tipoId 3 ou 6
+    if (tipoId === 3 || tipoId === 6) {
+      // Verificar e criar eventos para minutos entre -1 e -5
+      const eventosEntreMenos1EMenos5 = await this.prisma.eventos.findMany({
+        where: {
+          cartaoDiaId: eventoOriginal.cartaoDiaId,
+          minutos: { gte: -5, lte: -1 },
+          tratado: false,
+        },
+      });
+
+      for (const evento of eventosEntreMenos1EMenos5) {
+        await this.prisma.eventos.update({
+          where: { id: evento.id },
+          data: { tratado: true },
+        });
+
+        console.log(`Hora do evento com minutos entre -1 e -5: ${evento.hora}`);
+
+        await this.prisma.eventos.create({
+          data: {
+            cartaoDiaId: evento.cartaoDiaId,
+            hora: evento.hora,
+            tipoId: tipoId,
+            funcionarioId: evento.funcionarioId,
+            minutos: tipoId === 3 ? 0 : Math.abs(evento.minutos), // Define minutos como 0 para tipoId 3 e positivo para tipoId 6
+            tratado: true,
+          },
+        });
+      }
+    }
 
     return !!novoEvento;
   }
