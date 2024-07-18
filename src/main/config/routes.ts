@@ -29,6 +29,8 @@ import procurarLocalidade from "../routes/horarios/procurar-localidade-routes";
 import retornarsolucao from "../routes/horarios/retornar-solucao-routes";
 import solucaoeventos from "../routes/horarios/solucao-eventos-routes";
 import upload from "../routes/horarios/upload-routes-routes";
+import confirmarLancaDia from "../routes/horarios/confirmar-lanca-dia-routes";
+import respaldarAtestado from "../routes/horarios/respaldar-atestado-routes";
 
 export const setupRoutes = (app: Express): void => {
   const router = Router();
@@ -62,4 +64,5 @@ export const setupRoutes = (app: Express): void => {
   atestadoAprovado(router);
   atestadoRecusado(router);
   listarTodosAtestado(router);
+  respaldarAtestado(router);
 };
