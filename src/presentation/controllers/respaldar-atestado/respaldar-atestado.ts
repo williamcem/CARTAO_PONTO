@@ -86,23 +86,7 @@ export class RespaldarController implements Controller {
       switch (statusId) {
         case 2:
           {
-            let abonos: { cartaoDiaId: number; data: Date; minutos: number }[] = [];
-
-            abonos = this.gerarAbono(dias, { inicio, fim });
-
-            const atualizado = await this.respaldarAtestadoPostgresRepository.updateAtestado({
-              id: atestado.id,
-              statusId,
-              userName,
-              abonos,
-              observacao,
-              fim,
-              inicio,
-            });
-
-            if (!atualizado) return serverError();
-
-            message = "Abono aprovado com sucesso!";
+            message = await this.abonar({ dias, atestado: { id: atestado.id, fim, inicio, observacao, statusId }, userName });
           }
           break;
 
@@ -259,5 +243,31 @@ export class RespaldarController implements Controller {
     });
 
     return atestadoDia;
+  }
+
+  public async abonar(input: {
+    atestado: { id: number; inicio: Date; fim: Date; observacao: string; statusId: number };
+    userName: string;
+    dias: IDia[];
+  }): Promise<string> {
+    let abonos: { cartaoDiaId: number; data: Date; minutos: number }[] = [];
+
+    abonos = this.gerarAbono(input.dias, { inicio: input.atestado.inicio, fim: input.atestado.fim });
+
+    const atualizado = await this.respaldarAtestadoPostgresRepository.updateAtestado({
+      id: input.atestado.id,
+      statusId: input.atestado.statusId,
+      userName: input.userName,
+      abonos,
+      observacao: input.atestado.observacao,
+      fim: input.atestado.fim,
+      inicio: input.atestado.inicio,
+    });
+
+    if (!atualizado) return "Erro ao atualizar atestado";
+
+    const message = "Abono aprovado com sucesso!";
+
+    return message;
   }
 }

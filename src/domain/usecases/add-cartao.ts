@@ -24,5 +24,19 @@ export interface AddCartaoUpsertModel {
 }
 
 export interface AddCartoes {
-  upsert(input: CartaoUpsertModel): Promise<boolean>;
+  upsert(input: CartaoUpsertModel): Promise<
+    | {
+        id: number;
+        dias: {
+          id: number;
+          data: Date;
+          descanso: number;
+          cargaHoraria: number;
+          cargaHorariaCompleta: string;
+          cargaHorariaPrimeiroPeriodo: number;
+          cargaHorariaSegundoPeriodo: number;
+        }[];
+      }
+    | undefined
+  >;
 }

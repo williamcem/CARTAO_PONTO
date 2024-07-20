@@ -7,6 +7,8 @@ import { FuncionarioPostgresRepository } from "@infra/db/postgresdb/funcionario/
 import { GrupoDeTrabalhoRepositoryPrisma } from "@infra/db/postgresdb/grupo-trabalho/grupo-trabalho-repository";
 
 import { BuscarHorarioNortunoEmMinutos } from "../../presentation/controllers/procurar-funcionário/utils";
+import { RespaldarController } from "../../presentation/controllers/respaldar-atestado/respaldar-atestado";
+import { RespaldarAtestadoPostgresRepository } from "@infra/db/postgresdb/respaldar-atestado/respaldar-atestado";
 
 export async function importarArquivoGrupoTrabalho(
   req: { file?: Express.Multer.File | undefined; body: { userName: string } },
@@ -260,7 +262,9 @@ export async function importarArquivoCartao(
 
       if (identificacao !== cartao.identificacao) {
         if (cartao.identificacao !== "") {
-          await cartaoPostgresRepository.upsert(cartao);
+          const cartaoSalvo = await cartaoPostgresRepository.upsert(cartao);
+
+          if (cartaoSalvo) await abonarAtestado({ cartao: cartaoSalvo, userName: req.body.userName });
         }
 
         cartao.identificacao = identificacao;
@@ -347,6 +351,35 @@ export async function importarArquivoCartao(
     return res.send(error).status(400);
   }
 }
+
+const abonarAtestado = async (input: { cartao: { dias: { data: Date }[]; funcionarioId: number }; userName: string }) => {
+  const respaldarAtestadoPostgresRepository = new RespaldarAtestadoPostgresRepository();
+  const respaldarController = new RespaldarController(respaldarAtestadoPostgresRepository);
+
+  const atestados = await respaldarAtestadoPostgresRepository.findManyAtestados({
+    statusId: 2,
+    funcionarioId: input.cartao.funcionarioId,
+    abono: { inicio: input.cartao.dias[0].data, fim: input.cartao.dias[input.cartao.dias.length - 1].data },
+  });
+
+  for (const atestado of atestados) {
+    if (atestado.abonos.length == 0 && atestado.fim && atestado.inicio) {
+      const dataInicio = moment.utc(atestado.inicio).set({ h: 0, minute: 0, second: 0, millisecond: 0 }).toDate();
+
+      const dias = await respaldarAtestadoPostgresRepository.findManyCartaoDia({
+        inicio: dataInicio,
+        fim: atestado.fim,
+        funcionarioId: input.cartao.funcionarioId,
+      });
+
+      await respaldarController.abonar({
+        atestado: { ...atestado, ...{ fim: atestado.fim, inicio: atestado.inicio } },
+        userName: input.userName,
+        dias,
+      });
+    }
+  }
+};
 
 export async function importarArquivosAfastamento(
   req: { file?: Express.Multer.File | undefined; body: { userName: string } },
