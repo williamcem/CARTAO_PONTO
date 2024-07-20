@@ -1,4 +1,4 @@
-import { AtestadoRepository } from "@infra/db/postgresdb/atestado-repository/atestado-repository";
+import { AtestadoRepository, DataAtestadoInvalida } from "@infra/db/postgresdb/atestado-repository/atestado-repository";
 
 import { FuncionarioParamError } from "../../errors/Funcionario-param-error";
 import { badRequest, ok, serverError } from "../../helpers/http-helpers";
@@ -54,10 +54,13 @@ export class AtestadoController implements Controller {
         sintomas,
       });
 
-      if (!atestadoSalvo) throw "Erro ao salvar atestado!";
+      if (!atestadoSalvo) throw new Error("Erro ao salvar atestado!");
 
       return ok({ message: "Atestado salvo com sucesso" });
     } catch (error) {
+      if (error instanceof DataAtestadoInvalida) {
+        return badRequest(new FuncionarioParamError(error.message));
+      }
       console.error(error);
       return serverError();
     }

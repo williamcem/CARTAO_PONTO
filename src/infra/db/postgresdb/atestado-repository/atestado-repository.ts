@@ -3,6 +3,13 @@ import { PrismaClient } from "@prisma/client";
 import { AddAtestado, AddAtestadoModel } from "../../../../domain/usecases/add-atestado";
 import { prisma } from "../../../database/Prisma";
 
+export class DataAtestadoInvalida extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = "DataAtestadoInvalida";
+  }
+}
+
 export class AtestadoRepository implements AddAtestado {
   private prisma: PrismaClient;
 
@@ -12,6 +19,33 @@ export class AtestadoRepository implements AddAtestado {
 
   public async add(input: AddAtestadoModel): Promise<boolean> {
     try {
+      // Verificar a primeira data no cartao_dia do funcionário
+      const primeiroCartaoDia = await this.prisma.cartao_dia.findFirst({
+        where: {
+          cartao: {
+            funcionarioId: input.funcionarioId,
+          },
+          // Acrescentar verificação de sttaus do cartão, se estiver importado faz os fechados não
+        },
+        orderBy: {
+          data: "asc",
+        },
+        select: {
+          data: true,
+        },
+      });
+
+      // Análise de data de comparação
+      console.log("Data achada:", primeiroCartaoDia?.data);
+      console.log("Data de cadastro:", input.data);
+
+      // Lança um erro se a data do atestado for anterior à primeira data de registro
+      if (primeiroCartaoDia && new Date(input.data) < new Date(primeiroCartaoDia.data)) {
+        throw new DataAtestadoInvalida(
+          "A data do atestado não pode ser anterior à primeira data de registro no cartão do funcionário.",
+        );
+      }
+
       const savedAtestado = await this.prisma.atestado_funcionario.create({
         data: {
           data: input.data,
@@ -33,8 +67,11 @@ export class AtestadoRepository implements AddAtestado {
 
       return !!savedAtestado;
     } catch (error) {
+      if (error instanceof DataAtestadoInvalida) {
+        throw error;
+      }
       console.error("Erro ao criar atestado:", error);
-      return false;
+      throw new Error("Erro ao criar atestado.");
     }
   }
 }
