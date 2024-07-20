@@ -1,4 +1,4 @@
-import { DescricacoModel } from "@domain/models/descricacao";
+import { DescricacoModel } from "@domain/models/descricao";
 
 export interface ListarDescricacoModel {
   descricaco: string;

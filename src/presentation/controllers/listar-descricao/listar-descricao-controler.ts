@@ -1,7 +1,7 @@
-import { ListarDescricacoRepsository } from "@infra/db/postgresdb/listar-descricacao-repository/listar-descricacao-repository";
+import { ListarDescricacoRepsository } from "@infra/db/postgresdb/listar-descricao-repository/listar-descricao-repository";
 
 import { ok, serverError } from "../../helpers/http-helpers";
-import { Controller, HttpResponse } from "./listar-descricacao-protocols";
+import { Controller, HttpResponse } from "./listar-descricao-protocols";
 
 export class ListarDescricacoController implements Controller {
   constructor(private readonly CIDPostgresRepository: ListarDescricacoRepsository) {}

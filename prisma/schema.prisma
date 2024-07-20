@@ -216,6 +216,7 @@ model atestado_funcionario {
   ocupacaoId         Int?
   acao               Int
   observacao         String?
+  sintomas           String?
 
   tipos_documentos  tipos_documentos   @relation(fields: [tipoId], references: [id])
   funcionario       funcionario        @relation(fields: [funcionarioId], references: [id])

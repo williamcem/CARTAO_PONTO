@@ -1,19 +1,33 @@
 import { PrismaClient } from "@prisma/client";
-import { ListarAtestado } from "../../../../data/usecase/add-listar-atestados/add-listar-atestados";
+import moment from "moment";
+
+import { ListarAtestados60Dias } from "../../../../data/usecase/add-listar-atestados/add-listar-atestados";
 import { prisma } from "../../../database/Prisma";
 
-export class ListarAtestadoRepsository implements ListarAtestado {
+export class ListarAtestados60DiasRepository implements ListarAtestados60Dias {
   private prisma: PrismaClient;
 
   constructor() {
     this.prisma = prisma;
   }
 
-  public async list(): Promise<any[]> {
+  public async listar60Dias(funcionarioId: number): Promise<any[]> {
+    const hoje = new Date();
+    const sessentaDiasAtras = new Date();
+    const comFormato = moment(sessentaDiasAtras.setDate(hoje.getDate() - 60))
+      .utc(true)
+      .toDate();
+    console.log("Aquiiiii", comFormato);
+
     const atestados = await this.prisma.atestado_funcionario.findMany({
       where: {
-        tipo_status: {
-          id: 1,
+        funcionarioId: funcionarioId,
+        statusId: {
+          in: [1, 2],
+        },
+        data: {
+          gte: comFormato,
+          lte: hoje,
         },
       },
       include: {
@@ -25,7 +39,7 @@ export class ListarAtestadoRepsository implements ListarAtestado {
         tipo_eventos: true,
       },
       orderBy: {
-        data: "asc",
+        data: "desc",
       },
     });
 

@@ -7,7 +7,7 @@ export interface AtestadoModel {
   descricao?: string;
   userName?: string;
   funcionarioId?: number;
-  tipoId?: number;
+  tipoId: number | null;
   ocupacaoId?: number;
   tipoAcompanhanteId?: number;
   idade_paciente?: number;
@@ -15,4 +15,5 @@ export interface AtestadoModel {
   acao: number;
   statusId: number;
   observacao: string;
+  sintomas?: string;
 }

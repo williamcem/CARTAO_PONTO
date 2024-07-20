@@ -1,8 +1,10 @@
-import { PrismaClient } from "@prisma/client";
+/* import { PrismaClient } from "@prisma/client";
 import { ResumoModel } from "@domain/models/calcular-resumo";
 import { CalcularResumoDia } from "../../../../domain/usecases/calcular-resumo";
 import { prisma } from "../../../database/Prisma";
 import { arredondarParteDecimal, arredondarParteDecimalHoras } from "./utils";
+
+type MovimentacaoTipo = number | "-";
 
 export class CalcularResumoPostgresRepository implements CalcularResumoDia {
   private prisma: PrismaClient;
@@ -80,7 +82,7 @@ export class CalcularResumoPostgresRepository implements CalcularResumoDia {
               orderBy: { id: "asc" },
               include: {
                 eventos: true,
-                atestado_abonos: true, // Inclui atestado_abono relacionado ao cartaoDiaId
+                atestado_abonos: true, // Inclui a relação com atestado_abonos
               },
             },
           },
@@ -96,36 +98,16 @@ export class CalcularResumoPostgresRepository implements CalcularResumoDia {
 
     // Estrutura para os cartões e dias
     const cartoes = funcionario.cartao.map((cartao) => {
-      // Filtrar dias relevantes
-      const diasFiltrados = cartao.cartao_dia.filter((cartao_dia) => {
-        if (!cartao_dia) return false;
-
+      const dias = cartao.cartao_dia.map((cartao_dia) => {
         // Verificar se há eventos com tipoId 2 ou mais de um do tipo 8 e tratado false
         const eventosCriticos = cartao_dia.eventos.filter((evento) => evento.tipoId === 2 && !evento.tratado);
         const eventosTipo8 = cartao_dia.eventos.filter((evento) => evento.tipoId === 8 && !evento.tratado);
 
         if (eventosCriticos.length > 0 || eventosTipo8.length > 1) {
-          return true;
-        }
-
-        const eventosDiurnos = cartao_dia.eventos.filter(
-          (evento) => evento.tipoId !== 2 && evento.tipoId !== 8 && evento.tipoId !== 4,
-        );
-
-        // Verificar se não há eventos diurnos e nenhum registro em atestado_abono
-        return eventosDiurnos.length !== 0 || cartao_dia.atestado_abonos.length !== 0;
-      });
-
-      // Mapear dias relevantes
-      const dias = diasFiltrados.map((cartao_dia) => {
-        // Verificar se há eventos com tipoId 2 ou mais de um do tipo 8 e tratado false
-        const eventosCriticos = cartao_dia.eventos.filter((evento) => evento.tipoId === 2 && !evento.tratado);
-        const eventosTipo8 = cartao_dia.eventos.filter((evento) => evento.tipoId === 8 && !evento.tratado);
-
-        if (eventosCriticos.length > 0 || eventosTipo8.length > 1) {
-          // Se houver eventos críticos ou mais de um evento do tipo 8, retorna movimentações "-"
+          // Se houver eventos críticos ou mais de um evento do tipo 8, não realiza o cálculo deste dia
           return {
             data: cartao_dia.data.toISOString(), // Convertendo Date para string
+            cartaoId: cartao_dia.cartaoId,
             periodoDescanso: cartao_dia.periodoDescanso,
             cargaHor: cartao_dia.cargaHor,
             cargaHorariaCompleta: cartao_dia.cargaHorariaCompleta,
@@ -144,13 +126,30 @@ export class CalcularResumoPostgresRepository implements CalcularResumoDia {
           (evento) => evento.tipoId !== 2 && evento.tipoId !== 8 && evento.tipoId !== 4,
         );
 
-        // Somar minutos dos eventos diurnos e dos atestados/abonos
-        const totalMinutos =
-          eventosDiurnos.reduce((sum, evento) => sum + evento.minutos, 0) +
-          cartao_dia.atestado_abonos.reduce((sum, abono) => sum + abono.minutos, 0);
+        // Somar minutos de atestado_abono
+        const minutosAtestadoAbono = cartao_dia.atestado_abonos.reduce((sum, abono) => sum + abono.minutos, 0);
 
-        let movimentacao60 = totalMinutos - cartao_dia.cargaHor;
-        let movimentacao100 = 0;
+        if (eventosDiurnos.length === 0) {
+          // Se não houver eventos diurnos, retornar os dados sem os cálculos
+          return {
+            data: cartao_dia.data.toISOString(), // Convertendo Date para string
+            cartaoId: cartao_dia.cartaoId,
+            periodoDescanso: cartao_dia.periodoDescanso,
+            cargaHor: cartao_dia.cargaHor,
+            cargaHorariaCompleta: cartao_dia.cargaHorariaCompleta,
+            cargaHorariaNoturna: cartao_dia.cargaHorariaNoturna,
+            ResumoDia: {
+              movimentacao60: 0,
+              movimentacao100: 0,
+              movimentacaoNoturna60: eventosNoturnos.reduce((sum, evento) => sum + evento.minutos, 0),
+              movimentacaoNoturna100: 0,
+            },
+          };
+        }
+
+        const totalMinutos = eventosDiurnos.reduce((sum, evento) => sum + evento.minutos, 0) + minutosAtestadoAbono;
+        let movimentacao60: MovimentacaoTipo = totalMinutos - cartao_dia.cargaHor;
+        let movimentacao100: MovimentacaoTipo = 0;
         let movimentacaoNoturna60 = eventosNoturnos.reduce((sum, evento) => sum + evento.minutos, 0);
 
         if (movimentacao60 > 120) {
@@ -160,6 +159,7 @@ export class CalcularResumoPostgresRepository implements CalcularResumoDia {
 
         return {
           data: cartao_dia.data.toISOString(), // Convertendo Date para string
+          cartaoId: cartao_dia.cartaoId,
           periodoDescanso: cartao_dia.periodoDescanso,
           cargaHor: cartao_dia.cargaHor,
           cargaHorariaCompleta: cartao_dia.cargaHorariaCompleta,
@@ -179,34 +179,62 @@ export class CalcularResumoPostgresRepository implements CalcularResumoDia {
       };
     });
 
-    // Calcular o resumo inicial
+    // Calcular o resumo
     let resumoCalculado = this.calcularResumo({ cartao: cartoes });
 
     // Aplicar a regra adicional
-    let saldoSessenta = resumoCalculado.movimentacao.sessenta;
-    const cartoesAtualizados = cartoes.map((cartao) => {
-      const dias = cartao.dias.map((cartao_dia) => {
-        if (typeof cartao_dia.ResumoDia.movimentacao60 === "number" && cartao_dia.ResumoDia.movimentacao60 < 0) {
-          const diferenca = Math.abs(cartao_dia.ResumoDia.movimentacao60);
-          if (saldoSessenta > 0) {
-            cartao_dia.ResumoDia.movimentacao60 /= 1.6;
-            cartao_dia.ResumoDia.movimentacao60 = arredondarParteDecimal(cartao_dia.ResumoDia.movimentacao60);
-            saldoSessenta -= diferenca;
+    if (resumoCalculado.movimentacao.sessenta > 0) {
+      for (const cartao of cartoes) {
+        for (const cartao_dia of cartao.dias) {
+          const resumoDia = cartao_dia.ResumoDia;
+          if (typeof resumoDia.movimentacao60 === "number" && resumoDia.movimentacao60 < 0) {
+            const diferenca = Math.abs(resumoDia.movimentacao60);
+            if (resumoCalculado.movimentacao.sessenta >= diferenca) {
+              resumoDia.movimentacao60 /= 1.6;
+              resumoDia.movimentacao60 = arredondarParteDecimal(resumoDia.movimentacao60);
+              resumoCalculado.movimentacao.sessenta -= diferenca;
+            } else {
+              const restante = diferenca - resumoCalculado.movimentacao.sessenta;
+              resumoDia.movimentacao60 = 0;
+              resumoCalculado.movimentacao.sessenta = 0;
+              if (resumoCalculado.movimentacao.cem >= restante) {
+                resumoDia.movimentacao100 -= restante;
+                resumoCalculado.movimentacao.cem -= restante;
+              } else {
+                resumoDia.movimentacao100 -= restante;
+                resumoCalculado.movimentacao.cem = 0;
+              }
+            }
           }
         }
-        return cartao_dia;
-      });
-      return { ...cartao, dias };
-    });
-
-    // Recalcular o resumo após aplicar a regra adicional
-    resumoCalculado = this.calcularResumo({ cartao: cartoesAtualizados });
+      }
+      // Recalcular o resumo após aplicar a regra adicional
+      resumoCalculado = this.calcularResumo({ cartao: cartoes });
+    }
 
     // Retornar os dados completos
     return {
       identificacao: funcionario.identificacao,
-      cartao: cartoesAtualizados,
+      cartao: cartoes,
       Resumo: resumoCalculado,
     };
   }
 }
+
+
+    // Aplicar a regra adicional
+    if (resumoCalculado.movimentacao.sessenta > 0) {
+      console.log("Antes da divisão por 1.6:", JSON.stringify(cartoes, null, 2));
+      for (const cartao of cartoes) {
+        for (const cartao_dia of cartao.dias) {
+          const resumoDia = cartao_dia.ResumoDia;
+          if (typeof resumoDia.movimentacao60 === "number" && resumoDia.movimentacao60 < 0) {
+            resumoDia.movimentacao60 /= 1.6;
+            resumoDia.movimentacao60 = arredondarParteDecimal(resumoDia.movimentacao60);
+          }
+        }
+      }
+      console.log("Depois da divisão por 1.6:", JSON.stringify(cartoes, null, 2));
+      // Recalcular o resumo após aplicar a regra adicional
+      resumoCalculado = this.calcularResumo({ cartao: cartoes });
+    } */

@@ -253,7 +253,8 @@ var AtestadoController = class {
         acao,
         observacao,
         statusId,
-        data
+        data,
+        sintomas
       } = httpRequest.body;
       if (!userName)
         return badRequest(new FuncionarioParamError("Falta Usu\xE1rio!"));
@@ -265,6 +266,8 @@ var AtestadoController = class {
         return badRequest(new FuncionarioParamError("Falta escolher a a\xE7\xE3o caso seja recusado!"));
       if (!data)
         return badRequest(new FuncionarioParamError("Falta a data do atestado!"));
+      if (!sintomas && !grupo_cid)
+        return badRequest(new FuncionarioParamError("Falta o diagn\xF3stico ou o grupo CID!"));
       const atestadoSalvo = await this.atestadoRepository.add({
         inicio,
         fim,
@@ -280,7 +283,8 @@ var AtestadoController = class {
         acao,
         statusId,
         data,
-        observacao
+        observacao,
+        sintomas
       });
       if (!atestadoSalvo)
         throw "Erro ao salvar atestado!";
@@ -518,7 +522,9 @@ var CalcularResumoPostgresRepository = class {
             cartao_dia: {
               orderBy: { id: "asc" },
               include: {
-                eventos: true
+                eventos: true,
+                atestado_abonos: true
+                // Inclui atestado_abono relacionado ao cartaoDiaId
               }
             }
           },
@@ -530,14 +536,26 @@ var CalcularResumoPostgresRepository = class {
       throw new Error("Funcion\xE1rio n\xE3o encontrado");
     }
     const cartoes = funcionario.cartao.map((cartao) => {
-      const dias = cartao.cartao_dia.map((cartao_dia) => {
+      const diasFiltrados = cartao.cartao_dia.filter((cartao_dia) => {
+        if (!cartao_dia)
+          return false;
+        const eventosCriticos = cartao_dia.eventos.filter((evento) => evento.tipoId === 2 && !evento.tratado);
+        const eventosTipo8 = cartao_dia.eventos.filter((evento) => evento.tipoId === 8 && !evento.tratado);
+        if (eventosCriticos.length > 0 || eventosTipo8.length > 1) {
+          return true;
+        }
+        const eventosDiurnos = cartao_dia.eventos.filter(
+          (evento) => evento.tipoId !== 2 && evento.tipoId !== 8 && evento.tipoId !== 4
+        );
+        return eventosDiurnos.length !== 0 || cartao_dia.atestado_abonos.length !== 0;
+      });
+      const dias = diasFiltrados.map((cartao_dia) => {
         const eventosCriticos = cartao_dia.eventos.filter((evento) => evento.tipoId === 2 && !evento.tratado);
         const eventosTipo8 = cartao_dia.eventos.filter((evento) => evento.tipoId === 8 && !evento.tratado);
         if (eventosCriticos.length > 0 || eventosTipo8.length > 1) {
           return {
             data: cartao_dia.data.toISOString(),
             // Convertendo Date para string
-            cartaoId: cartao_dia.cartaoId,
             periodoDescanso: cartao_dia.periodoDescanso,
             cargaHor: cartao_dia.cargaHor,
             cargaHorariaCompleta: cartao_dia.cargaHorariaCompleta,
@@ -554,24 +572,7 @@ var CalcularResumoPostgresRepository = class {
         const eventosDiurnos = cartao_dia.eventos.filter(
           (evento) => evento.tipoId !== 2 && evento.tipoId !== 8 && evento.tipoId !== 4
         );
-        if (eventosDiurnos.length === 0) {
-          return {
-            data: cartao_dia.data.toISOString(),
-            // Convertendo Date para string
-            cartaoId: cartao_dia.cartaoId,
-            periodoDescanso: cartao_dia.periodoDescanso,
-            cargaHor: cartao_dia.cargaHor,
-            cargaHorariaCompleta: cartao_dia.cargaHorariaCompleta,
-            cargaHorariaNoturna: cartao_dia.cargaHorariaNoturna,
-            ResumoDia: {
-              movimentacao60: 0,
-              movimentacao100: 0,
-              movimentacaoNoturna60: eventosNoturnos.reduce((sum, evento) => sum + evento.minutos, 0),
-              movimentacaoNoturna100: 0
-            }
-          };
-        }
-        const totalMinutos = eventosDiurnos.reduce((sum, evento) => sum + evento.minutos, 0);
+        const totalMinutos = eventosDiurnos.reduce((sum, evento) => sum + evento.minutos, 0) + cartao_dia.atestado_abonos.reduce((sum, abono) => sum + abono.minutos, 0);
         let movimentacao60 = totalMinutos - cartao_dia.cargaHor;
         let movimentacao100 = 0;
         let movimentacaoNoturna60 = eventosNoturnos.reduce((sum, evento) => sum + evento.minutos, 0);
@@ -582,7 +583,6 @@ var CalcularResumoPostgresRepository = class {
         return {
           data: cartao_dia.data.toISOString(),
           // Convertendo Date para string
-          cartaoId: cartao_dia.cartaoId,
           periodoDescanso: cartao_dia.periodoDescanso,
           cargaHor: cartao_dia.cargaHor,
           cargaHorariaCompleta: cartao_dia.cargaHorariaCompleta,
@@ -603,36 +603,25 @@ var CalcularResumoPostgresRepository = class {
       };
     });
     let resumoCalculado = this.calcularResumo({ cartao: cartoes });
-    if (resumoCalculado.movimentacao.sessenta > 0) {
-      for (const cartao of cartoes) {
-        for (const cartao_dia of cartao.dias) {
-          const resumoDia = cartao_dia.ResumoDia;
-          if (typeof resumoDia.movimentacao60 === "number" && resumoDia.movimentacao60 < 0) {
-            const diferenca = Math.abs(resumoDia.movimentacao60);
-            if (resumoCalculado.movimentacao.sessenta >= diferenca) {
-              resumoDia.movimentacao60 /= 1.6;
-              resumoDia.movimentacao60 = arredondarParteDecimal(resumoDia.movimentacao60);
-              resumoCalculado.movimentacao.sessenta -= diferenca;
-            } else {
-              const restante = diferenca - resumoCalculado.movimentacao.sessenta;
-              resumoDia.movimentacao60 = 0;
-              resumoCalculado.movimentacao.sessenta = 0;
-              if (resumoCalculado.movimentacao.cem >= restante) {
-                resumoDia.movimentacao100 = typeof resumoDia.movimentacao100 === "number" ? resumoDia.movimentacao100 - restante : "-";
-                resumoCalculado.movimentacao.cem -= restante;
-              } else {
-                resumoDia.movimentacao100 = typeof resumoDia.movimentacao100 === "number" ? resumoDia.movimentacao100 - restante : "-";
-                resumoCalculado.movimentacao.cem = 0;
-              }
-            }
+    let saldoSessenta = resumoCalculado.movimentacao.sessenta;
+    const cartoesAtualizados = cartoes.map((cartao) => {
+      const dias = cartao.dias.map((cartao_dia) => {
+        if (typeof cartao_dia.ResumoDia.movimentacao60 === "number" && cartao_dia.ResumoDia.movimentacao60 < 0) {
+          const diferenca = Math.abs(cartao_dia.ResumoDia.movimentacao60);
+          if (saldoSessenta > 0) {
+            cartao_dia.ResumoDia.movimentacao60 /= 1.6;
+            cartao_dia.ResumoDia.movimentacao60 = arredondarParteDecimal(cartao_dia.ResumoDia.movimentacao60);
+            saldoSessenta -= diferenca;
           }
         }
-      }
-      resumoCalculado = this.calcularResumo({ cartao: cartoes });
-    }
+        return cartao_dia;
+      });
+      return { ...cartao, dias };
+    });
+    resumoCalculado = this.calcularResumo({ cartao: cartoesAtualizados });
     return {
       identificacao: funcionario.identificacao,
-      cartao: cartoes,
+      cartao: cartoesAtualizados,
       Resumo: resumoCalculado
     };
   }
@@ -745,7 +734,7 @@ Data do lan\xE7amento de sa\xEDda inv\xE1lida no cartao_dia_lancamentos`;
       );
       if (!updated)
         serverError();
-      return ok({ message: "Salvo com sucesso" });
+      return ok({ message: "Hor\xE1rios confirmados com sucesso" });
     } catch (error) {
       console.error(error);
       return serverError();
@@ -1392,7 +1381,7 @@ var DeleteController = class {
   }
 };
 
-// src/main/factories/delete-dia-horario-factore.ts
+// src/main/factories/delete-dia-horario.ts
 var makeDeleteController = () => {
   const deletePostgresRepository = new DeletePostgresRepository();
   const dbAddDelete = new DbAddDelete(deletePostgresRepository);
@@ -1913,17 +1902,27 @@ var route14 = (router) => {
 };
 var listar_acompanhante_routes_default = route14;
 
-// src/infra/db/postgresdb/listar-atestados-não-analisados/listar-atestados.ts
-var ListarAtestadoRepsository = class {
+// src/infra/db/postgresdb/listar-atestados-60-dias/listar-atestados-60-dias.ts
+var import_moment5 = __toESM(require("moment"), 1);
+var ListarAtestados60DiasRepository = class {
   prisma;
   constructor() {
     this.prisma = prisma;
   }
-  async list() {
+  async listar60Dias(funcionarioId) {
+    const hoje = /* @__PURE__ */ new Date();
+    const sessentaDiasAtras = /* @__PURE__ */ new Date();
+    const comFormato = (0, import_moment5.default)(sessentaDiasAtras.setDate(hoje.getDate() - 60)).utc(true).toDate();
+    console.log("Aquiiiii", comFormato);
     const atestados = await this.prisma.atestado_funcionario.findMany({
       where: {
-        tipo_status: {
-          id: 1
+        funcionarioId,
+        statusId: {
+          in: [1, 2]
+        },
+        data: {
+          gte: comFormato,
+          lte: hoje
         }
       },
       include: {
@@ -1933,6 +1932,9 @@ var ListarAtestadoRepsository = class {
         tipo_status: true,
         tipos_documentos: true,
         tipo_eventos: true
+      },
+      orderBy: {
+        data: "desc"
       }
     });
     return atestados.map((atestado) => ({
@@ -1957,7 +1959,89 @@ var ListarAtestadoRepsository = class {
   }
 };
 
-// src/presentation/controllers/listar-atestados/listar-atestados-controler.ts
+// src/presentation/controllers/listar-atestados-60-dias/listar-atestados-60-dias-controler.ts
+var ListarAtestado60DiasController = class {
+  constructor(atestadoPostgresRepository) {
+    this.atestadoPostgresRepository = atestadoPostgresRepository;
+  }
+  async handle(httpRequest) {
+    try {
+      const { funcionarioId } = httpRequest.query;
+      if (!funcionarioId)
+        return badRequest(new FuncionarioParamError("Falta a identifica\xE7\xE3o do funcion\xE1rio!"));
+      const atestados = await this.atestadoPostgresRepository.listar60Dias(Number(funcionarioId));
+      if (!atestados || atestados.length === 0) {
+        return ok({ message: "Nenhum atestado encontrado para esta identifica\xE7\xE3o." });
+      }
+      return ok({ atestados });
+    } catch (error) {
+      console.error(error);
+      return serverError();
+    }
+  }
+};
+
+// src/main/factories/listar-atestados-60-dias.ts
+var makeListarAtestados60DiasController = () => {
+  const listarAtestados60DiasRepository = new ListarAtestados60DiasRepository();
+  const listarAtestado60DiasController = new ListarAtestado60DiasController(listarAtestados60DiasRepository);
+  return new LogControllerDecorator(listarAtestado60DiasController);
+};
+
+// src/main/routes/horarios/listar-atestados-60-dias-routes.ts
+var route15 = (router) => {
+  router.get("/listar-todosatestado-60dias", adaptRoute(makeListarAtestados60DiasController()));
+};
+var listar_atestados_60_dias_routes_default = route15;
+
+// src/infra/db/postgresdb/listar-atestados-não-analisados/listar-atestados.ts
+var ListarAtestadoRepsository = class {
+  prisma;
+  constructor() {
+    this.prisma = prisma;
+  }
+  async list() {
+    const atestados = await this.prisma.atestado_funcionario.findMany({
+      where: {
+        tipo_status: {
+          id: 1
+        }
+      },
+      include: {
+        funcionario: true,
+        tipo_acompanhante: true,
+        tipo_ocupacao: true,
+        tipo_status: true,
+        tipos_documentos: true,
+        tipo_eventos: true
+      },
+      orderBy: {
+        data: "asc"
+      }
+    });
+    return atestados.map((atestado) => ({
+      data: atestado.data,
+      id: atestado.id,
+      inicio: atestado.inicio,
+      fim: atestado.fim,
+      grupo_cid: atestado.grupo_cid,
+      acidente_trabalho: atestado.acidente_trabalho,
+      descricao: atestado.descricao,
+      userName: atestado.userName,
+      funcionarioId: atestado.funcionarioId,
+      idade_paciente: atestado.idade_paciente,
+      nome: atestado.funcionario?.nome,
+      identificacao: atestado.funcionario?.identificacao,
+      nomeAcao: atestado.tipo_eventos?.nome,
+      nomeAcompanhante: atestado.tipo_acompanhante?.nome,
+      nomeOcupacao: atestado.tipo_ocupacao?.nome,
+      nomeStatus: atestado.tipo_status?.nome,
+      nomeDocumento: atestado.tipos_documentos?.nome
+    }));
+  }
+};
+
+// src/presentation/controllers/listar-atestados-não-analisados/listar-atestados-controler.ts
 var ListarAtestadoController = class {
   constructor(AtestadoPostgresRepository) {
     this.AtestadoPostgresRepository = AtestadoPostgresRepository;
@@ -1973,20 +2057,20 @@ var ListarAtestadoController = class {
   }
 };
 
-// src/main/factories/listar-atestados.ts
+// src/main/factories/listar-atestados-não-analisados.ts
 var makeListarAtestadosController = () => {
   const listarAtestadoRepsository = new ListarAtestadoRepsository();
   const listarAtestadoController = new ListarAtestadoController(listarAtestadoRepsository);
   return new LogControllerDecorator(listarAtestadoController);
 };
 
-// src/main/routes/horarios/listar-atestados-routes.ts
-var route15 = (router) => {
+// src/main/routes/horarios/listar-atestados-não-tratados.ts
+var route16 = (router) => {
   router.get("/listar-atestado", adaptRoute(makeListarAtestadosController()));
 };
-var listar_atestados_routes_default = route15;
+var listar_atestados_n_o_tratados_default = route16;
 
-// src/infra/db/postgresdb/listar-descricacao-repository/listar-descricacao-repository.ts
+// src/infra/db/postgresdb/listar-descricao-repository/listar-descricao-repository.ts
 var ListarDescricacoRepsository = class {
   prisma;
   constructor() {
@@ -1997,7 +2081,7 @@ var ListarDescricacoRepsository = class {
   }
 };
 
-// src/presentation/controllers/listar-descricacao/listar-descricacao-controler.ts
+// src/presentation/controllers/listar-descricao/listar-descricao-controler.ts
 var ListarDescricacoController = class {
   constructor(CIDPostgresRepository) {
     this.CIDPostgresRepository = CIDPostgresRepository;
@@ -2013,7 +2097,7 @@ var ListarDescricacoController = class {
   }
 };
 
-// src/main/factories/listar-descricacao.ts
+// src/main/factories/listar-descricao.ts
 var makeDescricacoController = () => {
   const listarDescricacoRepsository = new ListarDescricacoRepsository();
   const listarDescricacoController = new ListarDescricacoController(listarDescricacoRepsository);
@@ -2021,10 +2105,10 @@ var makeDescricacoController = () => {
 };
 
 // src/main/routes/horarios/listar-descricacao-routes.ts
-var route16 = (router) => {
+var route17 = (router) => {
   router.get("/descricacao", adaptRoute(makeDescricacoController()));
 };
-var listar_descricacao_routes_default = route16;
+var listar_descricacao_routes_default = route17;
 
 // src/infra/db/postgresdb/listar-documento/listar-documento.ts
 var ListarDocumentoRepsository = class {
@@ -2061,10 +2145,10 @@ var makeListarDocumentoController = () => {
 };
 
 // src/main/routes/horarios/listar-documento-routes.ts
-var route17 = (router) => {
+var route18 = (router) => {
   router.get("/listar-documento", adaptRoute(makeListarDocumentoController()));
 };
-var listar_documento_routes_default = route17;
+var listar_documento_routes_default = route18;
 
 // src/infra/db/postgresdb/listar-filial-repository/listar-status-lancamento-repository.ts
 var ListarFilialRepsository = class {
@@ -2136,10 +2220,10 @@ var makeListarFilialController = () => {
 };
 
 // src/main/routes/horarios/listar-filial-routes.ts
-var route18 = (router) => {
+var route19 = (router) => {
   router.get("/listar-filial", adaptRoute(makeListarFilialController()));
 };
-var listar_filial_routes_default = route18;
+var listar_filial_routes_default = route19;
 
 // src/infra/db/postgresdb/listar-ocorrencias-geral/listar-ocorrencias-repository.ts
 var OcorrenciaGeralPostgresRepository = class {
@@ -2149,7 +2233,10 @@ var OcorrenciaGeralPostgresRepository = class {
   }
   async findOcorrencia(localidade) {
     const funcionarios = await this.prisma.funcionario.findMany({
-      where: { localidadeId: localidade },
+      where: {
+        localidadeId: localidade,
+        cartao: { some: { cartao_dia: { some: { cartao_dia_lancamentos: { some: { validadoPeloOperador: true } } } } } }
+      },
       include: {
         cartao: {
           include: {
@@ -2221,10 +2308,10 @@ var makeListarOcorrenciaGeralController = () => {
 };
 
 // src/main/routes/horarios/listar-ocorrencia-geral-routes.ts
-var route19 = (router) => {
+var route20 = (router) => {
   router.get("/ocorrencia-geral", adaptRoute(makeListarOcorrenciaGeralController()));
 };
-var listar_ocorrencia_geral_routes_default = route19;
+var listar_ocorrencia_geral_routes_default = route20;
 
 // src/infra/db/postgresdb/listar-ocorrencias/listar-ocorrencias-repository.ts
 var OcorrenciaPostgresRepository = class {
@@ -2285,7 +2372,7 @@ var OcorrenciaPostgresRepository = class {
       where: {
         identificacao,
         localidadeId: localidade,
-        cartao: { every: { cartao_dia: { every: { cartao_dia_lancamentos: { every: { validadoPeloOperador: true } } } } } }
+        cartao: { some: { cartao_dia: { some: { cartao_dia_lancamentos: { some: { validadoPeloOperador: true } } } } } }
       },
       include: {
         cartao: {
@@ -2413,10 +2500,10 @@ var makeListarOcorrenciasController = () => {
 };
 
 // src/main/routes/horarios/listar-ocorrencia-routes.ts
-var route20 = (router) => {
+var route21 = (router) => {
   router.get("/ocorrencia", adaptRoute(makeListarOcorrenciasController()));
 };
-var listar_ocorrencia_routes_default = route20;
+var listar_ocorrencia_routes_default = route21;
 
 // src/infra/db/postgresdb/listar-ocupacao/listar-ocupacao.ts
 var ListarOcupacaoRepsository = class {
@@ -2453,10 +2540,10 @@ var makeListarOcupacaoController = () => {
 };
 
 // src/main/routes/horarios/listar-ocupacao-routes.ts
-var route21 = (router) => {
+var route22 = (router) => {
   router.get("/listar-ocupacao", adaptRoute(makeListarOcupacaoController()));
 };
-var listar_ocupacao_routes_default = route21;
+var listar_ocupacao_routes_default = route22;
 
 // src/infra/db/postgresdb/listar-solucoes-eventos/listar-solucoes-eventos.ts
 var SolucoesEventosPostgresRepository = class {
@@ -2498,10 +2585,10 @@ var makeTiposSolucoesController = () => {
 };
 
 // src/main/routes/horarios/listar-solucoes-eventos-routes.ts
-var route22 = (router) => {
+var route23 = (router) => {
   router.get("/tipo-evento", adaptRoute(makeTiposSolucoesController()));
 };
-var listar_solucoes_eventos_routes_default = route22;
+var listar_solucoes_eventos_routes_default = route23;
 
 // src/infra/db/postgresdb/listar-status-documento/listar-status-documento.ts
 var ListarStatusDocumentoRepsository = class {
@@ -2544,10 +2631,10 @@ var makeListarStatusDocumentoController = () => {
 };
 
 // src/main/routes/horarios/listar-status-documento-routes.ts
-var route23 = (router) => {
+var route24 = (router) => {
   router.get("/listar-status-documento", adaptRoute(makeListarStatusDocumentoController()));
 };
-var listar_status_documento_routes_default = route23;
+var listar_status_documento_routes_default = route24;
 
 // src/infra/db/postgresdb/listar-solucoes-atestado/listar-solucoes-atestado.ts
 var SolucoesAtestadoPostgresRepository = class {
@@ -2589,10 +2676,92 @@ var makeSolucaoEventosAtestadoController = () => {
 };
 
 // src/main/routes/horarios/listar-status-solucao-atestado.ts
-var route24 = (router) => {
+var route25 = (router) => {
   router.get("/listar-solucao-atestado", adaptRoute(makeSolucaoEventosAtestadoController()));
 };
-var listar_status_solucao_atestado_default = route24;
+var listar_status_solucao_atestado_default = route25;
+
+// src/infra/db/postgresdb/listar-todos-atestados/listar-todos-atestados.ts
+var ListarTodosAtestadoRepsository = class {
+  prisma;
+  constructor() {
+    this.prisma = prisma;
+  }
+  async listarTodos(identificacao) {
+    const atestados = await this.prisma.atestado_funcionario.findMany({
+      where: {
+        funcionario: {
+          identificacao
+        }
+      },
+      include: {
+        funcionario: true,
+        tipo_acompanhante: true,
+        tipo_ocupacao: true,
+        tipo_status: true,
+        tipos_documentos: true,
+        tipo_eventos: true
+      },
+      orderBy: {
+        data: "desc"
+      }
+    });
+    return atestados.map((atestado) => ({
+      data: atestado.data,
+      id: atestado.id,
+      inicio: atestado.inicio,
+      fim: atestado.fim,
+      grupo_cid: atestado.grupo_cid,
+      acidente_trabalho: atestado.acidente_trabalho,
+      descricao: atestado.descricao,
+      userName: atestado.userName,
+      funcionarioId: atestado.funcionarioId,
+      idade_paciente: atestado.idade_paciente,
+      nome: atestado.funcionario?.nome,
+      identificacao: atestado.funcionario?.identificacao,
+      nomeAcao: atestado.tipo_eventos?.nome,
+      nomeAcompanhante: atestado.tipo_acompanhante?.nome,
+      nomeOcupacao: atestado.tipo_ocupacao?.nome,
+      nomeStatus: atestado.tipo_status?.nome,
+      nomeDocumento: atestado.tipos_documentos?.nome
+    }));
+  }
+};
+
+// src/presentation/controllers/listar-todos-atestados/listar-todos-atestados-controler.ts
+var ListarTodosAtestadoController = class {
+  constructor(atestadoPostgresRepository) {
+    this.atestadoPostgresRepository = atestadoPostgresRepository;
+  }
+  async handle(httpRequest) {
+    try {
+      const { identificacao } = httpRequest.query;
+      if (!identificacao)
+        return badRequest(new FuncionarioParamError("Falta a identifica\xE7\xE3o do funcion\xE1rio!"));
+      const atestados = await this.atestadoPostgresRepository.listarTodos(identificacao);
+      if (!atestados || atestados.length === 0) {
+        return ok({ message: "Nenhum atestado encontrado para esta identifica\xE7\xE3o." });
+      }
+      return ok({ atestados });
+    } catch (error) {
+      console.error(error);
+      return serverError();
+    }
+  }
+};
+
+// src/main/factories/listar-todos-atestados.ts
+var makeListarTodosAtestadosController = () => {
+  const listarTodosAtestadoRepsository = new ListarTodosAtestadoRepsository();
+  const listarTodosAtestadoController = new ListarTodosAtestadoController(listarTodosAtestadoRepsository);
+  return new LogControllerDecorator(listarTodosAtestadoController);
+};
+
+// src/main/routes/horarios/listar-todos-atestados-routes.ts
+var route26 = (router) => {
+  router.get("/listar-todosatestado", adaptRoute(makeListarTodosAtestadosController()));
+};
+var listar_todos_atestados_routes_default = route26;
 
 // src/infra/db/postgresdb/procurar-localidades/procurar-localidades.ts
 var LocalidadePostgresRepository = class {
@@ -2628,10 +2797,257 @@ var makeProcurarLocalidadeController = () => {
 };
 
 // src/main/routes/horarios/procurar-localidade-routes.ts
-var route25 = (router) => {
+var route27 = (router) => {
   router.get("/localidades", adaptRoute(makeProcurarLocalidadeController()));
 };
-var procurar_localidade_routes_default = route25;
+var procurar_localidade_routes_default = route27;
+
+// src/presentation/controllers/respaldar-atestado/respaldar-atestado.ts
+var import_moment6 = __toESM(require("moment"), 1);
+var RespaldarController = class {
+  constructor(respaldarAtestadoPostgresRepository) {
+    this.respaldarAtestadoPostgresRepository = respaldarAtestadoPostgresRepository;
+  }
+  async handle(httpRequest) {
+    try {
+      const {
+        id,
+        statusId,
+        userName,
+        inicio,
+        fim,
+        observacao
+      } = httpRequest?.body;
+      if (!id)
+        return badRequest(new FuncionarioParamError("Falta id do periodo!"));
+      if (!statusId)
+        return badRequest(new FuncionarioParamError("Falta status!"));
+      if (!userName)
+        return badRequest(new FuncionarioParamError("Falta usu\xE1rio para lan\xE7ar cart\xE3o"));
+      if (!inicio)
+        return badRequest(new FuncionarioParamError("Falta inicio!"));
+      if (!fim)
+        return badRequest(new FuncionarioParamError("Falta fim!"));
+      if (!new Date(inicio).getTime())
+        return badRequest(new FuncionarioParamError("Data de in\xEDcio inv\xE1lida!"));
+      if (!new Date(fim).getTime())
+        return badRequest(new FuncionarioParamError("Data de fim inv\xE1lida!"));
+      if ((0, import_moment6.default)(inicio).isAfter(fim))
+        return badRequest(new FuncionarioParamError("Data inicial n\xE3o pode ser ap\xF3s o fim!"));
+      const atestado = await this.respaldarAtestadoPostgresRepository.findfirst({ id });
+      if (!atestado)
+        return notFoundRequest(new FuncionarioParamError("Atestado n\xE3o encontrado!"));
+      switch (statusId) {
+        case 1:
+          return badRequest(new FuncionarioParamError(`N\xE3o \xE9 poss\xEDvel resolver com status 1`));
+        case 2:
+          break;
+        case 3:
+          break;
+        default:
+          return badRequest(new FuncionarioParamError(`Status ${statusId} n\xE3o tratado!`));
+      }
+      switch (atestado.documentoId) {
+        case 1:
+          break;
+        case 2:
+          return badRequest(new FuncionarioParamError(`OUTROS COMPROVANTES n\xE3o tratado!`));
+        case 3:
+          return badRequest(new FuncionarioParamError(`ATESTADO OCUPACIONAL n\xE3o tratado`));
+        default:
+          return badRequest(new FuncionarioParamError(`Documento ${statusId} n\xE3o tratado!`));
+      }
+      if (atestado.statusId != 1)
+        return badRequest(new FuncionarioParamError("Atestado j\xE1 tratado!"));
+      const dataInicio = import_moment6.default.utc(inicio).set({ h: 0, minute: 0, second: 0, millisecond: 0 }).toDate();
+      const dias = await this.respaldarAtestadoPostgresRepository.findManyCartaoDia({
+        inicio: dataInicio,
+        fim,
+        funcionarioId: atestado.funcionarioId
+      });
+      let message = "";
+      switch (statusId) {
+        case 2:
+          {
+            let abonos = [];
+            abonos = this.gerarAbono(dias, { inicio, fim });
+            const atualizado = await this.respaldarAtestadoPostgresRepository.updateAtestado({
+              id: atestado.id,
+              statusId,
+              userName,
+              abonos,
+              observacao,
+              fim,
+              inicio
+            });
+            if (!atualizado)
+              return serverError();
+            message = "Abono aprovado com sucesso!";
+          }
+          break;
+        case 3:
+          {
+            const atualizado = await this.respaldarAtestadoPostgresRepository.updateAtestado({
+              id: atestado.id,
+              statusId,
+              userName,
+              abonos: [],
+              observacao,
+              fim,
+              inicio
+            });
+            if (!atualizado)
+              return serverError();
+            message = "Abono recusado com sucesso!";
+          }
+          break;
+        default:
+          return badRequest(new FuncionarioParamError(`Status ${atestado.statusId} n\xE3o tratado`));
+      }
+      return ok({ message });
+    } catch (error) {
+      console.error(error);
+      return serverError();
+    }
+  }
+  transformarCargaHoraria(input) {
+    const datas = [];
+    const [entradaManha, saidaManha, entradaTarde, saidaTarde] = input.cargaHorariaCompleta.split(";");
+    if (input.cargaHorariaPrimeiroPeriodo) {
+      {
+        const [hora, minuto] = entradaManha.split(".");
+        datas.push(
+          import_moment6.default.utc(input.data).set({ hour: Number(hora), minute: Number(minuto) }).toDate()
+        );
+      }
+      {
+        const [hora, minuto] = saidaManha.split(".");
+        datas.push(
+          import_moment6.default.utc(input.data).set({ hour: Number(hora), minute: Number(minuto) }).toDate()
+        );
+      }
+    }
+    if (input.cargaHorariaSegundoPeriodo) {
+      {
+        const [hora, minuto] = entradaTarde.split(".");
+        datas.push(
+          import_moment6.default.utc(input.data).set({ hour: Number(hora), minute: Number(minuto) }).toDate()
+        );
+      }
+      {
+        const [hora, minuto] = saidaTarde.split(".");
+        datas.push(
+          import_moment6.default.utc(input.data).set({ hour: Number(hora), minute: Number(minuto) }).toDate()
+        );
+      }
+    }
+    return datas;
+  }
+  gerarAbono(dias, itervalo) {
+    const atestadoDia = [];
+    dias.map((dia) => {
+      if (dia.cargaHoraria == 0)
+        return;
+      const horariosTrabalho = this.transformarCargaHoraria({
+        data: dia.data,
+        cargaHorariaCompleta: dia.cargaHorariaCompleta,
+        cargaHorariaPrimeiroPeriodo: dia.cargaHorariaPrimeiroPeriodo,
+        cargaHorariaSegundoPeriodo: dia.cargaHorariaSegundoPeriodo
+      });
+      const eAntes = horariosTrabalho.findIndex((horarioTrabalho) => (0, import_moment6.default)(itervalo.inicio).isAfter(horarioTrabalho));
+      const eDepois = horariosTrabalho.findIndex((horarioTrabalho) => (0, import_moment6.default)(itervalo.fim).isBefore(horarioTrabalho));
+      if (eAntes == -1 && eDepois == -1) {
+        atestadoDia.push({ data: dia.data, minutos: dia.cargaHoraria, cartaoDiaId: dia.id });
+      } else {
+        let minutos = 0;
+        if (dia.cargaHorariaPrimeiroPeriodo && (0, import_moment6.default)(itervalo.inicio).isSameOrAfter(horariosTrabalho[0]) && (0, import_moment6.default)(itervalo.fim).isSameOrBefore(horariosTrabalho[1]) || dia.cargaHorariaSegundoPeriodo && (0, import_moment6.default)(itervalo.inicio).isSameOrAfter(horariosTrabalho[2]) && (0, import_moment6.default)(itervalo.fim).isSameOrBefore(horariosTrabalho[3])) {
+          minutos = (0, import_moment6.default)(itervalo.fim).diff(itervalo.inicio, "minutes");
+        } else if (dia.cargaHorariaPrimeiroPeriodo && dia.cargaHorariaSegundoPeriodo && (0, import_moment6.default)(itervalo.inicio).isSameOrAfter(horariosTrabalho[0]) && (0, import_moment6.default)(itervalo.fim).isSameOrBefore(horariosTrabalho[3])) {
+          minutos = (0, import_moment6.default)(itervalo.fim).diff(itervalo.inicio, "minutes") - dia.descanso;
+        } else if (dia.cargaHorariaSegundoPeriodo && (0, import_moment6.default)(itervalo.inicio).isAfter(horariosTrabalho[2]) && (0, import_moment6.default)(itervalo.fim).isAfter(horariosTrabalho[3])) {
+          minutos = (0, import_moment6.default)(horariosTrabalho[3]).diff(itervalo.inicio, "minutes");
+        } else if (dia.cargaHorariaPrimeiroPeriodo && (0, import_moment6.default)(itervalo.inicio).isAfter(horariosTrabalho[0]) && (0, import_moment6.default)(itervalo.fim).isAfter(horariosTrabalho[1])) {
+          minutos = (0, import_moment6.default)(dia.cargaHorariaSegundoPeriodo ? horariosTrabalho[3] : horariosTrabalho[1]).diff(itervalo.inicio, "minutes") - (dia.cargaHorariaSegundoPeriodo ? dia.descanso : 0);
+        }
+        atestadoDia.push({
+          data: dia.data,
+          minutos,
+          cartaoDiaId: dia.id
+        });
+      }
+    });
+    return atestadoDia;
+  }
+};
+
+// src/infra/db/postgresdb/respaldar-atestado/respaldar-atestado.ts
+var RespaldarAtestadoPostgresRepository = class {
+  prisma;
+  constructor() {
+    this.prisma = prisma;
+  }
+  async findfirst(input) {
+    const result = await this.prisma.atestado_funcionario.findFirst({
+      where: { id: input.id }
+    });
+    if (!result)
+      return;
+    return {
+      id: result.id,
+      documentoId: result.tipoId,
+      statusId: result.statusId,
+      funcionarioId: result.funcionarioId
+    };
+  }
+  async findManyCartaoDia(input) {
+    const result = await this.prisma.cartao_dia.findMany({
+      where: { data: { lte: input.fim, gte: input.inicio }, cartao: { funcionarioId: input.funcionarioId } }
+    });
+    return result.map((dia) => ({
+      id: dia.id,
+      cargaHoraria: dia.cargaHor,
+      cargaHorariaPrimeiroPeriodo: dia.cargaHorPrimeiroPeriodo,
+      cargaHorariaSegundoPeriodo: dia.cargaHorSegundoPeriodo,
+      data: dia.data,
+      cargaHorariaCompleta: dia.cargaHorariaCompleta,
+      descanso: dia.periodoDescanso
+    }));
+  }
+  async updateAtestado(input) {
+    return Boolean(
+      await this.prisma.atestado_funcionario.update({
+        where: { id: input.id },
+        data: {
+          statusId: input.statusId,
+          userName: input.userName,
+          inicio: input.inicio,
+          fim: input.fim,
+          observacao: input.observacao,
+          atestado_abonos: {
+            upsert: input.abonos.map((abono) => ({
+              where: { cartaoDiaId_atestadoId: { atestadoId: input.id, cartaoDiaId: abono.cartaoDiaId } },
+              create: { cartaoDiaId: abono.cartaoDiaId, minutos: abono.minutos, userName: input.userName },
+              update: { cartaoDiaId: abono.cartaoDiaId, minutos: abono.minutos, userName: input.userName }
+            }))
+          }
+        }
+      })
+    );
+  }
+};
+
+// src/main/factories/respaldar-atestado.ts
+var makeRespaldarAtestadoController = () => {
+  const respaldarAtestadoPostgresRepository = new RespaldarAtestadoPostgresRepository();
+  const respaldarController = new RespaldarController(respaldarAtestadoPostgresRepository);
+  return new LogControllerDecorator(respaldarController);
+};
+
+// src/main/routes/horarios/respaldar-atestado-routes.ts
+var route28 = (router) => {
+  router.put("/atestado/respaldar", adaptRoute(makeRespaldarAtestadoController()));
+};
+var respaldar_atestado_routes_default = route28;
 
 // src/infra/db/postgresdb/retorno-solucao/retorno-solucao-repository.ts
 var RetornoSolucaoRepository = class {
@@ -2678,10 +3094,10 @@ var makeRetornarSolucaoController = () => {
 };
 
 // src/main/routes/horarios/retornar-solucao-routes.ts
-var route26 = (router) => {
+var route29 = (router) => {
   router.post("/retornar-solucao", adaptRoute(makeRetornarSolucaoController()));
 };
-var retornar_solucao_routes_default = route26;
+var retornar_solucao_routes_default = route29;
 
 // src/infra/db/postgresdb/solucao-eventos-repository/solucao-eventos-repository.ts
 var SolucaoEventoRepository = class {
@@ -2720,7 +3136,7 @@ var SolucaoEventoRepository = class {
         // Define tratado como true no novo evento
       }
     });
-    if (tipoId === 3 || tipoId === 6) {
+    if (tipoId === 3 || tipoId === 6 || tipoId === 5) {
       const eventosEntreMenos1EMenos5 = await this.prisma.eventos.findMany({
         where: {
           cartaoDiaId: eventoOriginal.cartaoDiaId,
@@ -2741,7 +3157,7 @@ var SolucaoEventoRepository = class {
             tipoId,
             funcionarioId: evento.funcionarioId,
             minutos: tipoId === 3 ? 0 : Math.abs(evento.minutos),
-            // Define minutos como 0 para tipoId 3 e positivo para tipoId 6
+            // Define minutos como 0 para tipoId 3 e positivo para tipoId 6 ou 5
             tratado: true
           }
         });
@@ -2782,16 +3198,16 @@ var makeSolucaoEventosController = () => {
 };
 
 // src/main/routes/horarios/solucao-eventos-routes.ts
-var route27 = (router) => {
+var route30 = (router) => {
   router.post("/solucao-eventos", adaptRoute(makeSolucaoEventosController()));
 };
-var solucao_eventos_routes_default = route27;
+var solucao_eventos_routes_default = route30;
 
 // src/main/routes/horarios/upload-routes-routes.ts
 var import_multer = __toESM(require("multer"), 1);
 
 // src/main/adapters/protheus-route-adapter.ts
-var import_moment6 = __toESM(require("moment"), 1);
+var import_moment8 = __toESM(require("moment"), 1);
 
 // src/infra/db/postgresdb/afastamento/afastamento -repository.ts
 var AfastamentoRepository = class {
@@ -3110,11 +3526,11 @@ var GrupoDeTrabalhoRepositoryPrisma = class {
 };
 
 // src/presentation/controllers/procurar-funcionário/utils.ts
-var import_moment5 = __toESM(require("moment"), 1);
+var import_moment7 = __toESM(require("moment"), 1);
 var BuscarHorarioNortunoEmMinutos = (data, inicial, final) => {
   let difMinNotuno = 0;
-  const inicioAdicional = (0, import_moment5.default)(data).utc(false).minutes(0).seconds(0).hour(22);
-  const finalAdicional = (0, import_moment5.default)(data).utc(false).minutes(0).seconds(0).add(1, "d").hour(5);
+  const inicioAdicional = (0, import_moment7.default)(data).utc(false).minutes(0).seconds(0).hour(22);
+  const finalAdicional = (0, import_moment7.default)(data).utc(false).minutes(0).seconds(0).add(1, "d").hour(5);
   if (inicial.isBetween(inicioAdicional, finalAdicional)) {
     if (inicial.isAfter(inicioAdicional)) {
       if (final.isBefore(finalAdicional)) {
@@ -3358,7 +3774,7 @@ async function importarArquivoCartao(req, res) {
         cartao.saldoAnterior100 = 0;
         cartao.saldoAnterior60 = 0;
         cartao.status = { id: 1, descricao: "IMPORTADO" };
-        cartao.referencia = (0, import_moment6.default)(`${referencia.slice(0, 4)}-${data.slice(4, 6)}-01`).add(1, "M").utc(true).toDate();
+        cartao.referencia = (0, import_moment8.default)(`${referencia.slice(0, 4)}-${data.slice(4, 6)}-01`).add(1, "M").utc(true).toDate();
         cartao.dias = [];
         const existeFuncionario = await funcionarioRepository.findFisrt({ identificacao });
         if (!existeFuncionario) {
@@ -3367,32 +3783,32 @@ async function importarArquivoCartao(req, res) {
         }
         cartao.funcionarioId = existeFuncionario.id;
       }
-      const dataAtual = (0, import_moment6.default)(/* @__PURE__ */ new Date(`${data.slice(0, 4)}-${data.slice(4, 6)}-${data.slice(6, 8)}`)).utc(false);
+      const dataAtual = (0, import_moment8.default)(/* @__PURE__ */ new Date(`${data.slice(0, 4)}-${data.slice(4, 6)}-${data.slice(6, 8)}`)).utc(false);
       const [hora, minutos] = descanso.split(".");
       let descansoEmMinutos = Number(hora) * 60 + Number(minutos);
       let cargaHor = 0, cargaHorPrimeiroPeriodo = 0, cargaHorSegundoPeriodo = 0, cargaHorNoturna = 0;
       {
         const [horaEntrada, minutosEntrada] = primeiraEntrada.split(".");
         const [horaSaida, minutosSaida] = primeiraSaida.split(".");
-        const dataEntrada = (0, import_moment6.default)(dataAtual).hour(Number(horaEntrada)).minutes(Number(minutosEntrada));
-        const dataSaida = (0, import_moment6.default)(dataAtual).hour(Number(horaSaida)).minutes(Number(minutosSaida));
+        const dataEntrada = (0, import_moment8.default)(dataAtual).hour(Number(horaEntrada)).minutes(Number(minutosEntrada));
+        const dataSaida = (0, import_moment8.default)(dataAtual).hour(Number(horaSaida)).minutes(Number(minutosSaida));
         if (dataEntrada.isAfter(dataSaida))
           dataSaida.add(1, "d");
         cargaHorPrimeiroPeriodo = dataSaida.diff(dataEntrada, "minutes");
-        cargaHorNoturna += BuscarHorarioNortunoEmMinutos((0, import_moment6.default)(data), dataEntrada, dataSaida);
+        cargaHorNoturna += BuscarHorarioNortunoEmMinutos((0, import_moment8.default)(data), dataEntrada, dataSaida);
       }
       {
         const [horaEntrada, minutosEntrada] = segundaEntrada.split(".");
         const [horaSaida, minutosSaida] = segundaSaida.split(".");
-        const dataEntrada = (0, import_moment6.default)(dataAtual).hour(Number(horaEntrada)).minutes(Number(minutosEntrada));
-        const dataSaida = (0, import_moment6.default)(dataAtual).hour(Number(horaSaida)).minutes(Number(minutosSaida));
-        const dataPrimeiraEntrada = (0, import_moment6.default)(dataAtual).hour(Number(primeiraEntrada.split(".")[0])).minutes(Number(primeiraEntrada.split(".")[1]));
+        const dataEntrada = (0, import_moment8.default)(dataAtual).hour(Number(horaEntrada)).minutes(Number(minutosEntrada));
+        const dataSaida = (0, import_moment8.default)(dataAtual).hour(Number(horaSaida)).minutes(Number(minutosSaida));
+        const dataPrimeiraEntrada = (0, import_moment8.default)(dataAtual).hour(Number(primeiraEntrada.split(".")[0])).minutes(Number(primeiraEntrada.split(".")[1]));
         if (dataPrimeiraEntrada.isAfter(dataEntrada))
           dataEntrada.add(1, "d");
         if (dataEntrada.isAfter(dataSaida))
           dataSaida.add(1, "d");
         cargaHorSegundoPeriodo = dataSaida.diff(dataEntrada, "minutes");
-        cargaHorNoturna += BuscarHorarioNortunoEmMinutos((0, import_moment6.default)(data), dataEntrada, dataSaida);
+        cargaHorNoturna += BuscarHorarioNortunoEmMinutos((0, import_moment8.default)(data), dataEntrada, dataSaida);
       }
       cargaHor = cargaHorPrimeiroPeriodo + cargaHorSegundoPeriodo;
       cartao.dias.push({
@@ -3458,13 +3874,13 @@ async function importarArquivosAfastamento(req, res) {
 
 // src/main/routes/horarios/upload-routes-routes.ts
 var upload = (0, import_multer.default)();
-var route28 = (router) => {
+var route31 = (router) => {
   router.post("/uploadfuncionario", upload.single("arquivo"), (req, res) => importarArquivoFuncionario(req, res));
   router.post("/uploadcartao", upload.single("arquivo"), (req, res) => importarArquivoCartao(req, res));
   router.post("/uploadafastamento", upload.single("arquivo"), (req, res) => importarArquivosAfastamento(req, res));
   router.post("/uploadagrupotrabalho", upload.single("arquivo"), (req, res) => importarArquivoGrupoTrabalho(req, res));
 };
-var upload_routes_routes_default = route28;
+var upload_routes_routes_default = route31;
 
 // src/main/config/routes.ts
 var setupRoutes = (app2) => {
@@ -3482,7 +3898,7 @@ var setupRoutes = (app2) => {
   export_demitidos_routes_default(router);
   listar_descricacao_routes_default(router);
   cadastrar_atestado_default(router);
-  listar_atestados_routes_default(router);
+  listar_atestados_n_o_tratados_default(router);
   criar_eventos_default(router);
   solucao_eventos_routes_default(router);
   listar_solucoes_eventos_routes_default(router);
@@ -3498,6 +3914,9 @@ var setupRoutes = (app2) => {
   listar_status_solucao_atestado_default(router);
   cadastrar_atestado_aprovado_routes_default(router);
   cadastrar_atestado_recusado_routes_default(router);
+  listar_todos_atestados_routes_default(router);
+  respaldar_atestado_routes_default(router);
+  listar_atestados_60_dias_routes_default(router);
 };
 
 // src/main/config/app.ts
