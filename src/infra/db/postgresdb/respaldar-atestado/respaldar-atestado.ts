@@ -81,4 +81,46 @@ export class RespaldarAtestadoPostgresRepository implements RespaldarAtestado {
       }),
     );
   }
+
+  public async findManyAtestados(input: {
+    funcionarioId: number;
+    statusId: number;
+    abono: { inicio: Date; fim: Date };
+  }): Promise<
+    { abonos: { id: number }[]; fim: Date | null; id: number; inicio: Date | null; observacao: string; statusId: number }[]
+  > {
+    const output: {
+      abonos: { id: number }[];
+      fim: Date | null;
+      id: number;
+      inicio: Date | null;
+      observacao: string;
+      statusId: number;
+    }[] = [];
+    const result = await this.prisma.atestado_funcionario.findMany({
+      where: {
+        funcionarioId: input.funcionarioId,
+        statusId: input.statusId,
+      },
+      include: {
+        atestado_abonos: {
+          where: {
+            cartao_dia: { AND: [{ data: { lte: input.abono.fim } }, { data: { gte: input.abono.inicio } }] },
+          },
+        },
+      },
+    });
+
+    result.map((atestado) =>
+      output.push({
+        id: atestado.id,
+        fim: atestado.fim,
+        inicio: atestado.inicio,
+        observacao: atestado.observacao,
+        statusId: atestado.statusId,
+        abonos: atestado.atestado_abonos.map((abono) => ({ id: abono.id })),
+      }),
+    );
+    return output;
+  }
 }

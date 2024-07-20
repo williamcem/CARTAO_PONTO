@@ -10,7 +10,22 @@ export class CartaoPostgresRepository implements AddCartoes {
     this.prisma = prisma;
   }
 
-  public async upsert(input: AddCartaoUpsertModel): Promise<boolean> {
+  public async upsert(input: AddCartaoUpsertModel): Promise<
+    | {
+        id: number;
+        funcionarioId: number;
+        dias: {
+          id: number;
+          data: Date;
+          descanso: number;
+          cargaHoraria: number;
+          cargaHorariaCompleta: string;
+          cargaHorariaPrimeiroPeriodo: number;
+          cargaHorariaSegundoPeriodo: number;
+        }[];
+      }
+    | undefined
+  > {
     const saved = await this.prisma.cartao.upsert({
       create: {
         referencia: input.referencia,
@@ -31,8 +46,28 @@ export class CartaoPostgresRepository implements AddCartoes {
       where: { funcionarioId_referencia: { referencia: input.referencia, funcionarioId: input.funcionarioId } },
     });
 
+    const output:
+      | {
+          id: number;
+          dias: {
+            id: number;
+            data: Date;
+            descanso: number;
+            cargaHoraria: number;
+            cargaHorariaCompleta: string;
+            cargaHorariaPrimeiroPeriodo: number;
+            cargaHorariaSegundoPeriodo: number;
+          }[];
+          funcionarioId: number;
+        }
+      | undefined = {
+      id: saved.id,
+      dias: [],
+      funcionarioId: saved.funcionarioId,
+    };
+
     for (const dia of input.dias) {
-      await this.prisma.cartao_dia.upsert({
+      const diaSalvo = await this.prisma.cartao_dia.upsert({
         where: { cartaoId_data: { cartaoId: saved.id, data: dia.data } },
         create: {
           cargaHor: dia.cargaHor,
@@ -67,8 +102,19 @@ export class CartaoPostgresRepository implements AddCartoes {
           cartao: { connect: { id: saved.id } },
         },
       });
+      output.dias.push({
+        id: diaSalvo.id,
+        data: diaSalvo.data,
+        cargaHoraria: diaSalvo.cargaHor,
+        cargaHorariaCompleta: diaSalvo.cargaHorariaCompleta,
+        cargaHorariaPrimeiroPeriodo: diaSalvo.cargaHorPrimeiroPeriodo,
+        cargaHorariaSegundoPeriodo: diaSalvo.cargaHorSegundoPeriodo,
+        descanso: diaSalvo.periodoDescanso,
+      });
     }
 
-    return Boolean(saved);
+    if (!saved) return undefined;
+
+    return output;
   }
 }
