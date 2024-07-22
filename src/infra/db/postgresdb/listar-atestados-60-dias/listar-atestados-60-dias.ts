@@ -17,7 +17,7 @@ export class ListarAtestados60DiasRepository implements ListarAtestados60Dias {
     const comFormato = moment(sessentaDiasAtras.setDate(hoje.getDate() - 60))
       .utc(true)
       .toDate();
-    console.log("Aquiiiii", comFormato);
+    console.log("Data de hoje formatada", comFormato);
 
     const atestados = await this.prisma.atestado_funcionario.findMany({
       where: {

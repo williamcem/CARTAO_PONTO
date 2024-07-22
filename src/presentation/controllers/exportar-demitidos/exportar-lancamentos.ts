@@ -1,7 +1,7 @@
 import { exportarDadosDemitidosParaArquivo } from "../../../main/expotações-demitidos/exportar-dados";
+import { FuncionarioParamError } from "../../errors/Funcionario-param-error";
 import { badRequest } from "../../helpers/http-helpers";
 import { Controller, HttpRequest, HttpResponse } from "./export-protocols";
-import { FuncionarioParamError } from "../../errors/Funcionario-param-error";
 
 export class ExportarDemitidosController implements Controller {
   async handle(httpRequest: HttpRequest): Promise<HttpResponse> {
