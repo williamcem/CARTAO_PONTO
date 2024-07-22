@@ -61,6 +61,7 @@ export class AtestadoRepository implements AddAtestado {
           funcionarioId: input.funcionarioId,
           ocupacaoId: input.ocupacaoId,
           tipoId: input.tipoId,
+          sintomas: input.sintomas,
           statusId: 1,
         },
       });

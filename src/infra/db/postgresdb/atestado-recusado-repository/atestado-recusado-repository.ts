@@ -52,6 +52,19 @@ export class RespaldarAtestadoRecusadoPostgresRepository implements RespaldarAte
     }));
   }
 
+  public async findAtestadoAcao(input: { id: number }): Promise<{ acao: number } | undefined> {
+    const result = await this.prisma.atestado_funcionario.findFirst({
+      where: { id: input.id },
+      select: { acao: true },
+    });
+
+    if (!result) return;
+
+    return {
+      acao: result.acao,
+    };
+  }
+
   public async updateAtestado(input: {
     id: number;
     statusId: number;
