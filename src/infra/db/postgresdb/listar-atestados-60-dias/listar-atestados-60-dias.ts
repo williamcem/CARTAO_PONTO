@@ -13,20 +13,19 @@ export class ListarAtestados60DiasRepository implements ListarAtestados60Dias {
 
   public async listar60Dias(funcionarioId: number): Promise<any[]> {
     const hoje = new Date();
-    const sessentaDiasAtras = new Date();
-    const comFormato = moment(sessentaDiasAtras.setDate(hoje.getDate() - 60))
-      .utc(true)
-      .toDate();
-    console.log("Aquiiiii", comFormato);
+
+    const parametros = (await this.prisma.parametros.findFirst()) || { qtdeDiasAnteriorAtestado: 60 };
+
+    const sessentaDiasAtras = moment(hoje).add(-parametros.qtdeDiasAnteriorAtestado, "d").toDate();
 
     const atestados = await this.prisma.atestado_funcionario.findMany({
       where: {
-        funcionarioId: funcionarioId,
+        funcionarioId: Number(funcionarioId),
         statusId: {
           in: [1, 2],
         },
         data: {
-          gte: comFormato,
+          gte: sessentaDiasAtras,
           lte: hoje,
         },
       },
@@ -61,6 +60,7 @@ export class ListarAtestados60DiasRepository implements ListarAtestados60Dias {
       nomeOcupacao: atestado.tipo_ocupacao?.nome,
       nomeStatus: atestado.tipo_status?.nome,
       nomeDocumento: atestado.tipos_documentos?.nome,
+      dias: atestado?.inicio && atestado.fim ? moment(atestado.fim).diff(moment(atestado.inicio), "d") : 0,
     }));
   }
 }

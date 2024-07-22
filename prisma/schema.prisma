@@ -202,7 +202,7 @@ model funcionarios_afastados_status {
 model atestado_funcionario {
   id                 Int       @id @default(autoincrement())
   inicio             DateTime?
-  data               DateTime
+  data               DateTime?
   fim                DateTime?
   grupo_cid          String?
   acidente_trabalho  Boolean
@@ -214,7 +214,7 @@ model atestado_funcionario {
   statusId           Int
   idade_paciente     Int?
   ocupacaoId         Int?
-  acao               Int
+  acao               Int       @default(1)
   observacao         String?
   sintomas           String?
 
@@ -320,4 +320,9 @@ model grupo_trabalho {
   total_horas_intervalo   String
   total_horas_dia         String
   userName                String?
+}
+
+model parametros {
+  id                       Int @id
+  qtdeDiasAnteriorAtestado Int @default(60)
 }
