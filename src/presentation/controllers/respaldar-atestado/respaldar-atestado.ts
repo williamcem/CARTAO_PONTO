@@ -133,16 +133,17 @@ export class RespaldarController implements Controller {
         const [hora, minuto] = entradaManha.split(".");
         datas.push(
           moment
-            .utc(input.data)
+            .utc(moment.utc(input.data))
             .set({ hour: Number(hora), minute: Number(minuto) })
             .toDate(),
         );
       }
       {
         const [hora, minuto] = saidaManha.split(".");
+        const menorPrimeiraEntrada = hora < entradaManha.split(".")[0];
         datas.push(
           moment
-            .utc(input.data)
+            .utc(moment.utc(input.data).add(menorPrimeiraEntrada ? 1 : 0, "d"))
             .set({ hour: Number(hora), minute: Number(minuto) })
             .toDate(),
         );
@@ -152,18 +153,20 @@ export class RespaldarController implements Controller {
     if (input.cargaHorariaSegundoPeriodo) {
       {
         const [hora, minuto] = entradaTarde.split(".");
+        const menorPrimeiraEntrada = hora < entradaManha.split(".")[0];
         datas.push(
           moment
-            .utc(input.data)
+            .utc(moment.utc(input.data).add(menorPrimeiraEntrada ? 1 : 0, "d"))
             .set({ hour: Number(hora), minute: Number(minuto) })
             .toDate(),
         );
       }
       {
         const [hora, minuto] = saidaTarde.split(".");
+        const menorPrimeiraEntrada = hora < entradaManha.split(".")[0];
         datas.push(
           moment
-            .utc(input.data)
+            .utc(moment.utc(input.data).add(menorPrimeiraEntrada ? 1 : 0, "d"))
             .set({ hour: Number(hora), minute: Number(minuto) })
             .toDate(),
         );
