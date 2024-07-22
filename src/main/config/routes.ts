@@ -2,7 +2,6 @@ import { Express, Router } from "express";
 
 import todosfuncionarios from "../routes/horarios/buscar-todos-funcionarios-routes";
 import cadastrarAtestado from "../routes/horarios/cadastrar-atestado";
-import atestadoAprovado from "../routes/horarios/cadastrar-atestado-aprovado-routes";
 import atestadoRecusado from "../routes/horarios/cadastrar-atestado-recusado-routes";
 import calcularresumo from "../routes/horarios/calcular-resumo-routes";
 import confirmarLancaDia from "../routes/horarios/confirmar-lanca-dia-routes";
@@ -61,7 +60,6 @@ export const setupRoutes = (app: Express): void => {
   listarOcupacao(router);
   listarStatusDocumento(router);
   listarSolucaoAtestado(router);
-  atestadoAprovado(router);
   atestadoRecusado(router);
   listarTodosAtestado(router);
   respaldarAtestado(router);
