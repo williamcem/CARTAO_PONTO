@@ -11,9 +11,13 @@ export class ListarTodosAtestadoRepsository implements ListarTodosAtestados {
   }
 
   public async listarTodos(funcionarioId: number): Promise<any[]> {
+    const funcionarioIdConvertido = Number(funcionarioId);
+    console.log("funcionarioId Original:", funcionarioId, typeof funcionarioId); // Valor original
+    console.log("funcionarioId Valor Convertido:", funcionarioIdConvertido, typeof funcionarioIdConvertido); // Verificar a conversão
+
     const atestados = await this.prisma.atestado_funcionario.findMany({
       where: {
-        funcionarioId: funcionarioId,
+        funcionarioId: funcionarioIdConvertido,
       },
       include: {
         funcionario: true,
@@ -39,6 +43,7 @@ export class ListarTodosAtestadoRepsository implements ListarTodosAtestados {
       userName: atestado.userName,
       funcionarioId: atestado.funcionarioId,
       idade_paciente: atestado.idade_paciente,
+      sintomas: atestado.sintomas,
       nome: atestado.funcionario?.nome,
       identificacao: atestado.funcionario?.identificacao,
       nomeAcao: atestado.tipo_eventos?.nome,

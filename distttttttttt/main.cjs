@@ -2103,7 +2103,7 @@ var ListarAtestados60DiasRepository = class {
     const hoje = /* @__PURE__ */ new Date();
     const sessentaDiasAtras = /* @__PURE__ */ new Date();
     const comFormato = (0, import_moment6.default)(sessentaDiasAtras.setDate(hoje.getDate() - 60)).utc(true).toDate();
-    console.log("Aquiiiii", comFormato);
+    console.log("Data de hoje formatada", comFormato);
     const atestados = await this.prisma.atestado_funcionario.findMany({
       where: {
         funcionarioId,
@@ -2878,9 +2878,12 @@ var ListarTodosAtestadoRepsository = class {
     this.prisma = prisma;
   }
   async listarTodos(funcionarioId) {
+    const funcionarioIdConvertido = Number(funcionarioId);
+    console.log("funcionarioId Original:", funcionarioId, typeof funcionarioId);
+    console.log("funcionarioId Valor Convertido:", funcionarioIdConvertido, typeof funcionarioIdConvertido);
     const atestados = await this.prisma.atestado_funcionario.findMany({
       where: {
-        funcionarioId
+        funcionarioId: funcionarioIdConvertido
       },
       include: {
         funcionario: true,
@@ -2905,6 +2908,7 @@ var ListarTodosAtestadoRepsository = class {
       userName: atestado.userName,
       funcionarioId: atestado.funcionarioId,
       idade_paciente: atestado.idade_paciente,
+      sintomas: atestado.sintomas,
       nome: atestado.funcionario?.nome,
       identificacao: atestado.funcionario?.identificacao,
       nomeAcao: atestado.tipo_eventos?.nome,
