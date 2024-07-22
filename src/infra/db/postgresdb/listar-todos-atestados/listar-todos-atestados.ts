@@ -10,12 +10,10 @@ export class ListarTodosAtestadoRepsository implements ListarTodosAtestados {
     this.prisma = prisma;
   }
 
-  public async listarTodos(identificacao: string): Promise<any[]> {
+  public async listarTodos(funcionarioId: number): Promise<any[]> {
     const atestados = await this.prisma.atestado_funcionario.findMany({
       where: {
-        funcionario: {
-          identificacao: identificacao,
-        },
+        funcionarioId: funcionarioId,
       },
       include: {
         funcionario: true,

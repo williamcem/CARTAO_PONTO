@@ -20,7 +20,7 @@ export class AtestadoRepository implements AddAtestado {
   public async add(input: AddAtestadoModel): Promise<boolean> {
     try {
       // Verificar a primeira data no cartao_dia do funcionário
-      const primeiroCartaoDia = await this.prisma.cartao_dia.findFirst({
+      const primeiroDiaCartao = await this.prisma.cartao_dia.findFirst({
         where: {
           cartao: {
             funcionarioId: input.funcionarioId,
@@ -36,11 +36,11 @@ export class AtestadoRepository implements AddAtestado {
       });
 
       // Análise de data de comparação
-      console.log("Data achada:", primeiroCartaoDia?.data);
+      console.log("Data achada:", primeiroDiaCartao?.data);
       console.log("Data de cadastro:", input.data);
 
       // Lança um erro se a data do atestado for anterior à primeira data de registro
-      if (primeiroCartaoDia && new Date(input.data) < new Date(primeiroCartaoDia.data)) {
+      if (primeiroDiaCartao && new Date(input.data) < new Date(primeiroDiaCartao.data)) {
         throw new DataAtestadoInvalida(
           "A data do atestado não pode ser anterior à primeira data de registro no cartão do funcionário.",
         );

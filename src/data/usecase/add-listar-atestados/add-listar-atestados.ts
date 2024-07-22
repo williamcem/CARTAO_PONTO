@@ -7,7 +7,7 @@ export interface ListarFilial {
 }
 
 export interface ListarTodosAtestados {
-  listarTodos(identificacao: string): Promise<{ identificacao: string }[]>;
+  listarTodos(funcionarioId: number): Promise<{ funcionarioId: number }[]>;
 }
 
 export interface ListarAtestados60Dias {

@@ -9,11 +9,11 @@ export class ListarTodosAtestadoController implements Controller {
 
   async handle(httpRequest: HttpRequest): Promise<HttpResponse> {
     try {
-      const { identificacao } = httpRequest.query;
+      const { funcionarioId } = httpRequest.query;
 
-      if (!identificacao) return badRequest(new FuncionarioParamError("Falta a identificação do funcionário!"));
+      if (!funcionarioId) return badRequest(new FuncionarioParamError("Falta a identificação do funcionário!"));
 
-      const atestados = await this.atestadoPostgresRepository.listarTodos(identificacao);
+      const atestados = await this.atestadoPostgresRepository.listarTodos(funcionarioId);
 
       if (!atestados || atestados.length === 0) {
         return ok({ message: "Nenhum atestado encontrado para esta identificação." });

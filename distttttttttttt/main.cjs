@@ -190,6 +190,12 @@ var route = (router) => {
 var buscar_todos_funcionarios_routes_default = route;
 
 // src/infra/db/postgresdb/atestado-repository/atestado-repository.ts
+var DataAtestadoInvalida = class extends Error {
+  constructor(message) {
+    super(message);
+    this.name = "DataAtestadoInvalida";
+  }
+};
 var AtestadoRepository = class {
   prisma;
   constructor() {
@@ -197,6 +203,27 @@ var AtestadoRepository = class {
   }
   async add(input) {
     try {
+      const primeiroDiaCartao = await this.prisma.cartao_dia.findFirst({
+        where: {
+          cartao: {
+            funcionarioId: input.funcionarioId
+          }
+          // Acrescentar verificação de sttaus do cartão, se estiver importado faz os fechados não
+        },
+        orderBy: {
+          data: "asc"
+        },
+        select: {
+          data: true
+        }
+      });
+      console.log("Data achada:", primeiroDiaCartao?.data);
+      console.log("Data de cadastro:", input.data);
+      if (primeiroDiaCartao && new Date(input.data) < new Date(primeiroDiaCartao.data)) {
+        throw new DataAtestadoInvalida(
+          "A data do atestado n\xE3o pode ser anterior \xE0 primeira data de registro no cart\xE3o do funcion\xE1rio."
+        );
+      }
       const savedAtestado = await this.prisma.atestado_funcionario.create({
         data: {
           data: input.data,
@@ -217,8 +244,11 @@ var AtestadoRepository = class {
       });
       return !!savedAtestado;
     } catch (error) {
+      if (error instanceof DataAtestadoInvalida) {
+        throw error;
+      }
       console.error("Erro ao criar atestado:", error);
-      return false;
+      throw new Error("Erro ao criar atestado.");
     }
   }
 };
@@ -287,9 +317,12 @@ var AtestadoController = class {
         sintomas
       });
       if (!atestadoSalvo)
-        throw "Erro ao salvar atestado!";
+        throw new Error("Erro ao salvar atestado!");
       return ok({ message: "Atestado salvo com sucesso" });
     } catch (error) {
+      if (error instanceof DataAtestadoInvalida) {
+        return badRequest(new FuncionarioParamError(error.message));
+      }
       console.error(error);
       return serverError();
     }
@@ -2555,7 +2588,7 @@ var SolucoesEventosPostgresRepository = class {
     return await this.prisma.tipo_eventos.findMany({
       where: {
         id: {
-          in: [3, 5, 6, 7]
+          in: [3, 5, 7]
         }
       }
     });
@@ -2687,12 +2720,10 @@ var ListarTodosAtestadoRepsository = class {
   constructor() {
     this.prisma = prisma;
   }
-  async listarTodos(identificacao) {
+  async listarTodos(funcionarioId) {
     const atestados = await this.prisma.atestado_funcionario.findMany({
       where: {
-        funcionario: {
-          identificacao
-        }
+        funcionarioId
       },
       include: {
         funcionario: true,
@@ -2735,10 +2766,10 @@ var ListarTodosAtestadoController = class {
   }
   async handle(httpRequest) {
     try {
-      const { identificacao } = httpRequest.query;
-      if (!identificacao)
+      const { funcionarioId } = httpRequest.query;
+      if (!funcionarioId)
         return badRequest(new FuncionarioParamError("Falta a identifica\xE7\xE3o do funcion\xE1rio!"));
-      const atestados = await this.atestadoPostgresRepository.listarTodos(identificacao);
+      const atestados = await this.atestadoPostgresRepository.listarTodos(funcionarioId);
       if (!atestados || atestados.length === 0) {
         return ok({ message: "Nenhum atestado encontrado para esta identifica\xE7\xE3o." });
       }
@@ -2857,7 +2888,7 @@ var RespaldarController = class {
         default:
           return badRequest(new FuncionarioParamError(`Documento ${statusId} n\xE3o tratado!`));
       }
-      if (atestado.statusId != 1)
+      if (atestado.statusId !== 1)
         return badRequest(new FuncionarioParamError("Atestado j\xE1 tratado!"));
       const dataInicio = import_moment6.default.utc(inicio).set({ h: 0, minute: 0, second: 0, millisecond: 0 }).toDate();
       const dias = await this.respaldarAtestadoPostgresRepository.findManyCartaoDia({
@@ -2946,7 +2977,7 @@ var RespaldarController = class {
   gerarAbono(dias, itervalo) {
     const atestadoDia = [];
     dias.map((dia) => {
-      if (dia.cargaHoraria == 0)
+      if (dia.cargaHoraria === 0)
         return;
       const horariosTrabalho = this.transformarCargaHoraria({
         data: dia.data,
@@ -2956,7 +2987,7 @@ var RespaldarController = class {
       });
       const eAntes = horariosTrabalho.findIndex((horarioTrabalho) => (0, import_moment6.default)(itervalo.inicio).isAfter(horarioTrabalho));
       const eDepois = horariosTrabalho.findIndex((horarioTrabalho) => (0, import_moment6.default)(itervalo.fim).isBefore(horarioTrabalho));
-      if (eAntes == -1 && eDepois == -1) {
+      if (eAntes === -1 && eDepois === -1) {
         atestadoDia.push({ data: dia.data, minutos: dia.cargaHoraria, cartaoDiaId: dia.id });
       } else {
         let minutos = 0;
