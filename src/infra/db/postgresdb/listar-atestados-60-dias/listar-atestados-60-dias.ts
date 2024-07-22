@@ -51,6 +51,7 @@ export class ListarAtestados60DiasRepository implements ListarAtestados60Dias {
       userName: atestado.userName,
       funcionarioId: atestado.funcionarioId,
       idade_paciente: atestado.idade_paciente,
+      sintomas: atestado.sintomas,
       nome: atestado.funcionario?.nome,
       identificacao: atestado.funcionario?.identificacao,
       nomeAcao: atestado.tipo_eventos?.nome,
