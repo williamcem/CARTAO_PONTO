@@ -1,11 +1,11 @@
-import { AtestadoRecusadoRepository } from "@infra/db/postgresdb/atestado-recusado-repository/atestado-recusado-repository";
+import { RespaldarAtestadoRecusadoPostgresRepository } from "@infra/db/postgresdb/atestado-recusado-repository/atestado-recusado-repository";
 
-import { AtestadoRecusadoController } from "../../presentation/controllers/cadastrar-atestado-recusado/cadastrar-atestado-recusado";
+import { RespaldarRecusadoController } from "../../presentation/controllers/atestado-recusado/atestado-recusado";
 import { Controller } from "../../presentation/protocols";
 import { LogControllerDecorator } from "../decorators/log";
 
-export const makeCadastrarAtestadoRecusadoController = (): Controller => {
-  const atestadoRecusadoRepository = new AtestadoRecusadoRepository();
-  const atestadoRecusadoController = new AtestadoRecusadoController(atestadoRecusadoRepository);
-  return new LogControllerDecorator(atestadoRecusadoController);
+export const makeAtestadoRecusadoController = (): Controller => {
+  const respaldarAtestadoRecusadoPostgresRepository = new RespaldarAtestadoRecusadoPostgresRepository();
+  const respaldarRecusadoController = new RespaldarRecusadoController(respaldarAtestadoRecusadoPostgresRepository);
+  return new LogControllerDecorator(respaldarRecusadoController);
 };

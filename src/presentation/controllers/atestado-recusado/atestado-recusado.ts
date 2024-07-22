@@ -1,8 +1,10 @@
 import moment from "moment";
+
+import { RespaldarAtestadoRecusadoPostgresRepository } from "@infra/db/postgresdb/atestado-recusado-repository/atestado-recusado-repository";
+
 import { FuncionarioParamError } from "../../errors/Funcionario-param-error";
 import { badRequest, notFoundRequest, ok, serverError } from "../../helpers/http-helpers";
-import { Controller, HttpRequest, HttpResponse } from "./respaldar-atestado-protocols";
-import { RespaldarAtestadoPostgresRepository } from "@infra/db/postgresdb/respaldar-atestado/respaldar-atestado";
+import { Controller, HttpRequest, HttpResponse } from "./recusado-protocols";
 
 type IDia = {
   id: number;
@@ -14,8 +16,8 @@ type IDia = {
   descanso: number;
 };
 
-export class RespaldarController implements Controller {
-  constructor(private readonly respaldarAtestadoPostgresRepository: RespaldarAtestadoPostgresRepository) {}
+export class RespaldarRecusadoController implements Controller {
+  constructor(private readonly respaldarAtestadoRecusadoPostgresRepository: RespaldarAtestadoRecusadoPostgresRepository) {}
 
   async handle(httpRequest: HttpRequest): Promise<HttpResponse> {
     try {
@@ -40,7 +42,7 @@ export class RespaldarController implements Controller {
 
       if (moment(inicio).isAfter(fim)) return badRequest(new FuncionarioParamError("Data inicial não pode ser após o fim!"));
 
-      const atestado = await this.respaldarAtestadoPostgresRepository.findfirst({ id });
+      const atestado = await this.respaldarAtestadoRecusadoPostgresRepository.findfirst({ id });
 
       if (!atestado) return notFoundRequest(new FuncionarioParamError("Atestado não encontrado!"));
 
@@ -75,7 +77,7 @@ export class RespaldarController implements Controller {
 
       const dataInicio = moment.utc(inicio).set({ h: 0, minute: 0, second: 0, millisecond: 0 }).toDate();
 
-      const dias = await this.respaldarAtestadoPostgresRepository.findManyCartaoDia({
+      const dias = await this.respaldarAtestadoRecusadoPostgresRepository.findManyCartaoDia({
         inicio: dataInicio,
         fim: fim,
         funcionarioId: atestado.funcionarioId,
@@ -90,7 +92,7 @@ export class RespaldarController implements Controller {
 
             abonos = this.gerarAbono(dias, { inicio, fim });
 
-            const atualizado = await this.respaldarAtestadoPostgresRepository.updateAtestado({
+            const atualizado = await this.respaldarAtestadoRecusadoPostgresRepository.updateAtestado({
               id: atestado.id,
               statusId,
               userName,
@@ -108,19 +110,44 @@ export class RespaldarController implements Controller {
 
         case 3:
           {
-            const atualizado = await this.respaldarAtestadoPostgresRepository.updateAtestado({
-              id: atestado.id,
-              statusId,
-              userName,
-              abonos: [],
-              observacao,
-              fim,
-              inicio,
-            });
+            const atestadoAcao = await this.respaldarAtestadoRecusadoPostgresRepository.findAtestadoAcao({ id });
+            if (atestadoAcao.acao === 3) {
+              const abonos = dias.map((dia) => ({
+                cartaoDiaId: dia.id,
+                data: dia.data,
+                minutos: 0,
+              }));
 
-            if (!atualizado) return serverError();
+              const atualizado = await this.respaldarAtestadoRecusadoPostgresRepository.updateAtestado({
+                id: atestado.id,
+                statusId,
+                userName,
+                abonos,
+                observacao,
+                fim,
+                inicio,
+              });
 
-            message = "Abono recusado com sucesso!";
+              if (!atualizado) return serverError();
+
+              message = "Abono recusado e minutos zerados com sucesso!";
+            } else {
+              const abonos = [];
+
+              const atualizado = await this.respaldarAtestadoRecusadoPostgresRepository.updateAtestado({
+                id: atestado.id,
+                statusId,
+                userName,
+                abonos,
+                observacao,
+                fim,
+                inicio,
+              });
+
+              if (!atualizado) return serverError();
+
+              message = "Abono recusado com sucesso!";
+            }
           }
           break;
 

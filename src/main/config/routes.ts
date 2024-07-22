@@ -1,8 +1,8 @@
 import { Express, Router } from "express";
 
+import atestadoRecusado from "../routes/horarios/atestado-recusado-routes";
 import todosfuncionarios from "../routes/horarios/buscar-todos-funcionarios-routes";
 import cadastrarAtestado from "../routes/horarios/cadastrar-atestado";
-import atestadoRecusado from "../routes/horarios/cadastrar-atestado-recusado-routes";
 import calcularresumo from "../routes/horarios/calcular-resumo-routes";
 import confirmarLancaDia from "../routes/horarios/confirmar-lanca-dia-routes";
 import eventos from "../routes/horarios/criar-eventos";
