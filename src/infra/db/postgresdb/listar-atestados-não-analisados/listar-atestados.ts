@@ -24,6 +24,9 @@ export class ListarAtestadoRepsository implements ListarAtestado {
         tipos_documentos: true,
         tipo_eventos: true,
       },
+      orderBy: {
+        data: "asc",
+      },
     });
 
     return atestados.map((atestado) => ({

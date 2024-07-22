@@ -1,8 +1,10 @@
 import moment from "moment";
+
+import { RespaldarAtestadoRecusadoPostgresRepository } from "@infra/db/postgresdb/atestado-recusado-repository/atestado-recusado-repository";
+
 import { FuncionarioParamError } from "../../errors/Funcionario-param-error";
 import { badRequest, notFoundRequest, ok, serverError } from "../../helpers/http-helpers";
-import { Controller, HttpRequest, HttpResponse } from "./respaldar-atestado-protocols";
-import { RespaldarAtestadoPostgresRepository } from "@infra/db/postgresdb/respaldar-atestado/respaldar-atestado";
+import { Controller, HttpRequest, HttpResponse } from "./recusado-protocols";
 
 type IDia = {
   id: number;
@@ -14,8 +16,8 @@ type IDia = {
   descanso: number;
 };
 
-export class RespaldarController implements Controller {
-  constructor(private readonly respaldarAtestadoPostgresRepository: RespaldarAtestadoPostgresRepository) {}
+export class RespaldarRecusadoController implements Controller {
+  constructor(private readonly respaldarAtestadoRecusadoPostgresRepository: RespaldarAtestadoRecusadoPostgresRepository) {}
 
   async handle(httpRequest: HttpRequest): Promise<HttpResponse> {
     try {
@@ -40,7 +42,7 @@ export class RespaldarController implements Controller {
 
       if (moment(inicio).isAfter(fim)) return badRequest(new FuncionarioParamError("Data inicial não pode ser após o fim!"));
 
-      const atestado = await this.respaldarAtestadoPostgresRepository.findfirst({ id });
+      const atestado = await this.respaldarAtestadoRecusadoPostgresRepository.findfirst({ id });
 
       if (!atestado) return notFoundRequest(new FuncionarioParamError("Atestado não encontrado!"));
 
@@ -75,7 +77,7 @@ export class RespaldarController implements Controller {
 
       const dataInicio = moment.utc(inicio).set({ h: 0, minute: 0, second: 0, millisecond: 0 }).toDate();
 
-      const dias = await this.respaldarAtestadoPostgresRepository.findManyCartaoDia({
+      const dias = await this.respaldarAtestadoRecusadoPostgresRepository.findManyCartaoDia({
         inicio: dataInicio,
         fim: fim,
         funcionarioId: atestado.funcionarioId,
@@ -86,17 +88,15 @@ export class RespaldarController implements Controller {
       switch (statusId) {
         case 2:
           {
-            message = await this.abonar({ dias, atestado: { id: atestado.id, fim, inicio, observacao, statusId }, userName });
-          }
-          break;
+            let abonos: { cartaoDiaId: number; data: Date; minutos: number }[] = [];
 
-        case 3:
-          {
-            const atualizado = await this.respaldarAtestadoPostgresRepository.updateAtestado({
+            abonos = this.gerarAbono(dias, { inicio, fim });
+
+            const atualizado = await this.respaldarAtestadoRecusadoPostgresRepository.updateAtestado({
               id: atestado.id,
               statusId,
               userName,
-              abonos: [],
+              abonos,
               observacao,
               fim,
               inicio,
@@ -104,7 +104,50 @@ export class RespaldarController implements Controller {
 
             if (!atualizado) return serverError();
 
-            message = "Abono recusado com sucesso!";
+            message = "Abono aprovado com sucesso!";
+          }
+          break;
+
+        case 3:
+          {
+            const atestadoAcao = await this.respaldarAtestadoRecusadoPostgresRepository.findAtestadoAcao({ id });
+            if (atestadoAcao.acao === 3) {
+              const abonos = dias.map((dia) => ({
+                cartaoDiaId: dia.id,
+                data: dia.data,
+                minutos: 0,
+              }));
+
+              const atualizado = await this.respaldarAtestadoRecusadoPostgresRepository.updateAtestado({
+                id: atestado.id,
+                statusId,
+                userName,
+                abonos,
+                observacao,
+                fim,
+                inicio,
+              });
+
+              if (!atualizado) return serverError();
+
+              message = "Abono recusado e minutos zerados com sucesso!";
+            } else {
+              const abonos = [];
+
+              const atualizado = await this.respaldarAtestadoRecusadoPostgresRepository.updateAtestado({
+                id: atestado.id,
+                statusId,
+                userName,
+                abonos,
+                observacao,
+                fim,
+                inicio,
+              });
+
+              if (!atualizado) return serverError();
+
+              message = "Abono recusado com sucesso!";
+            }
           }
           break;
 
@@ -133,17 +176,16 @@ export class RespaldarController implements Controller {
         const [hora, minuto] = entradaManha.split(".");
         datas.push(
           moment
-            .utc(moment.utc(input.data))
+            .utc(input.data)
             .set({ hour: Number(hora), minute: Number(minuto) })
             .toDate(),
         );
       }
       {
         const [hora, minuto] = saidaManha.split(".");
-        const menorPrimeiraEntrada = hora < entradaManha.split(".")[0];
         datas.push(
           moment
-            .utc(moment.utc(input.data).add(menorPrimeiraEntrada ? 1 : 0, "d"))
+            .utc(input.data)
             .set({ hour: Number(hora), minute: Number(minuto) })
             .toDate(),
         );
@@ -153,20 +195,18 @@ export class RespaldarController implements Controller {
     if (input.cargaHorariaSegundoPeriodo) {
       {
         const [hora, minuto] = entradaTarde.split(".");
-        const menorPrimeiraEntrada = hora < entradaManha.split(".")[0];
         datas.push(
           moment
-            .utc(moment.utc(input.data).add(menorPrimeiraEntrada ? 1 : 0, "d"))
+            .utc(input.data)
             .set({ hour: Number(hora), minute: Number(minuto) })
             .toDate(),
         );
       }
       {
         const [hora, minuto] = saidaTarde.split(".");
-        const menorPrimeiraEntrada = hora < entradaManha.split(".")[0];
         datas.push(
           moment
-            .utc(moment.utc(input.data).add(menorPrimeiraEntrada ? 1 : 0, "d"))
+            .utc(input.data)
             .set({ hour: Number(hora), minute: Number(minuto) })
             .toDate(),
         );
@@ -247,31 +287,5 @@ export class RespaldarController implements Controller {
     });
 
     return atestadoDia;
-  }
-
-  public async abonar(input: {
-    atestado: { id: number; inicio: Date; fim: Date; observacao: string; statusId: number };
-    userName: string;
-    dias: IDia[];
-  }): Promise<string> {
-    let abonos: { cartaoDiaId: number; data: Date; minutos: number }[] = [];
-
-    abonos = this.gerarAbono(input.dias, { inicio: input.atestado.inicio, fim: input.atestado.fim });
-
-    const atualizado = await this.respaldarAtestadoPostgresRepository.updateAtestado({
-      id: input.atestado.id,
-      statusId: input.atestado.statusId,
-      userName: input.userName,
-      abonos,
-      observacao: input.atestado.observacao,
-      fim: input.atestado.fim,
-      inicio: input.atestado.inicio,
-    });
-
-    if (!atualizado) return "Erro ao atualizar atestado";
-
-    const message = "Abono aprovado com sucesso!";
-
-    return message;
   }
 }

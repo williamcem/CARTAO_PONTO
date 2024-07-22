@@ -1,9 +1,8 @@
 import { Express, Router } from "express";
 
+import atestadoRecusado from "../routes/horarios/atestado-recusado-routes";
 import todosfuncionarios from "../routes/horarios/buscar-todos-funcionarios-routes";
 import cadastrarAtestado from "../routes/horarios/cadastrar-atestado";
-import atestadoAprovado from "../routes/horarios/cadastrar-atestado-aprovado-routes";
-import atestadoRecusado from "../routes/horarios/cadastrar-atestado-recusado-routes";
 import calcularresumo from "../routes/horarios/calcular-resumo-routes";
 import confirmarLancaDia from "../routes/horarios/confirmar-lanca-dia-routes";
 import eventos from "../routes/horarios/criar-eventos";
@@ -14,6 +13,7 @@ import exportarlancamentos from "../routes/horarios/export-geral-routes";
 import funcionario from "../routes/horarios/get-funcionario-routes";
 import lancarDia from "../routes/horarios/lancar-dia-routes";
 import listarAcompanhante from "../routes/horarios/listar-acompanhante-routes";
+import listarAtestados60Dias from "../routes/horarios/listar-atestados-60-dias-routes";
 import listarAtestado from "../routes/horarios/listar-atestados-não-tratados";
 import descricacao from "../routes/horarios/listar-descricacao-routes";
 import listarDocumento from "../routes/horarios/listar-documento-routes";
@@ -26,11 +26,10 @@ import listarStatusDocumento from "../routes/horarios/listar-status-documento-ro
 import listarSolucaoAtestado from "../routes/horarios/listar-status-solucao-atestado";
 import listarTodosAtestado from "../routes/horarios/listar-todos-atestados-routes";
 import procurarLocalidade from "../routes/horarios/procurar-localidade-routes";
+import respaldarAtestado from "../routes/horarios/respaldar-atestado-routes";
 import retornarsolucao from "../routes/horarios/retornar-solucao-routes";
 import solucaoeventos from "../routes/horarios/solucao-eventos-routes";
 import upload from "../routes/horarios/upload-routes-routes";
-import confirmarLancaDia from "../routes/horarios/confirmar-lanca-dia-routes";
-import respaldarAtestado from "../routes/horarios/respaldar-atestado-routes";
 
 export const setupRoutes = (app: Express): void => {
   const router = Router();
@@ -61,8 +60,8 @@ export const setupRoutes = (app: Express): void => {
   listarOcupacao(router);
   listarStatusDocumento(router);
   listarSolucaoAtestado(router);
-  atestadoAprovado(router);
   atestadoRecusado(router);
   listarTodosAtestado(router);
   respaldarAtestado(router);
+  listarAtestados60Dias(router);
 };

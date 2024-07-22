@@ -9,7 +9,7 @@ export interface AddAtestadoModel {
   descricao?: string;
   userName?: string;
   funcionarioId: number;
-  tipoId?: number;
+  tipoId: number;
   ocupacaoId?: number;
   tipoAcompanhanteId?: number;
   idade_paciente?: number;
@@ -17,6 +17,7 @@ export interface AddAtestadoModel {
   acao: number;
   statusId: number;
   observacao: string;
+  sintomas?: string;
 }
 
 export interface AddAtestado {

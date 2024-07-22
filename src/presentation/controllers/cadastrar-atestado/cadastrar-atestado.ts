@@ -1,4 +1,4 @@
-import { AtestadoRepository } from "@infra/db/postgresdb/atestado-repository/atestado-repository";
+import { AtestadoRepository, DataAtestadoInvalida } from "@infra/db/postgresdb/atestado-repository/atestado-repository";
 
 import { FuncionarioParamError } from "../../errors/Funcionario-param-error";
 import { badRequest, ok, serverError } from "../../helpers/http-helpers";
@@ -25,6 +25,7 @@ export class AtestadoController implements Controller {
         observacao,
         statusId,
         data,
+        sintomas,
       } = httpRequest.body;
 
       if (!userName) return badRequest(new FuncionarioParamError("Falta Usuário!"));
@@ -32,6 +33,7 @@ export class AtestadoController implements Controller {
       if (!funcionarioId) return badRequest(new FuncionarioParamError("Falta funcionárioId!"));
       if (!acao) return badRequest(new FuncionarioParamError("Falta escolher a ação caso seja recusado!"));
       if (!data) return badRequest(new FuncionarioParamError("Falta a data do atestado!"));
+      if (!sintomas && !grupo_cid) return badRequest(new FuncionarioParamError("Faltam os sintomas ou o grupo CID!"));
 
       const atestadoSalvo = await this.atestadoRepository.add({
         inicio,
@@ -49,12 +51,16 @@ export class AtestadoController implements Controller {
         statusId,
         data,
         observacao,
+        sintomas,
       });
 
-      if (!atestadoSalvo) throw "Erro ao salvar atestado!";
+      if (!atestadoSalvo) throw new Error("Erro ao salvar atestado!");
 
       return ok({ message: "Atestado salvo com sucesso" });
     } catch (error) {
+      if (error instanceof DataAtestadoInvalida) {
+        return badRequest(new FuncionarioParamError(error.message));
+      }
       console.error(error);
       return serverError();
     }

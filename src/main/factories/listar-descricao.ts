@@ -1,6 +1,6 @@
-import { ListarDescricacoRepsository } from "@infra/db/postgresdb/listar-descricacao-repository/listar-descricacao-repository";
+import { ListarDescricacoRepsository } from "@infra/db/postgresdb/listar-descricao-repository/listar-descricao-repository";
 
-import { ListarDescricacoController } from "../../presentation/controllers/listar-descricacao/listar-descricacao-controler";
+import { ListarDescricacoController } from "../../presentation/controllers/listar-descricao/listar-descricao-controler";
 import { Controller } from "../../presentation/protocols";
 import { LogControllerDecorator } from "../decorators/log";
 
