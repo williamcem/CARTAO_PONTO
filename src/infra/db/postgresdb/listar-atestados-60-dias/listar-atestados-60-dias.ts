@@ -13,9 +13,7 @@ export class ListarAtestados60DiasRepository implements ListarAtestados60Dias {
 
   public async listar60Dias(funcionarioId: number): Promise<any[]> {
     const hoje = new Date();
-
     const parametros = (await this.prisma.parametros.findFirst()) || { qtdeDiasAnteriorAtestado: 60 };
-
     const sessentaDiasAtras = moment(hoje).add(-parametros.qtdeDiasAnteriorAtestado, "d").toDate();
 
     const atestados = await this.prisma.atestado_funcionario.findMany({
