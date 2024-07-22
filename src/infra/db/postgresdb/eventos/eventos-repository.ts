@@ -238,18 +238,23 @@ export class CriarEventosPostgresRepository implements AdicionarEventos {
         `Evento criado: ${eventoPeriodoReal.hora} - Tipo: ${eventoPeriodoReal.tipoId} - Minutos: ${eventoPeriodoReal.minutos}`,
       );
 
-      const eventoExcedentePositivoReal = {
-        cartaoDiaId: lancamento.cartao_dia.id,
-        hora: `${entrada.format("HH:mm")} - ${horarioEntradaEsperado1.format("HH:mm")}`,
-        tipoId: 1,
-        funcionarioId: lancamento.cartao_dia.cartao.funcionario.id,
-        minutos: horarioEntradaEsperado1.diff(entrada, "minutes"),
-      };
+      ///////////////////////////////// testar
+      /*       const minutosExcedentes = horarioEntradaEsperado1.diff(entrada, "minutes");
 
-      eventos.push(eventoExcedentePositivoReal);
-      console.log(
-        `Evento criado: ${eventoPeriodoReal.hora} - Tipo: ${eventoPeriodoReal.tipoId} - Minutos: ${eventoPeriodoReal.minutos}`,
-      );
+      if (minutosExcedentes > 5) {
+        const eventoExcedentePositivoReal = {
+          cartaoDiaId: lancamento.cartao_dia.id,
+          hora: `${entrada.format("HH:mm")} - ${horarioEntradaEsperado1.format("HH:mm")}`,
+          tipoId: 1,
+          funcionarioId: lancamento.cartao_dia.cartao.funcionario.id,
+          minutos: horarioEntradaEsperado1.diff(entrada, "minutes"),
+        };
+
+        eventos.push(eventoExcedentePositivoReal);
+        console.log(
+          `Evento criado: ${eventoPeriodoReal.hora} - Tipo: ${eventoPeriodoReal.tipoId} - Minutos: ${eventoPeriodoReal.minutos}`,
+        );
+      } */
     } else {
       const eventoPeriodo1 = {
         cartaoDiaId: lancamento.cartao_dia.id,
@@ -353,7 +358,7 @@ export class CriarEventosPostgresRepository implements AdicionarEventos {
         console.log(
           `Evento criado000000000: ${eventoExcedentePositivo.hora} - Tipo: ${eventoExcedentePositivo.tipoId} - Minutos: ${eventoExcedentePositivo.minutos}`,
         );
-      } else {
+      } else if (eventoExcedentePositivo.minutos < 0) {
         const eventoPositivo = {
           ...eventoExcedentePositivo,
           tipoId: 9,
@@ -394,7 +399,7 @@ export class CriarEventosPostgresRepository implements AdicionarEventos {
         console.log(
           `Evento criado: ${eventoExcedentePositivo.hora} - Tipo: ${eventoExcedentePositivo.tipoId} - Minutos: ${eventoExcedentePositivo.minutos}`,
         );
-      } else {
+      } else if (eventoExcedentePositivo.minutos < 0) {
         const eventoPositivo = {
           ...eventoExcedentePositivo,
           tipoId: 9,

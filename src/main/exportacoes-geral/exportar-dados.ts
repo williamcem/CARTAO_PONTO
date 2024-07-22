@@ -47,18 +47,15 @@ export const exportarDadosParaArquivo = async (callback: (err: Error | null, fil
 
             return `${funcionario.identificacao};${formatarData(dia.data)};${entradasSaidas}`;
           } else {
-            // Se não houver lançamentos, retornar uma string vazia
-            return "";
+            // Se não houver lançamentos, retornar a identificação e a data sem lançamentos
+            return `${funcionario.identificacao};${formatarData(dia.data)};`;
           }
         });
       });
     });
 
-    // Filtrar as linhas para remover as linhas vazias
-    const linhasFiltradas = linhas.filter((linha) => linha !== "");
-
     const filename = "dados_da_tabela.txt";
-    const data = linhasFiltradas.join("\n");
+    const data = linhas.join("\n");
 
     // Escrever os dados em um arquivo de texto
     fs.writeFile(filename, data, "utf8", (err) => {

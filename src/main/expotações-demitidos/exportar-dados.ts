@@ -6,21 +6,30 @@ const prisma = new PrismaClient();
 export const exportarDadosDemitidosParaArquivo = async (
   callback: (err: Error | null, filename?: string) => void,
   identificacao?: string,
-  localidade?: string,
+  localidadeId?: string,
 ) => {
   try {
+    // Buscar todos os funcionários sem filtro para depuração
+    const todosFuncionarios = await prisma.funcionario.findMany({
+      include: {
+        localidade: true,
+      },
+    });
+
+    console.log("Todos os funcionários:", JSON.stringify(todosFuncionarios, null, 2));
+
     // Definir filtros de busca
     const where: any = {};
     if (identificacao) {
       where.identificacao = identificacao;
     }
-    if (localidade) {
-      where.localidade = {
-        nome: localidade,
-      };
+    if (localidadeId) {
+      where.localidadeId = localidadeId;
     }
 
-    console.log("bateu");
+    // Log para depuração
+    console.log("Filtros de busca:", JSON.stringify(where, null, 2));
+
     // Buscar os dados das tabelas com filtros
     const funcionarios = await prisma.funcionario.findMany({
       where,
@@ -44,6 +53,15 @@ export const exportarDadosDemitidosParaArquivo = async (
       },
     });
 
+    // Verificar se encontrou funcionários
+    if (funcionarios.length === 0) {
+      console.log("Nenhum funcionário encontrado com os critérios fornecidos.");
+      return callback(null, "Nenhum funcionário encontrado com os critérios fornecidos.");
+    }
+
+    // Log para depuração
+    console.log("Funcionários encontrados:", JSON.stringify(funcionarios, null, 2));
+
     // Preparar os dados para o arquivo
     const linhas = funcionarios.flatMap((funcionario) => {
       return funcionario.cartao.flatMap((cartao) => {
@@ -64,18 +82,21 @@ export const exportarDadosDemitidosParaArquivo = async (
 
             return `${funcionario.identificacao};${formatarData(dia.data)};${entradasSaidas}`;
           } else {
-            // Se não houver lançamentos, retornar uma string vazia
-            return "";
+            // Se não houver lançamentos, retornar a identificação e a data sem lançamentos
+            return `${funcionario.identificacao};${formatarData(dia.data)};`;
           }
         });
       });
     });
 
-    // Filtrar as linhas para remover as linhas vazias
-    const linhasFiltradas = linhas.filter((linha) => linha !== "");
-
     const filename = "dados_da_tabela_filtrado.txt";
-    const data = linhasFiltradas.join("\n");
+    const data = linhas.join("\n");
+
+    // Verificar se há dados para escrever
+    if (data.trim() === "") {
+      console.log("Nenhum dado para exportar.");
+      return callback(null, "Nenhum dado para exportar.");
+    }
 
     // Escrever os dados em um arquivo de texto
     fs.writeFile(filename, data, "utf8", (err) => {
