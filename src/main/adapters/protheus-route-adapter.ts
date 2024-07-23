@@ -6,7 +6,7 @@ import { CartaoPostgresRepository } from "@infra/db/postgresdb/funcionario/carta
 import { FuncionarioPostgresRepository } from "@infra/db/postgresdb/funcionario/funcionario-repository";
 import { GrupoDeTrabalhoRepositoryPrisma } from "@infra/db/postgresdb/grupo-trabalho/grupo-trabalho-repository";
 
-import { BuscarHorarioNortunoEmMinutos } from "../../presentation/controllers/procurar-funcionário/utils";
+import { BuscarHorarioNortunoEmMinutos } from "../../presentation/controllers/get-funcionário/utils";
 import { RespaldarController } from "../../presentation/controllers/respaldar-atestado/respaldar-atestado";
 import { RespaldarAtestadoPostgresRepository } from "@infra/db/postgresdb/respaldar-atestado/respaldar-atestado";
 
