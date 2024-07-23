@@ -1,5 +1,7 @@
 import { PrismaClient } from "@prisma/client";
+
 import { ResumoModel } from "@domain/models/calcular-resumo";
+
 import { CalcularResumoDia } from "../../../../domain/usecases/calcular-resumo";
 import { prisma } from "../../../database/Prisma";
 import { arredondarParteDecimal, arredondarParteDecimalHoras } from "./utils";
