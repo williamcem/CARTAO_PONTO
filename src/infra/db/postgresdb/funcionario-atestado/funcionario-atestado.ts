@@ -10,9 +10,9 @@ export class FuncionarioAtestadoPostgresRepository implements GetFuncionarioAtes
     this.prisma = prisma;
   }
 
-  public async atestadoFuncionario(funcionarioId: number): Promise<any> {
+  public async atestadoFuncionario(identificacao: string): Promise<any> {
     const funcionario = await this.prisma.funcionario.findFirst({
-      where: { id: Number(funcionarioId) },
+      where: { identificacao: { endsWith: identificacao } },
       include: {
         cartao: {
           include: {

@@ -11,5 +11,5 @@ export interface CalcularResumoDia {
 }
 
 export interface GetFuncionarioAtestado {
-  atestadoFuncionario(funcionarioId: number): Promise<GetFuncionarioModel | undefined>;
+  atestadoFuncionario(identificacao: string): Promise<GetFuncionarioModel | undefined>;
 }
