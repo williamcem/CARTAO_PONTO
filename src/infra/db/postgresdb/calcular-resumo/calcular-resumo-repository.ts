@@ -1,7 +1,5 @@
 import { PrismaClient } from "@prisma/client";
-
 import { ResumoModel } from "@domain/models/calcular-resumo";
-
 import { CalcularResumoDia } from "../../../../domain/usecases/calcular-resumo";
 import { prisma } from "../../../database/Prisma";
 import { arredondarParteDecimal, arredondarParteDecimalHoras } from "./utils";
@@ -186,14 +184,21 @@ export class CalcularResumoPostgresRepository implements CalcularResumoDia {
 
     // Aplicar a regra adicional
     let saldoSessenta = resumoCalculado.movimentacao.sessenta;
+    const diasDivididos = new Set(); // Set para armazenar dias divididos
+
     const cartoesAtualizados = cartoes.map((cartao) => {
       const dias = cartao.dias.map((cartao_dia) => {
-        if (typeof cartao_dia.ResumoDia.movimentacao60 === "number" && cartao_dia.ResumoDia.movimentacao60 < 0) {
-          const diferenca = Math.abs(cartao_dia.ResumoDia.movimentacao60);
+        if (
+          typeof cartao_dia.ResumoDia.movimentacao60 === "number" &&
+          cartao_dia.ResumoDia.movimentacao60 < 0 &&
+          !diasDivididos.has(cartao_dia.data)
+        ) {
           if (saldoSessenta > 0) {
+            const diferenca = Math.abs(cartao_dia.ResumoDia.movimentacao60);
             cartao_dia.ResumoDia.movimentacao60 /= 1.6;
             cartao_dia.ResumoDia.movimentacao60 = arredondarParteDecimal(cartao_dia.ResumoDia.movimentacao60);
             saldoSessenta -= diferenca;
+            diasDivididos.add(cartao_dia.data); // Marca o dia como dividido
           }
         }
         return cartao_dia;
