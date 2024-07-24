@@ -212,7 +212,7 @@ model atestado_funcionario {
   descricao           String?
   userName            String?
   funcionarioId       Int
-  tipo_comprovanteId        Int?
+  tipo_comprovanteId  Int?
   tipoId              Int
   statusId            Int
   idade_paciente      Int?
@@ -222,17 +222,15 @@ model atestado_funcionario {
   sintomas            String?
   funcionarioFuncaoId Int       @default(1)
   nomeFuncionario     String    @default("")
-  observacao                String?
-  sintomas                  String?
 
-  tipos_documentos  tipos_documentos   @relation(fields: [tipoId], references: [id])
-  funcionario       funcionario        @relation(fields: [funcionarioId], references: [id])
-  tipo_acompanhante tipo_acompanhante? @relation(fields: [tipoAcompanhanteId], references: [id])
-  tipo_ocupacao     tipo_ocupacao?     @relation(fields: [ocupacaoId], references: [id])
-  tipo_status       tipo_status?       @relation(fields: [statusId], references: [id])
-  funcao            funcao             @relation(fields: [funcionarioFuncaoId], references: [id])
-  tipo_eventos      tipo_eventos?      @relation(fields: [acao], references: [id])
-  atestado_abonos   atestado_abono[]
+  tipos_documentos          tipos_documentos           @relation(fields: [tipoId], references: [id])
+  funcionario               funcionario                @relation(fields: [funcionarioId], references: [id])
+  tipo_acompanhante         tipo_acompanhante?         @relation(fields: [tipoAcompanhanteId], references: [id])
+  tipo_ocupacao             tipo_ocupacao?             @relation(fields: [ocupacaoId], references: [id])
+  tipo_status               tipo_status?               @relation(fields: [statusId], references: [id])
+  funcao                    funcao                     @relation(fields: [funcionarioFuncaoId], references: [id])
+  tipo_eventos              tipo_eventos?              @relation(fields: [acao], references: [id])
+  atestado_abonos           atestado_abono[]
   tipo_comprovante_ausencia tipo_comprovante_ausencia? @relation(fields: [tipo_comprovanteId], references: [id])
 }
 
