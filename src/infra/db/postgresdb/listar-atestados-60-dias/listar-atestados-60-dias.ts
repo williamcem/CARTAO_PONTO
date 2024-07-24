@@ -57,6 +57,8 @@ export class ListarAtestados60DiasRepository implements ListarAtestados60Dias {
       trabalhou_dia: atestado.trabalhou_dia,
       horario_trabalhado_inicio: atestado.horario_trabalhado_inicio,
       horario_trabalhado_fim: atestado.horario_trabalhado_fim,
+      observacao: atestado.observacao,
+      exame: atestado.exame,
       nome: atestado.nomeFuncionario,
       identificacao: atestado.funcionario?.identificacao,
       nomeAcao: atestado.tipo_eventos?.nome,
