@@ -223,15 +223,17 @@ model atestado_funcionario {
   nome_acompanhante   String?
   funcionarioFuncaoId Int       @default(1)
   nomeFuncionario     String    @default("")
+  createAt            DateTime  @default(now())
+  updateAt            DateTime  @default(now()) @updatedAt
 
-  tipos_documentos  tipos_documentos   @relation(fields: [tipoId], references: [id])
-  funcionario       funcionario        @relation(fields: [funcionarioId], references: [id])
-  tipo_acompanhante tipo_acompanhante? @relation(fields: [tipoAcompanhanteId], references: [id])
-  tipo_ocupacao     tipo_ocupacao?     @relation(fields: [ocupacaoId], references: [id])
-  tipo_status       tipo_status?       @relation(fields: [statusId], references: [id])
-  funcao            funcao             @relation(fields: [funcionarioFuncaoId], references: [id])
-  tipo_eventos      tipo_eventos?      @relation(fields: [acao], references: [id])
-  atestado_abonos   atestado_abono[]
+  tipos_documentos          tipos_documentos           @relation(fields: [tipoId], references: [id])
+  funcionario               funcionario                @relation(fields: [funcionarioId], references: [id])
+  tipo_acompanhante         tipo_acompanhante?         @relation(fields: [tipoAcompanhanteId], references: [id])
+  tipo_ocupacao             tipo_ocupacao?             @relation(fields: [ocupacaoId], references: [id])
+  tipo_status               tipo_status?               @relation(fields: [statusId], references: [id])
+  funcao                    funcao                     @relation(fields: [funcionarioFuncaoId], references: [id])
+  tipo_eventos              tipo_eventos?              @relation(fields: [acao], references: [id])
+  atestado_abonos           atestado_abono[]
   tipo_comprovante_ausencia tipo_comprovante_ausencia? @relation(fields: [tipo_comprovanteId], references: [id])
 }
 
