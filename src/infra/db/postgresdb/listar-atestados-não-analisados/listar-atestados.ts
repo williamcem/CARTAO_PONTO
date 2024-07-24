@@ -1,4 +1,5 @@
 import { PrismaClient } from "@prisma/client";
+
 import { ListarAtestado } from "../../../../data/usecase/add-listar-atestados/add-listar-atestados";
 import { prisma } from "../../../database/Prisma";
 
@@ -43,9 +44,12 @@ export class ListarAtestadoRepsository implements ListarAtestado {
       funcionarioId: atestado.funcionarioId,
       idade_paciente: atestado.idade_paciente,
       trabalhou_dia: atestado.trabalhou_dia,
+      observacao: atestado.observacao,
       horario_trabalhado_inicio: atestado.horario_trabalhado_inicio,
       horario_trabalhado_fim: atestado.horario_trabalhado_fim,
       nome: atestado.nomeFuncionario,
+      exame: atestado.exame,
+      nome_acompanhante: atestado.nome_acompanhante,
       identificacao: atestado.funcionario?.identificacao,
       nomeAcao: atestado.tipo_eventos?.nome,
       nomeAcompanhante: atestado.tipo_acompanhante?.nome,
