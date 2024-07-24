@@ -23,6 +23,7 @@ export class ListarAtestadoRepsository implements ListarAtestado {
         tipo_status: true,
         tipos_documentos: true,
         tipo_eventos: true,
+        funcao: true,
       },
       orderBy: {
         data: "asc",
@@ -40,13 +41,14 @@ export class ListarAtestadoRepsository implements ListarAtestado {
       userName: atestado.userName,
       funcionarioId: atestado.funcionarioId,
       idade_paciente: atestado.idade_paciente,
-      nome: atestado.funcionario?.nome,
+      nome: atestado.nomeFuncionario,
       identificacao: atestado.funcionario?.identificacao,
       nomeAcao: atestado.tipo_eventos?.nome,
       nomeAcompanhante: atestado.tipo_acompanhante?.nome,
       nomeOcupacao: atestado.tipo_ocupacao?.nome,
       nomeStatus: atestado.tipo_status?.nome,
       nomeDocumento: atestado.tipos_documentos?.nome,
+      funcao: atestado.funcao.nome,
     }));
   }
 }
