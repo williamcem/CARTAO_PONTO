@@ -32,6 +32,7 @@ import solucaoeventos from "../routes/horarios/solucao-eventos-routes";
 import upload from "../routes/horarios/upload-routes-routes";
 import calcularresumo from "../routes/horarios/calcular-resumo-routes";
 import criarUsuario from "../routes/horarios/criar-usuario-routes";
+import login from "../routes/horarios/fazer-login-routes";
 
 export const setupRoutes = (app: Express): void => {
   const router = Router();
@@ -67,4 +68,5 @@ export const setupRoutes = (app: Express): void => {
   calcularresumo(router);
   listarComprovantes(router);
   criarUsuario(router);
+  login(router);
 };
