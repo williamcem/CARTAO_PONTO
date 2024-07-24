@@ -21,6 +21,11 @@ export const ok = (data: any): HttpResponse => ({
   body: data,
 });
 
+export const notAuthorized = (error: Error): HttpResponse => ({
+  statusCode: 401,
+  body: error,
+});
+
 /* const sendError = (message: string, error: "Bad Request" | "Not Found" | "Server Error"): HttpResponse => {
   const output: HttpResponse;
 };
