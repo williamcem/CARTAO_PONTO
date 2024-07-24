@@ -64,6 +64,7 @@ export class AtestadoRepository implements AddAtestado {
           tipo_comprovanteId: input.tipo_comprovanteId,
           sintomas: input.sintomas,
           trabalhou_dia: input.trabalhou_dia,
+          exame: input.exame,
           horario_trabalhado_inicio: input.horario_trabalhado_inicio,
           horario_trabalhado_fim: input.horario_trabalhado_fim,
           nome_acompanhante: input.nome_acompanhante,

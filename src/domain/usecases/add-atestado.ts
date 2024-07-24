@@ -25,6 +25,7 @@ export interface AddAtestadoModel {
   funcionarioFuncaoId: number;
   nomeFuncionario: string;
   nome_acompanhante?: string;
+  exame?: string;
 }
 
 export interface AddAtestado {

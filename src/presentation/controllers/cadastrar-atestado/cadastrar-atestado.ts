@@ -31,6 +31,7 @@ export class AtestadoController implements Controller {
         horario_trabalhado_fim,
         tipo_comprovanteId,
         nome_acompanhante,
+        exame,
       } = httpRequest.body;
 
       if (!userName) return badRequest(new FuncionarioParamError("Falta Usuário!"));
@@ -54,9 +55,9 @@ export class AtestadoController implements Controller {
       const atestadoSalvo = await this.atestadoRepository.add({
         inicio,
         fim,
-        grupo_cid,
-        descricao,
-        userName,
+        grupo_cid: grupo_cid ? grupo_cid.toUpperCase() : undefined,
+        descricao: descricao ? descricao.toUpperCase() : undefined,
+        userName: userName ? userName.toUpperCase() : undefined,
         funcionarioId,
         tipoId,
         ocupacaoId,
@@ -66,15 +67,16 @@ export class AtestadoController implements Controller {
         acao,
         statusId,
         data,
-        observacao,
-        sintomas,
+        observacao: observacao ? observacao.toUpperCase() : undefined,
+        sintomas: sintomas ? sintomas.toUpperCase() : undefined,
         trabalhou_dia,
         horario_trabalhado_inicio,
         horario_trabalhado_fim,
         tipo_comprovanteId,
         funcionarioFuncaoId: funcionario.funcaoId,
         nomeFuncionario: funcionario.nome,
-        nome_acompanhante,
+        nome_acompanhante: nome_acompanhante ? nome_acompanhante.toUpperCase() : undefined,
+        exame: exame ? exame.toUpperCase() : undefined,
       });
 
       if (!atestadoSalvo) throw new Error("Erro ao salvar atestado!");

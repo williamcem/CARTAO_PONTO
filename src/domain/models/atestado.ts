@@ -21,4 +21,5 @@ export interface AtestadoModel {
   trabalhou_dia: boolean;
   tipo_comprovanteId?: number;
   nome_acompanhante?: string;
+  exame?: string;
 }

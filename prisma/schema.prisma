@@ -202,29 +202,33 @@ model funcionarios_afastados_status {
 }
 
 model atestado_funcionario {
-  id                  Int       @id @default(autoincrement())
-  inicio              DateTime?
-  data                DateTime?
-  fim                 DateTime?
-  grupo_cid           String?
-  acidente_trabalho   Boolean
-  tipoAcompanhanteId  Int?
-  descricao           String?
-  userName            String?
-  funcionarioId       Int
-  tipo_comprovanteId  Int?
-  tipoId              Int
-  statusId            Int
-  idade_paciente      Int?
-  ocupacaoId          Int?
-  acao                Int       @default(1)
-  observacao          String?
-  sintomas            String?
-  nome_acompanhante   String?
-  funcionarioFuncaoId Int       @default(1)
-  nomeFuncionario     String    @default("")
-  createAt            DateTime  @default(now())
-  updateAt            DateTime  @default(now()) @updatedAt
+  id                        Int       @id @default(autoincrement())
+  inicio                    DateTime?
+  data                      DateTime?
+  fim                       DateTime?
+  grupo_cid                 String?
+  acidente_trabalho         Boolean
+  tipoAcompanhanteId        Int?
+  descricao                 String?
+  userName                  String?
+  funcionarioId             Int
+  tipo_comprovanteId        Int?
+  tipoId                    Int
+  statusId                  Int
+  idade_paciente            Int?
+  trabalhou_dia             Boolean
+  horario_trabalhado_fim    DateTime?
+  horario_trabalhado_inicio DateTime?
+  exame                     String?
+  acao                      Int       @default(1)
+  observacao                String?
+  sintomas                  String?
+  nome_acompanhante         String?
+  funcionarioFuncaoId       Int       @default(1)
+  nomeFuncionario           String    @default("")
+  ocupacaoId                Int?
+  createAt                  DateTime  @default(now())
+  updateAt                  DateTime  @default(now()) @updatedAt
 
   tipos_documentos          tipos_documentos           @relation(fields: [tipoId], references: [id])
   funcionario               funcionario                @relation(fields: [funcionarioId], references: [id])
