@@ -116,7 +116,7 @@ export class RespaldarAtestadoPostgresRepository implements RespaldarAtestado {
         id: atestado.id,
         fim: atestado.fim,
         inicio: atestado.inicio,
-        observacao: atestado.observacao,
+        observacao: atestado.observacao || "",
         statusId: atestado.statusId,
         abonos: atestado.atestado_abonos.map((abono) => ({ id: abono.id })),
       }),

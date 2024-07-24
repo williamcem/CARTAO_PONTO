@@ -62,10 +62,10 @@ export class RespaldarController implements Controller {
         case 1:
           break;
         case 2:
-          return badRequest(new FuncionarioParamError(`OUTROS COMPROVANTES não tratado!`));
+          break;
 
         case 3:
-          return badRequest(new FuncionarioParamError(`ATESTADO OCUPACIONAL não tratado`));
+          break;
 
         default:
           return badRequest(new FuncionarioParamError(`Documento ${statusId} não tratado!`));
