@@ -1,8 +1,10 @@
 import moment from "moment";
+
+import { RespaldarAtestadoPostgresRepository } from "@infra/db/postgresdb/respaldar-atestado/respaldar-atestado";
+
 import { FuncionarioParamError } from "../../errors/Funcionario-param-error";
 import { badRequest, notFoundRequest, ok, serverError } from "../../helpers/http-helpers";
 import { Controller, HttpRequest, HttpResponse } from "./respaldar-atestado-protocols";
-import { RespaldarAtestadoPostgresRepository } from "@infra/db/postgresdb/respaldar-atestado/respaldar-atestado";
 
 type IDia = {
   id: number;
@@ -54,6 +56,9 @@ export class RespaldarController implements Controller {
         case 3:
           break;
 
+        case 4:
+          break;
+
         default:
           return badRequest(new FuncionarioParamError(`Status ${statusId} não tratado!`));
       }
@@ -65,6 +70,9 @@ export class RespaldarController implements Controller {
           break;
 
         case 3:
+          break;
+
+        case 4:
           break;
 
         default:
