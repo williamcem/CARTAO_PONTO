@@ -53,6 +53,9 @@ export class ListarAtestados60DiasRepository implements ListarAtestados60Dias {
       funcionarioId: atestado.funcionarioId,
       idade_paciente: atestado.idade_paciente,
       sintomas: atestado.sintomas,
+      trabalhou_dia: atestado.trabalhou_dia,
+      horario_trabalhado_inicio: atestado.horario_trabalhado_inicio,
+      horario_trabalhado_fim: atestado.horario_trabalhado_fim,
       nome: atestado.nomeFuncionario,
       identificacao: atestado.funcionario?.identificacao,
       nomeAcao: atestado.tipo_eventos?.nome,
@@ -60,6 +63,7 @@ export class ListarAtestados60DiasRepository implements ListarAtestados60Dias {
       nomeOcupacao: atestado.tipo_ocupacao?.nome,
       nomeStatus: atestado.tipo_status?.nome,
       nomeDocumento: atestado.tipos_documentos?.nome,
+      nomeComprovante: atestado.tipo_acompanhante?.nome,
       dias: atestado?.inicio && atestado.fim ? moment(atestado.fim).diff(moment(atestado.inicio), "d") : 0,
       funcaoFuncionario: atestado.funcao.nome,
     }));

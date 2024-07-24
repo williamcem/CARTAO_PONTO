@@ -44,6 +44,9 @@ export class ListarTodosAtestadoRepsository implements ListarTodosAtestados {
       funcionarioId: atestado.funcionarioId,
       idade_paciente: atestado.idade_paciente,
       sintomas: atestado.sintomas,
+      trabalhou_dia: atestado.trabalhou_dia,
+      horario_trabalhado_inicio: atestado.horario_trabalhado_inicio,
+      horario_trabalhado_fim: atestado.horario_trabalhado_fim,
       nome: atestado.funcionario?.nome,
       identificacao: atestado.funcionario?.identificacao,
       nomeAcao: atestado.tipo_eventos?.nome,
@@ -51,6 +54,7 @@ export class ListarTodosAtestadoRepsository implements ListarTodosAtestados {
       nomeOcupacao: atestado.tipo_ocupacao?.nome,
       nomeStatus: atestado.tipo_status?.nome,
       nomeDocumento: atestado.tipos_documentos?.nome,
+      nomeComprovante: atestado.tipo_acompanhante?.nome,
     }));
   }
 }

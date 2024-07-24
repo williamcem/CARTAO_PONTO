@@ -2,6 +2,7 @@ import { Express, Router } from "express";
 
 import todosfuncionarios from "../routes/horarios/buscar-todos-funcionarios-routes";
 import cadastrarAtestado from "../routes/horarios/cadastrar-atestado";
+import calcularresumo from "../routes/horarios/calcular-resumo-routes";
 import confirmarLancaDia from "../routes/horarios/confirmar-lanca-dia-routes";
 import eventos from "../routes/horarios/criar-eventos";
 import deletecartao from "../routes/horarios/delete-cartao-routes";
@@ -14,6 +15,7 @@ import lancarDia from "../routes/horarios/lancar-dia-routes";
 import listarAcompanhante from "../routes/horarios/listar-acompanhante-routes";
 import listarAtestados60Dias from "../routes/horarios/listar-atestados-60-dias-routes";
 import listarAtestado from "../routes/horarios/listar-atestados-não-tratados";
+import listarComprovantes from "../routes/horarios/listar-comprovantes";
 import listarDocumento from "../routes/horarios/listar-documento-routes";
 import listarFilial from "../routes/horarios/listar-filial-routes";
 import ocorrenciageral from "../routes/horarios/listar-ocorrencia-geral-routes";
@@ -63,5 +65,6 @@ export const setupRoutes = (app: Express): void => {
   listarAtestados60Dias(router);
   funcionarioAtestado(router);
   calcularresumo(router);
+  listarComprovantes(router);
   criarUsuario(router);
 };
