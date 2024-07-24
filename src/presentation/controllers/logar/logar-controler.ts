@@ -28,12 +28,12 @@ export class LogarController implements Controller {
 
       if (!perfil) return badRequest(new FuncionarioParamError("Perfil não cadastrado!"));
 
-      jwt.sign({ ...usuario, ...{ perfil } }, String(process.env.JWTSECRET), {
+      const token = jwt.sign({ ...usuario, ...{ perfil } }, String(process.env.JWTSECRET), {
         expiresIn: Number(process.env.JWTEXPIREIN),
         algorithm: "HS512",
       });
 
-      return ok({ ...usuario, ...{ perfil } });
+      return ok({ ...{ id: usuario.id, perfil, token, localidade: localidadeCodigo } });
     } catch (error) {
       console.error(error);
       return serverError();
