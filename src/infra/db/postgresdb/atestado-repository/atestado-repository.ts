@@ -25,7 +25,7 @@ export class AtestadoRepository implements AddAtestado {
           cartao: {
             funcionarioId: input.funcionarioId,
           },
-          // Acrescentar verificação de sttaus do cartão, se estiver importado faz os fechados não
+          // Acrescentar verificação de sttaus do cartão, se estiver importado faz, os fechados não
         },
         orderBy: {
           data: "asc",
@@ -66,6 +66,7 @@ export class AtestadoRepository implements AddAtestado {
           trabalhou_dia: input.trabalhou_dia,
           horario_trabalhado_inicio: input.horario_trabalhado_inicio,
           horario_trabalhado_fim: input.horario_trabalhado_fim,
+          nome_acompanhante: input.nome_acompanhante,
           statusId: 1,
           funcionarioFuncaoId: input.funcionarioFuncaoId,
           nomeFuncionario: input.nomeFuncionario,

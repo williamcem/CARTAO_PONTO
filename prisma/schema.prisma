@@ -220,6 +220,7 @@ model atestado_funcionario {
   acao                Int       @default(1)
   observacao          String?
   sintomas            String?
+  nome_acompanhante   String?
   funcionarioFuncaoId Int       @default(1)
   nomeFuncionario     String    @default("")
 

@@ -20,4 +20,5 @@ export interface AtestadoModel {
   horario_trabalhado_fim?: Date;
   trabalhou_dia: boolean;
   tipo_comprovanteId?: number;
+  nome_acompanhante?: string;
 }

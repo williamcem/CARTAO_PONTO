@@ -24,6 +24,7 @@ export interface AddAtestadoModel {
   tipo_comprovanteId?: number;
   funcionarioFuncaoId: number;
   nomeFuncionario: string;
+  nome_acompanhante?: string;
 }
 
 export interface AddAtestado {
