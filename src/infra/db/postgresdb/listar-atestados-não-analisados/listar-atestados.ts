@@ -23,6 +23,7 @@ export class ListarAtestadoRepsository implements ListarAtestado {
         tipo_status: true,
         tipos_documentos: true,
         tipo_eventos: true,
+        tipo_comprovante_ausencia: true,
       },
       orderBy: {
         data: "asc",
@@ -40,6 +41,9 @@ export class ListarAtestadoRepsository implements ListarAtestado {
       userName: atestado.userName,
       funcionarioId: atestado.funcionarioId,
       idade_paciente: atestado.idade_paciente,
+      trabalhou_dia: atestado.trabalhou_dia,
+      horario_trabalhado_inicio: atestado.horario_trabalhado_inicio,
+      horario_trabalhado_fim: atestado.horario_trabalhado_fim,
       nome: atestado.funcionario?.nome,
       identificacao: atestado.funcionario?.identificacao,
       nomeAcao: atestado.tipo_eventos?.nome,
@@ -47,6 +51,7 @@ export class ListarAtestadoRepsository implements ListarAtestado {
       nomeOcupacao: atestado.tipo_ocupacao?.nome,
       nomeStatus: atestado.tipo_status?.nome,
       nomeDocumento: atestado.tipos_documentos?.nome,
+      nomeComprovante: atestado.tipo_comprovante_ausencia?.nome,
     }));
   }
 }

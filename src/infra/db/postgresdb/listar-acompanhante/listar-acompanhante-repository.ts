@@ -1,6 +1,6 @@
 import { PrismaClient } from "@prisma/client";
 
-import { ListarAcompanhante } from "../../../../data/usecase/add-listar-tipos-acompanhante/add-listar-tipos-acompanhante";
+import { ListarAcompanhante } from "../../../../data/usecase/add-listar-todos-tipos-atestado/add-listar-tipos-acompanhante";
 import { prisma } from "../../../database/Prisma";
 
 export class ListarAcompanahanteRepsository implements ListarAcompanhante {

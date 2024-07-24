@@ -1,6 +1,6 @@
 import { PrismaClient } from "@prisma/client";
 
-import { ListarTiposDocumentos } from "../../../../data/usecase/add-listar-tipos-status-documento/add-listar-tipos-status-documento";
+import { ListarTiposDocumentos } from "../../../../data/usecase/add-listar-todos-tipos-atestado/add-listar-tipos-status-documento";
 import { prisma } from "../../../database/Prisma";
 
 export class ListarStatusDocumentoRepsository implements ListarTiposDocumentos {

@@ -61,10 +61,15 @@ export class AtestadoRepository implements AddAtestado {
           funcionarioId: input.funcionarioId,
           ocupacaoId: input.ocupacaoId,
           tipoId: input.tipoId,
+          tipo_comprovanteId: input.tipo_comprovanteId,
           sintomas: input.sintomas,
+          trabalhou_dia: input.trabalhou_dia,
+          horario_trabalhado_inicio: input.horario_trabalhado_inicio,
+          horario_trabalhado_fim: input.horario_trabalhado_fim,
           statusId: 1,
         },
       });
+      console.log("Aquii", savedAtestado);
 
       return !!savedAtestado;
     } catch (error) {

@@ -16,4 +16,8 @@ export interface AtestadoModel {
   statusId: number;
   observacao: string;
   sintomas?: string;
+  horario_trabalhado_inicio?: Date;
+  horario_trabalhado_fim?: Date;
+  trabalhou_dia: boolean;
+  tipo_comprovanteId?: number;
 }

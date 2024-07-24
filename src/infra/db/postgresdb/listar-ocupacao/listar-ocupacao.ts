@@ -1,6 +1,6 @@
 import { PrismaClient } from "@prisma/client";
 
-import { ListarOcupacao } from "../../../../data/usecase/add-listar-tipos-ocupacao/add-listar-tipos-ocupacao";
+import { ListarOcupacao } from "../../../../data/usecase/add-listar-todos-tipos-atestado/add-listar-tipos-ocupacao";
 import { prisma } from "../../../database/Prisma";
 
 export class ListarOcupacaoRepsository implements ListarOcupacao {
