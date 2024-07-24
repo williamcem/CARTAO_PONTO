@@ -216,7 +216,6 @@ model atestado_funcionario {
   tipoId                    Int
   statusId                  Int
   idade_paciente            Int?
-  ocupacaoId                Int?
   trabalhou_dia             Boolean
   horario_trabalhado_fim    DateTime?
   horario_trabalhado_inicio DateTime?
