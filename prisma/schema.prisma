@@ -217,8 +217,8 @@ model atestado_funcionario {
   statusId                  Int
   idade_paciente            Int?
   trabalhou_dia             Boolean   @default(false)
-  horario_trabalhado_fim    DateTime?
-  horario_trabalhado_inicio DateTime?
+  horario_trabalhado_fim    String?
+  horario_trabalhado_inicio String?
   exame                     String?
   acao                      Int       @default(1)
   observacao                String?

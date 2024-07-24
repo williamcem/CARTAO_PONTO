@@ -48,6 +48,7 @@ export class ListarTodosAtestadoRepsository implements ListarTodosAtestados {
       trabalhou_dia: atestado.trabalhou_dia,
       observacao: atestado.observacao,
       exame: atestado.exame,
+      nome_acompanhante: atestado.nome_acompanhante,
       horario_trabalhado_inicio: atestado.horario_trabalhado_inicio,
       horario_trabalhado_fim: atestado.horario_trabalhado_fim,
       nome: atestado.funcionario?.nome,
