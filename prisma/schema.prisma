@@ -1,9 +1,3 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
-// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
-// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
-
 generator client {
   provider = "prisma-client-js"
 }
@@ -13,12 +7,365 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-model dia {
-  entradaManha String @unique @db.VarChar
-  saidaManha   String @db.VarChar
-  entradaTarde String @db.VarChar
-  saidaTarde   String @db.VarChar
-  dif_min      String @db.VarChar
-  tipoUm       String @db.VarChar
-  tipoDois     String @db.VarChar
+model funcionario {
+  id             Int       @id @default(autoincrement())
+  filial         String
+  identificacao  String    @unique
+  nome           String
+  turnoId        Int
+  centroCustoId  Int
+  funcaoId       Int
+  localidadeId   String
+  dataNascimento DateTime
+  dataAdmissao   DateTime
+  dataDemissao   DateTime?
+  createAt       DateTime? @default(now())
+  updateAt       DateTime? @updatedAt
+  userName       String?
+
+  turno        turno                    @relation(fields: [turnoId], references: [id], onDelete: Cascade)
+  centro_custo centro_custo             @relation(fields: [centroCustoId], references: [id], onDelete: Cascade)
+  funcao       funcao                   @relation(fields: [funcaoId], references: [id], onDelete: Cascade)
+  endereco     endereco?
+  contatos     contato[]
+  emails       email[]
+  cartao       cartao[]
+  afastamento  funcionarios_afastados[]
+  eventos      eventos[]
+
+  localidade           localidade             @relation(fields: [localidadeId], references: [codigo], onDelete: Cascade)
+  atestado_funcionario atestado_funcionario[]
+}
+
+model localidade {
+  codigo       String        @id @unique
+  nome         String
+  funcionarios funcionario[]
+  usuarios     usuario[]
+}
+
+model turno {
+  id        Int    @id @unique @default(autoincrement())
+  nome      String
+  cod_turno String @unique
+
+  funcionarios funcionario[]
+}
+
+model centro_custo {
+  id           Int           @id @unique @default(autoincrement())
+  nome         String        @unique
+  funcionarios funcionario[]
+}
+
+model funcao {
+  id                   Int                    @id @unique @default(autoincrement())
+  nome                 String                 @unique
+  funcionarios         funcionario[]
+  atestado_funcionario atestado_funcionario[]
+}
+
+model endereco {
+  id          Int    @id @default(autoincrement())
+  rua         String
+  numero      String
+  complemento String
+  bairro      String
+  cidade      String
+  estado      String
+  cep         String
+
+  funcionarioId Int         @unique
+  funcionario   funcionario @relation(fields: [funcionarioId], references: [id], onDelete: Cascade)
+}
+
+model contato {
+  id            Int          @id @unique @default(autoincrement())
+  numero        String       @unique
+  funcionarioId Int?
+  funcionario   funcionario? @relation(fields: [funcionarioId], references: [id], onDelete: Cascade)
+}
+
+model email {
+  id            Int          @id @unique @default(autoincrement())
+  nome          String       @unique
+  funcionarioId Int?
+  funcionario   funcionario? @relation(fields: [funcionarioId], references: [id], onDelete: Cascade)
+}
+
+model cartao {
+  id               Int       @id @default(autoincrement())
+  funcionarioId    Int
+  referencia       DateTime
+  saldoAnterior60  Int
+  saldoAnterior100 Int
+  statusId         Int
+  createAt         DateTime? @default(now())
+  updateAt         DateTime? @updatedAt
+  userName         String?
+
+  funcionario   funcionario    @relation(fields: [funcionarioId], references: [id], onDelete: Cascade)
+  cartao_dia    cartao_dia[]
+  cartao_status cartao_status? @relation(fields: [statusId], references: [id], onDelete: Cascade)
+
+  @@unique([funcionarioId, referencia])
+}
+
+model cartao_status {
+  id   Int    @id
+  nome String @unique
+
+  cartao cartao[]
+}
+
+model cartao_dia {
+  id                      Int                     @id @default(autoincrement())
+  data                    DateTime
+  statusId                Int
+  cartaoId                Int
+  periodoDescanso         Int
+  cargaHor                Int
+  cargaHorPrimeiroPeriodo Int
+  cargaHorSegundoPeriodo  Int
+  cargaHorariaCompleta    String
+  cargaHorariaNoturna     Int                     @default(0)
+  createAt                DateTime?               @default(now())
+  updateAt                DateTime?               @updatedAt
+  userName                String?
+  cartao_dia_status       cartao_dia_status       @relation(fields: [statusId], references: [id], onDelete: Cascade)
+  cartao                  cartao                  @relation(fields: [cartaoId], references: [id], onDelete: Cascade)
+  cartao_dia_lancamentos  cartao_dia_lancamento[]
+  eventos                 eventos[]
+  atestado_abonos         atestado_abono[]
+
+  @@unique([cartaoId, data])
+}
+
+model cartao_dia_status {
+  id          Int          @id
+  nome        String
+  cartao_dias cartao_dia[]
+}
+
+model cartao_dia_lancamento {
+  id                   Int       @id @default(autoincrement())
+  periodoId            Int
+  entrada              DateTime?
+  saida                DateTime?
+  diferenca            Int       @default(0)
+  statusId             Int       @default(1)
+  cartao_dia_id        Int
+  validadoPeloOperador Boolean   @default(false)
+  createAt             DateTime? @default(now())
+  updateAt             DateTime? @updatedAt
+  userName             String?
+
+  cartao_dia_lancamento_periodo cartao_dia_lancamento_periodo @relation(fields: [periodoId], references: [id], onDelete: Cascade)
+  cartao_dia                    cartao_dia                    @relation(fields: [cartao_dia_id], references: [id], onDelete: Cascade)
+  cartao_dia_lancamento_status  cartao_dia_lancamento_status? @relation(fields: [statusId], references: [id], onDelete: Cascade)
+
+  @@unique([cartao_dia_id, periodoId])
+}
+
+model cartao_dia_lancamento_periodo {
+  id                     Int                     @id
+  nome                   String                  @unique
+  cartao_dia_lancamentos cartao_dia_lancamento[]
+}
+
+model cartao_dia_lancamento_status {
+  id                     Int                     @id
+  nome                   String                  @unique
+  cartao_dia_lancamentos cartao_dia_lancamento[]
+}
+
+model funcionarios_afastados {
+  id            Int       @id @default(autoincrement())
+  inicio        DateTime
+  fim           DateTime?
+  total         Int
+  funcionarioId Int
+  statusId      Int
+  userName      String?
+  diaId         Int
+
+  funcionario                   funcionario?                  @relation(fields: [funcionarioId], references: [id])
+  funcionarios_afastados_status funcionarios_afastados_status @relation(fields: [statusId], references: [id], onDelete: Cascade)
+
+  @@unique([inicio, funcionarioId, statusId])
+}
+
+model funcionarios_afastados_status {
+  id                     Int                      @id
+  nome                   String                   @unique
+  funcionarios_afastados funcionarios_afastados[]
+}
+
+model atestado_funcionario {
+  id                        Int       @id @default(autoincrement())
+  inicio                    DateTime?
+  data                      DateTime?
+  fim                       DateTime?
+  grupo_cid                 String?
+  acidente_trabalho         Boolean
+  tipoAcompanhanteId        Int?
+  descricao                 String?
+  userName                  String?
+  funcionarioId             Int
+  tipo_comprovanteId        Int?
+  tipoId                    Int
+  statusId                  Int
+  idade_paciente            Int?
+  trabalhou_dia             Boolean   @default(false)
+  horario_trabalhado_fim    String?
+  horario_trabalhado_inicio String?
+  exame                     String?
+  acao                      Int       @default(1)
+  observacao                String?
+  sintomas                  String?
+  nome_acompanhante         String?
+  funcionarioFuncaoId       Int       @default(1)
+  nomeFuncionario           String    @default("")
+  ocupacaoId                Int?
+  createAt                  DateTime  @default(now())
+  updateAt                  DateTime  @default(now()) @updatedAt
+
+  tipos_documentos          tipos_documentos           @relation(fields: [tipoId], references: [id])
+  funcionario               funcionario                @relation(fields: [funcionarioId], references: [id])
+  tipo_acompanhante         tipo_acompanhante?         @relation(fields: [tipoAcompanhanteId], references: [id])
+  tipo_ocupacao             tipo_ocupacao?             @relation(fields: [ocupacaoId], references: [id])
+  tipo_status               tipo_status?               @relation(fields: [statusId], references: [id])
+  funcao                    funcao                     @relation(fields: [funcionarioFuncaoId], references: [id])
+  tipo_eventos              tipo_eventos?              @relation(fields: [acao], references: [id])
+  atestado_abonos           atestado_abono[]
+  tipo_comprovante_ausencia tipo_comprovante_ausencia? @relation(fields: [tipo_comprovanteId], references: [id])
+}
+
+model atestado_abono {
+  id                   Int                  @id @default(autoincrement())
+  atestadoId           Int
+  cartaoDiaId          Int
+  minutos              Int
+  userName             String
+  atestado_funcionario atestado_funcionario @relation(fields: [atestadoId], references: [id])
+  cartao_dia           cartao_dia           @relation(fields: [cartaoDiaId], references: [id])
+
+  @@unique([cartaoDiaId, atestadoId])
+}
+
+model tipos_documentos {
+  id   Int    @id
+  nome String @unique
+
+  atestado_funcionario atestado_funcionario[]
+}
+
+model tipo_acompanhante {
+  id   Int    @id
+  nome String @unique
+
+  atestado_funcionario atestado_funcionario[]
+}
+
+model tipo_ocupacao {
+  id   Int    @id
+  nome String @unique
+
+  atestado_funcionario atestado_funcionario[]
+}
+
+model tipo_status {
+  id   Int    @id
+  nome String @unique
+
+  atestado_funcionario atestado_funcionario[]
+}
+
+model tipo_comprovante_ausencia {
+  id   Int    @id
+  nome String @unique
+
+  atestado_funcionario atestado_funcionario[]
+}
+
+model descricaco_cid {
+  id         Int    @id @default(autoincrement())
+  grupo_cid  String
+  descricaco String
+}
+
+model eventos {
+  id            Int     @id @default(autoincrement())
+  cartaoDiaId   Int
+  hora          String
+  funcionarioId Int
+  minutos       Int
+  tipoId        Int?
+  tratado       Boolean @default(false)
+
+  tipo_eventos tipo_eventos? @relation(fields: [tipoId], references: [id], onDelete: Cascade)
+  funcionario  funcionario   @relation(fields: [funcionarioId], references: [id])
+  cartao_dia   cartao_dia?   @relation(fields: [cartaoDiaId], references: [id], onDelete: Cascade)
+}
+
+model tipo_eventos {
+  id                   Int                    @id @default(autoincrement())
+  nome                 String
+  eventos              eventos[]
+  atestado_funcionario atestado_funcionario[]
+}
+
+model grupo_trabalho {
+  id                      Int     @id @default(autoincrement())
+  cod_turno               String
+  descri_turno            String
+  status_turno            String
+  dia_semana              String
+  tipo_dia                String
+  hora_1_entrada          String
+  hora_1_saida            String
+  hora_2_entrada          String
+  hora_2_saida            String
+  hora_3_entrada          String
+  hora_3_saida            String
+  hora_4_entrada          String
+  hora_4_saida            String
+  total_horas_1_periodo   String
+  total_horas_2_periodo   String
+  total_horas_3_periodo   String
+  total_horas_4_periodo   String
+  total_horas_1_intervalo String
+  total_horas_2_intervalo String
+  total_horas_3_intervalo String
+  total_horas_trabalhadas String
+  total_horas_intervalo   String
+  total_horas_dia         String
+  userName                String?
+}
+
+model parametros {
+  id                       Int @id
+  qtdeDiasAnteriorAtestado Int @default(60)
+}
+
+model usuario {
+  id               Int            @id @default(autoincrement())
+  localidadeCodigo String
+  usuarioPerfilId  Int
+  senha            String
+  userName         String
+  createAt         DateTime       @default(now())
+  updateAt         DateTime       @updatedAt
+  localidade       localidade     @relation(fields: [localidadeCodigo], references: [codigo])
+  usuarioPerfil    usuario_perfil @relation(fields: [usuarioPerfilId], references: [id])
+
+  @@unique([localidadeCodigo, usuarioPerfilId])
+}
+
+model usuario_perfil {
+  id     Int    @id @default(autoincrement())
+  nome   String @unique
+  acesso Int
+
+  usuarios usuario[]
 }

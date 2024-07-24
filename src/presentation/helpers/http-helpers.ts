@@ -6,6 +6,11 @@ export const badRequest = (error: Error): HttpResponse => ({
   body: error,
 });
 
+export const notFoundRequest = (error: Error): HttpResponse => ({
+  statusCode: 404,
+  body: error,
+});
+
 export const serverError = (): HttpResponse => ({
   statusCode: 500,
   body: new ServerError(),
@@ -15,3 +20,8 @@ export const ok = (data: any): HttpResponse => ({
   statusCode: 200,
   body: data,
 });
+
+/* const sendError = (message: string, error: "Bad Request" | "Not Found" | "Server Error"): HttpResponse => {
+  const output: HttpResponse;
+};
+ */
