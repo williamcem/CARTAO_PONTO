@@ -26,6 +26,7 @@ export class ListarTodosAtestadoRepsository implements ListarTodosAtestados {
         tipo_status: true,
         tipos_documentos: true,
         tipo_eventos: true,
+        tipo_comprovante_ausencia: true,
       },
       orderBy: {
         data: "desc",
@@ -54,7 +55,7 @@ export class ListarTodosAtestadoRepsository implements ListarTodosAtestados {
       nomeOcupacao: atestado.tipo_ocupacao?.nome,
       nomeStatus: atestado.tipo_status?.nome,
       nomeDocumento: atestado.tipos_documentos?.nome,
-      nomeComprovante: atestado.tipo_acompanhante?.nome,
+      nomeComprovante: atestado.tipo_comprovante_ausencia?.nome,
     }));
   }
 }
