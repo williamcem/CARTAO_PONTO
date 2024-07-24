@@ -58,9 +58,10 @@ model centro_custo {
 }
 
 model funcao {
-  id           Int           @id @unique @default(autoincrement())
-  nome         String        @unique
-  funcionarios funcionario[]
+  id                   Int                    @id @unique @default(autoincrement())
+  nome                 String                 @unique
+  funcionarios         funcionario[]
+  atestado_funcionario atestado_funcionario[]
 }
 
 model endereco {
@@ -200,29 +201,32 @@ model funcionarios_afastados_status {
 }
 
 model atestado_funcionario {
-  id                 Int       @id @default(autoincrement())
-  inicio             DateTime?
-  data               DateTime?
-  fim                DateTime?
-  grupo_cid          String?
-  acidente_trabalho  Boolean
-  tipoAcompanhanteId Int?
-  descricao          String?
-  userName           String?
-  funcionarioId      Int
-  tipoId             Int
-  statusId           Int
-  idade_paciente     Int?
-  ocupacaoId         Int?
-  acao               Int       @default(1)
-  observacao         String?
-  sintomas           String?
+  id                  Int       @id @default(autoincrement())
+  inicio              DateTime?
+  data                DateTime?
+  fim                 DateTime?
+  grupo_cid           String?
+  acidente_trabalho   Boolean
+  tipoAcompanhanteId  Int?
+  descricao           String?
+  userName            String?
+  funcionarioId       Int
+  tipoId              Int
+  statusId            Int
+  idade_paciente      Int?
+  ocupacaoId          Int?
+  acao                Int       @default(1)
+  observacao          String?
+  sintomas            String?
+  funcionarioFuncaoId Int       @default(1)
+  nomeFuncionario     String    @default("")
 
   tipos_documentos  tipos_documentos   @relation(fields: [tipoId], references: [id])
   funcionario       funcionario        @relation(fields: [funcionarioId], references: [id])
   tipo_acompanhante tipo_acompanhante? @relation(fields: [tipoAcompanhanteId], references: [id])
   tipo_ocupacao     tipo_ocupacao?     @relation(fields: [ocupacaoId], references: [id])
   tipo_status       tipo_status?       @relation(fields: [statusId], references: [id])
+  funcao            funcao             @relation(fields: [funcionarioFuncaoId], references: [id])
   tipo_eventos      tipo_eventos?      @relation(fields: [acao], references: [id])
   atestado_abonos   atestado_abono[]
 }

@@ -36,6 +36,10 @@ export class AtestadoController implements Controller {
       if (tipoId == 1)
         if (!sintomas && !grupo_cid) return badRequest(new FuncionarioParamError("Faltam os sintomas ou o grupo CID!"));
 
+      const funcionario = await this.atestadoRepository.findFisrtFuncionario({ id: Number(funcionarioId) });
+
+      if (!funcionario) return badRequest(new FuncionarioParamError("Funcionário inexistente!"));
+
       const atestadoSalvo = await this.atestadoRepository.add({
         inicio,
         fim,
@@ -53,6 +57,8 @@ export class AtestadoController implements Controller {
         data,
         observacao,
         sintomas,
+        funcionarioFuncaoId: funcionario.funcaoId,
+        nomeFuncionario: funcionario.nome,
       });
 
       if (!atestadoSalvo) throw new Error("Erro ao salvar atestado!");
