@@ -30,6 +30,7 @@ export class AtestadoController implements Controller {
         horario_trabalhado_inicio,
         horario_trabalhado_fim,
         tipo_comprovanteId,
+        nome_acompanhante,
       } = httpRequest.body;
 
       if (!userName) return badRequest(new FuncionarioParamError("Falta Usuário!"));
@@ -73,6 +74,7 @@ export class AtestadoController implements Controller {
         tipo_comprovanteId,
         funcionarioFuncaoId: funcionario.funcaoId,
         nomeFuncionario: funcionario.nome,
+        nome_acompanhante,
       });
 
       if (!atestadoSalvo) throw new Error("Erro ao salvar atestado!");
