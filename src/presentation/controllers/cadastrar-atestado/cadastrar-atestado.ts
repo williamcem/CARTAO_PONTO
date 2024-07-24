@@ -46,6 +46,10 @@ export class AtestadoController implements Controller {
         return badRequest(new FuncionarioParamError("Falta inserir o horario em que o funcionario trabalhou"));
       }
 
+      const funcionario = await this.atestadoRepository.findFisrtFuncionario({ id: Number(funcionarioId) });
+
+      if (!funcionario) return badRequest(new FuncionarioParamError("Funcionário inexistente!"));
+
       const atestadoSalvo = await this.atestadoRepository.add({
         inicio,
         fim,
@@ -67,6 +71,8 @@ export class AtestadoController implements Controller {
         horario_trabalhado_inicio,
         horario_trabalhado_fim,
         tipo_comprovanteId,
+        funcionarioFuncaoId: funcionario.funcaoId,
+        nomeFuncionario: funcionario.nome,
       });
 
       if (!atestadoSalvo) throw new Error("Erro ao salvar atestado!");

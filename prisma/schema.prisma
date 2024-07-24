@@ -41,6 +41,7 @@ model localidade {
   codigo       String        @id @unique
   nome         String
   funcionarios funcionario[]
+  usuarios     usuario[]
 }
 
 model turno {
@@ -58,9 +59,10 @@ model centro_custo {
 }
 
 model funcao {
-  id           Int           @id @unique @default(autoincrement())
-  nome         String        @unique
-  funcionarios funcionario[]
+  id                   Int                    @id @unique @default(autoincrement())
+  nome                 String                 @unique
+  funcionarios         funcionario[]
+  atestado_funcionario atestado_funcionario[]
 }
 
 model endereco {
@@ -200,35 +202,37 @@ model funcionarios_afastados_status {
 }
 
 model atestado_funcionario {
-  id                        Int       @id @default(autoincrement())
-  inicio                    DateTime?
-  data                      DateTime?
-  fim                       DateTime?
-  grupo_cid                 String?
-  acidente_trabalho         Boolean
-  trabalhou_dia             Boolean   @default(false)
-  horario_trabalhado_inicio DateTime?
-  horario_trabalhado_fim    DateTime?
-  tipoAcompanhanteId        Int?
-  descricao                 String?
-  userName                  String?
-  funcionarioId             Int
+  id                  Int       @id @default(autoincrement())
+  inicio              DateTime?
+  data                DateTime?
+  fim                 DateTime?
+  grupo_cid           String?
+  acidente_trabalho   Boolean
+  tipoAcompanhanteId  Int?
+  descricao           String?
+  userName            String?
+  funcionarioId       Int
   tipo_comprovanteId        Int?
-  tipoId                    Int
-  statusId                  Int
-  idade_paciente            Int?
-  ocupacaoId                Int?
-  acao                      Int       @default(1)
+  tipoId              Int
+  statusId            Int
+  idade_paciente      Int?
+  ocupacaoId          Int?
+  acao                Int       @default(1)
+  observacao          String?
+  sintomas            String?
+  funcionarioFuncaoId Int       @default(1)
+  nomeFuncionario     String    @default("")
   observacao                String?
   sintomas                  String?
 
-  tipos_documentos          tipos_documentos           @relation(fields: [tipoId], references: [id])
-  funcionario               funcionario                @relation(fields: [funcionarioId], references: [id])
-  tipo_acompanhante         tipo_acompanhante?         @relation(fields: [tipoAcompanhanteId], references: [id])
-  tipo_ocupacao             tipo_ocupacao?             @relation(fields: [ocupacaoId], references: [id])
-  tipo_status               tipo_status?               @relation(fields: [statusId], references: [id])
-  tipo_eventos              tipo_eventos?              @relation(fields: [acao], references: [id])
-  atestado_abonos           atestado_abono[]
+  tipos_documentos  tipos_documentos   @relation(fields: [tipoId], references: [id])
+  funcionario       funcionario        @relation(fields: [funcionarioId], references: [id])
+  tipo_acompanhante tipo_acompanhante? @relation(fields: [tipoAcompanhanteId], references: [id])
+  tipo_ocupacao     tipo_ocupacao?     @relation(fields: [ocupacaoId], references: [id])
+  tipo_status       tipo_status?       @relation(fields: [statusId], references: [id])
+  funcao            funcao             @relation(fields: [funcionarioFuncaoId], references: [id])
+  tipo_eventos      tipo_eventos?      @relation(fields: [acao], references: [id])
+  atestado_abonos   atestado_abono[]
   tipo_comprovante_ausencia tipo_comprovante_ausencia? @relation(fields: [tipo_comprovanteId], references: [id])
 }
 
@@ -337,4 +341,26 @@ model grupo_trabalho {
 model parametros {
   id                       Int @id
   qtdeDiasAnteriorAtestado Int @default(60)
+}
+
+model usuario {
+  id               Int            @id @default(autoincrement())
+  localidadeCodigo String
+  usuarioPerfilId  Int
+  senha            String
+  userName         String
+  createAt         DateTime       @default(now())
+  updateAt         DateTime       @updatedAt
+  localidade       localidade     @relation(fields: [localidadeCodigo], references: [codigo])
+  usuarioPerfil    usuario_perfil @relation(fields: [usuarioPerfilId], references: [id])
+
+  @@unique([localidadeCodigo, usuarioPerfilId])
+}
+
+model usuario_perfil {
+  id     Int    @id @default(autoincrement())
+  nome   String @unique
+  acesso Int
+
+  usuarios usuario[]
 }

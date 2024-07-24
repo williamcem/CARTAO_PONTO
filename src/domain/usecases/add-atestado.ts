@@ -22,6 +22,8 @@ export interface AddAtestadoModel {
   horario_trabalhado_fim?: Date;
   trabalhou_dia: boolean;
   tipo_comprovanteId?: number;
+  funcionarioFuncaoId: number;
+  nomeFuncionario: string;
 }
 
 export interface AddAtestado {
