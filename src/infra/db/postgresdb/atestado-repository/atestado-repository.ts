@@ -63,6 +63,8 @@ export class AtestadoRepository implements AddAtestado {
           tipoId: input.tipoId,
           sintomas: input.sintomas,
           statusId: 1,
+          funcionarioFuncaoId: input.funcionarioFuncaoId,
+          nomeFuncionario: input.nomeFuncionario,
         },
       });
 
@@ -73,6 +75,28 @@ export class AtestadoRepository implements AddAtestado {
       }
       console.error("Erro ao criar atestado:", error);
       throw new Error("Erro ao criar atestado.");
+    }
+  }
+
+  public async findFisrtFuncionario(input: { id: number }): Promise<{ nome: string; funcaoId: number } | undefined> {
+    try {
+      const funcionario = await this.prisma.funcionario.findFirst({
+        where: {
+          id: input.id,
+        },
+      });
+
+      if (!funcionario) return undefined;
+      return {
+        nome: funcionario.nome,
+        funcaoId: funcionario.funcaoId,
+      };
+    } catch (error) {
+      if (error instanceof DataAtestadoInvalida) {
+        throw error;
+      }
+      console.error("Erro ao buscar funcionário:", error);
+      throw new Error("Erro ao buscar funcionário.");
     }
   }
 }
