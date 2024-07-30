@@ -33,6 +33,7 @@ import upload from "../routes/horarios/upload-routes-routes";
 import criarUsuario from "../routes/horarios/criar-usuario-routes";
 import login from "../routes/horarios/fazer-login-routes";
 import listarPerfil from "../routes/horarios/listar-perfil-routes";
+import listarUsuario from "../routes/horarios/listar-usuario-routes";
 import AlterarUsuario from "../routes/horarios/alterar-usuario-routes";
 
 export const setupRoutes = (app: Express): void => {
@@ -71,5 +72,6 @@ export const setupRoutes = (app: Express): void => {
   criarUsuario(router);
   login(router);
   listarPerfil(router);
+  listarUsuario(router);
   AlterarUsuario(router);
 };
