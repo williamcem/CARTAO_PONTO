@@ -34,6 +34,7 @@ import criarUsuario from "../routes/horarios/criar-usuario-routes";
 import login from "../routes/horarios/fazer-login-routes";
 import listarPerfil from "../routes/horarios/listar-perfil-routes";
 import listarUsuario from "../routes/horarios/listar-usuario-routes";
+import AlterarUsuario from "../routes/horarios/alterar-usuario-routes";
 
 export const setupRoutes = (app: Express): void => {
   const router = Router();
@@ -72,4 +73,5 @@ export const setupRoutes = (app: Express): void => {
   login(router);
   listarPerfil(router);
   listarUsuario(router);
+  AlterarUsuario(router);
 };
