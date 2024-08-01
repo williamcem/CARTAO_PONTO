@@ -12,13 +12,20 @@ export class LancarDiaPostgresRepository implements LancarDia {
 
   public async upsert(input: {
     periodoId: number;
-    entrada: Date;
-    saida: Date;
+    entrada: Date | undefined;
+    saida: Date | undefined;
     cartao_dia_id: number;
     statusId: number;
     diferenca: number;
     userName: string;
   }): Promise<boolean> {
+    const existingLancamento = await this.prisma.cartao_dia_lancamento.findUnique({
+      where: { cartao_dia_id_periodoId: { cartao_dia_id: input.cartao_dia_id, periodoId: input.periodoId } },
+    });
+
+    if (existingLancamento) {
+      return false;
+    }
     return Boolean(
       await this.prisma.cartao_dia_lancamento.upsert({
         where: { cartao_dia_id_periodoId: { cartao_dia_id: input.cartao_dia_id, periodoId: input.periodoId } },
