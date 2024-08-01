@@ -25,3 +25,10 @@ export class FormatoArray extends Error {
     this.name = "FormatoArray";
   }
 }
+
+export class OcorrenciasNull extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = "FormatoArray";
+  }
+}
