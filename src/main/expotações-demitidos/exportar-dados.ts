@@ -10,15 +10,6 @@ export const exportarDadosDemitidosParaArquivo = async (
   localidadeId?: string,
 ) => {
   try {
-    // Buscar todos os funcionários sem filtro para depuração
-    const todosFuncionarios = await prisma.funcionario.findMany({
-      include: {
-        localidade: true,
-      },
-    });
-
-    console.log("Todos os funcionários:", JSON.stringify(todosFuncionarios, null, 2));
-
     // Definir filtros de busca
     const where: any = {};
     if (identificacao) {
@@ -39,11 +30,8 @@ export const exportarDadosDemitidosParaArquivo = async (
           include: {
             cartao_dia: {
               include: {
-                cartao_dia_lancamentos: {
-                  orderBy: {
-                    entrada: "asc", // Ordena os lançamentos por entrada em ordem crescente
-                  },
-                },
+                eventos: true,
+                atestado_abonos: true,
               },
               orderBy: {
                 data: "asc", // Ordena os dias de cartão por data em ordem crescente
@@ -66,26 +54,26 @@ export const exportarDadosDemitidosParaArquivo = async (
     // Preparar os dados para o arquivo
     const linhas = funcionarios.flatMap((funcionario) => {
       return funcionario.cartao.flatMap((cartao) => {
-        return cartao.cartao_dia.map((dia) => {
-          const lancamentos = dia.cartao_dia_lancamentos;
-          // Verificar se há lançamentos para este dia
-          if (lancamentos && lancamentos.length > 0) {
-            const entradasSaidas = lancamentos
-              .map((lancamento) => {
-                // Ajustar para o fuso horário local antes de formatar o tempo
-                const entradaLocal = ajustarFusoHorario(lancamento.entrada, 3); // Ajuste de 3 horas
-                const saidaLocal = ajustarFusoHorario(lancamento.saida, 3); // Ajuste de 3 horas
-                const entrada = formatarTempo(entradaLocal);
-                const saida = formatarTempo(saidaLocal);
-                return `${entrada};${saida}`;
-              })
-              .join(";");
+        return cartao.cartao_dia.flatMap((dia) => {
+          // Filtrar os eventos com tipoId igual a 5
+          const eventosFiltrados = dia.eventos.filter((evento) => evento.tipoId === 5);
+          const minutosInjustificados = eventosFiltrados.reduce((total, evento) => total + evento.minutos, 0);
 
-            return `${funcionario.identificacao};${formatarData(dia.data)};${entradasSaidas}`;
-          } else {
-            // Se não houver lançamentos, retornar a identificação e a data sem lançamentos
-            return `${funcionario.identificacao};${formatarData(dia.data)};`;
+          // Filtrar os abonos justificados
+          const abonosJustificados = dia.atestado_abonos;
+          const minutosJustificados = abonosJustificados.reduce((total, abono) => total + abono.minutos, 0);
+
+          const linhasDia = [];
+
+          if (minutosInjustificados > 0) {
+            linhasDia.push(`${funcionario.identificacao};${formatarData(dia.data)};FALTA INJUSTIFICADA ${minutosInjustificados}`);
           }
+
+          if (minutosJustificados > 0) {
+            linhasDia.push(`${funcionario.identificacao};${formatarData(dia.data)};FALTA JUSTIFICADA ${minutosJustificados}`);
+          }
+
+          return linhasDia;
         });
       });
     });
@@ -115,27 +103,6 @@ export const exportarDadosDemitidosParaArquivo = async (
   } finally {
     await prisma.$disconnect();
   }
-};
-
-// Função para formatar o tempo
-const formatarTempo = (tempo: Date | null | undefined): string => {
-  if (!tempo) return ""; // Retorna uma string vazia se o tempo for nulo ou indefinido
-
-  const data = new Date(tempo);
-  const horas = data.getHours().toString().padStart(2, "0");
-  const minutos = data.getMinutes().toString().padStart(2, "0");
-  return `${horas}:${minutos}`;
-};
-
-// Função para ajustar o fuso horário para o fuso horário local
-const ajustarFusoHorario = (tempo: Date | null | undefined, ajuste: number): Date | null | undefined => {
-  if (!tempo) return tempo; // Retorna o tempo original se for nulo ou indefinido
-
-  // Converter o ajuste de horas para milissegundos
-  const ajusteMs = ajuste * 60 * 60 * 1000;
-
-  // Ajustar o tempo para o fuso horário local
-  return new Date(tempo.getTime() + ajusteMs);
 };
 
 // Função para formatar a data sem hífens
