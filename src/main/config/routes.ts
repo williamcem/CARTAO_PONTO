@@ -36,6 +36,8 @@ import respaldarAtestado from "../routes/horarios/respaldar-atestado-routes";
 import retornarsolucao from "../routes/horarios/retornar-solucao-routes";
 import solucaoeventos from "../routes/horarios/solucao-eventos-routes";
 import upload from "../routes/horarios/upload-routes-routes";
+import listarUsuario from "../routes/horarios/listar-usuario-routes";
+import AlterarUsuario from "../routes/horarios/alterar-usuario-routes";
 
 export const setupRoutes = (app: Express): void => {
   const router = Router();
@@ -76,4 +78,6 @@ export const setupRoutes = (app: Express): void => {
   listarCertidaoObito(router);
   funcionarioImpressao(router);
   funcionarioImpressaoCalculo(router);
+  listarUsuario(router);
+  AlterarUsuario(router);
 };
