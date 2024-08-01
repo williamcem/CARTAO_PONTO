@@ -1,5 +1,8 @@
 import { PrismaClient } from "@prisma/client";
+import moment from "moment";
+
 import { ResumoModel } from "@domain/models/calcular-resumo";
+
 import { CalcularResumoDia } from "../../../../domain/usecases/calcular-resumo";
 import { prisma } from "../../../database/Prisma";
 import { arredondarParteDecimal, arredondarParteDecimalHoras } from "./utils";
@@ -184,21 +187,17 @@ export class CalcularResumoPostgresRepository implements CalcularResumoDia {
 
     // Aplicar a regra adicional
     let saldoSessenta = resumoCalculado.movimentacao.sessenta;
-    const diasDivididos = new Set(); // Set para armazenar dias divididos
+    const diasDivididos = new Set<string>(); // Set para armazenar dias divididos
 
     const cartoesAtualizados = cartoes.map((cartao) => {
       const dias = cartao.dias.map((cartao_dia) => {
-        if (
-          typeof cartao_dia.ResumoDia.movimentacao60 === "number" &&
-          cartao_dia.ResumoDia.movimentacao60 < 0 &&
-          !diasDivididos.has(cartao_dia.data)
-        ) {
-          if (saldoSessenta > 0) {
+        const dataFormatada = moment.utc(cartao_dia.data).format("YYYY-MM-DD");
+        if (typeof cartao_dia.ResumoDia.movimentacao60 === "number" && cartao_dia.ResumoDia.movimentacao60 < 0) {
+          if (saldoSessenta > 0 && !diasDivididos.has(dataFormatada)) {
             const diferenca = Math.abs(cartao_dia.ResumoDia.movimentacao60);
-            cartao_dia.ResumoDia.movimentacao60 /= 1.6;
-            cartao_dia.ResumoDia.movimentacao60 = arredondarParteDecimal(cartao_dia.ResumoDia.movimentacao60);
+            cartao_dia.ResumoDia.movimentacao60 = arredondarParteDecimal(cartao_dia.ResumoDia.movimentacao60 / 1.6);
             saldoSessenta -= diferenca;
-            diasDivididos.add(cartao_dia.data); // Marca o dia como dividido
+            diasDivididos.add(dataFormatada); // Marca o dia como dividido
           }
         }
         return cartao_dia;
@@ -207,6 +206,20 @@ export class CalcularResumoPostgresRepository implements CalcularResumoDia {
     });
 
     // Recalcular o resumo após aplicar a regra adicional
+    resumoCalculado = this.calcularResumo({ cartao: cartoesAtualizados });
+
+    // Garantir que os dias divididos permanecem divididos
+    cartoesAtualizados.forEach((cartao) => {
+      cartao.dias.forEach((cartao_dia) => {
+        const dataFormatada = moment.utc(cartao_dia.data).format("YYYY-MM-DD");
+        if (diasDivididos.has(dataFormatada)) {
+          // Aqui certificamos que não revertam a divisão
+          cartao_dia.ResumoDia.movimentacao60 = arredondarParteDecimal(Number(cartao_dia.ResumoDia.movimentacao60));
+        }
+      });
+    });
+
+    // Recalcular o resumo após garantir a persistência das divisões
     resumoCalculado = this.calcularResumo({ cartao: cartoesAtualizados });
 
     // Retornar os dados completos
