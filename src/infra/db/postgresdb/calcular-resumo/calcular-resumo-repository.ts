@@ -14,6 +14,14 @@ export class CalcularResumoPostgresRepository implements CalcularResumoDia {
     this.prisma = prisma;
   }
 
+  private pegarCargaHorarioCompleta(input: string) {
+    const horaMinutos = input.replaceAll(".", ":").split(";");
+    return horaMinutos.map((a) => {
+      const [hora, minuto] = a.split(":");
+      return { hora: Number(hora), minuto: Number(minuto) };
+    });
+  }
+
   private calcularResumo(funcionario: any) {
     let somaMovimentacao60 = 0;
     let somaMovimentacao100 = 0;
@@ -152,13 +160,21 @@ export class CalcularResumoPostgresRepository implements CalcularResumoDia {
           eventosDiurnos.reduce((sum, evento) => sum + evento.minutos, 0) +
           cartao_dia.atestado_abonos.reduce((sum, abono) => sum + abono.minutos, 0);
 
-        let movimentacao60 = totalMinutos - cartao_dia.cargaHor;
+        const cargaHorariaCompletaArray = this.pegarCargaHorarioCompleta(cartao_dia.cargaHorariaCompleta);
+        const isFolga = cargaHorariaCompletaArray.every((horario) => horario.hora === 0 && horario.minuto === 0);
+
+        let movimentacao60 = 0;
         let movimentacao100 = 0;
         let movimentacaoNoturna60 = eventosNoturnos.reduce((sum, evento) => sum + evento.minutos, 0);
 
-        if (movimentacao60 > 120) {
-          movimentacao100 = movimentacao60 - 120;
-          movimentacao60 = 120;
+        if (isFolga) {
+          movimentacao100 = totalMinutos;
+        } else {
+          movimentacao60 = totalMinutos - cartao_dia.cargaHor;
+          if (movimentacao60 > 120) {
+            movimentacao100 = movimentacao60 - 120;
+            movimentacao60 = 120;
+          }
         }
 
         return {
