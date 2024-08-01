@@ -49,11 +49,14 @@ export class SolucaoEventoRepository implements AdicionarSolucao {
     });
 
     // Verifica se é necessário criar eventos adicionais para tipoId 3 ou 6
-    if (tipoId === 3 || tipoId === 6 || tipoId === 5) {
+    if (tipoId === 3 || tipoId === 6 || tipoId === 5 || tipoId === 12) {
       // Verificar e criar eventos para minutos entre -1 e -5
       const eventosEntreMenos1EMenos5 = await this.prisma.eventos.findMany({
         where: {
           cartaoDiaId: eventoOriginal.cartaoDiaId,
+          tipoId: {
+            in: [2],
+          },
           minutos: { gte: -5, lte: -1 },
           tratado: false,
         },
