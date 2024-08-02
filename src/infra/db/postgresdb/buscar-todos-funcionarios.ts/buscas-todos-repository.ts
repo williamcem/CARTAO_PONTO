@@ -12,7 +12,7 @@ export class BuscarTodosPostgresRepository implements BuscraTodosRepository {
     this.prisma = prisma;
   }
 
-  public async listAll(funcionarioData: BuscarTodosFuncionarios): Promise<GetTodosFuncionariosModel[]> {
+  public async listAll(funcionarioData: BuscarTodosFuncionarios) {
     try {
       const funcionarios = await this.prisma.funcionario.findMany({
         include: {
@@ -24,8 +24,9 @@ export class BuscarTodosPostgresRepository implements BuscraTodosRepository {
           emails: true,
           endereco: true,
           afastamento: {
-            include: { funcionarios_afastados_status: true}
-          }
+            include: { funcionarios_afastados_status: true },
+          },
+          cartao: { include: { cartao_dia: { include: { cartao_dia_lancamentos: true } } } },
         },
         where: {
           identificacao: { endsWith: funcionarioData.identificacao },
@@ -46,5 +47,18 @@ export class BuscarTodosPostgresRepository implements BuscraTodosRepository {
       console.error("Erro ao buscar funcionários", error);
       throw error;
     }
+  }
+
+  public async findFisrtAtestado(input: { cartaoDiaId: number; funcionarioId: number }) {
+    const result = await this.prisma.atestado_abono.findFirst({
+      where: {
+        cartaoDiaId: input.cartaoDiaId,
+        atestado_funcionario: { funcionarioId: input.funcionarioId },
+      },
+    });
+
+    if (!result) return undefined;
+
+    return result;
   }
 }
