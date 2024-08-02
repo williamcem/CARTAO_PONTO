@@ -34,7 +34,8 @@ export class CalcularResumoPostgresRepository implements CalcularResumoDia {
     let horasNoturno100 = 0;
 
     for (const cartao of funcionario.cartao) {
-      for (const cartao_dia of cartao.dias) {
+      const dias = cartao.dias || []; // Garantir que dias é um array
+      for (const cartao_dia of dias) {
         const resumoDia = cartao_dia.ResumoDia || {
           movimentacao60: 0,
           movimentacao100: 0,
@@ -78,6 +79,10 @@ export class CalcularResumoPostgresRepository implements CalcularResumoDia {
       },
       saldoAnterior: saldoAnterior,
     };
+  }
+
+  public calcularResumoPublico(funcionario: any) {
+    return this.calcularResumo(funcionario);
   }
 
   public async calc(identificacao: string): Promise<ResumoModel> {
