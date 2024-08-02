@@ -40,7 +40,16 @@ export class OcorrenciaSolucionadasController implements Controller {
         referencia: Date | null;
         dias: {
           data: Date;
-          eventos: any[];
+          eventos: {
+            id: number;
+            cartaoDiaId: number;
+            hora: string;
+            funcionarioId: number;
+            minutos: number;
+            tipoId: number;
+            tratado: boolean;
+            solucaoDada: string;
+          }[];
           lancamentos: {
             periodoId: number;
             entrada: Date | null;
