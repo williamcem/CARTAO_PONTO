@@ -1,3 +1,3 @@
 export interface RetornarSolucao {
-  resetTratado(input: { cartaoDiaId: number }): Promise<boolean>;
+  resetTratado(input: { cartaoDiaId: number; eventoId: number }): Promise<boolean>;
 }
