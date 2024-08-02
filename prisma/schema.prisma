@@ -1,5 +1,6 @@
 generator client {
-  provider = "prisma-client-js"
+  provider        = "prisma-client-js"
+  previewFeatures = ["metrics"]
 }
 
 datasource db {
@@ -35,6 +36,24 @@ model funcionario {
 
   localidade           localidade             @relation(fields: [localidadeId], references: [codigo], onDelete: Cascade)
   atestado_funcionario atestado_funcionario[]
+}
+
+model funcionario_historico {
+  historicoId    Int       @id @default(autoincrement())
+  id             Int
+  filial         String
+  identificacao  String
+  nome           String
+  turnoId        Int
+  centroCustoId  Int
+  funcaoId       Int
+  localidadeId   String
+  dataNascimento DateTime
+  dataAdmissao   DateTime
+  dataDemissao   DateTime?
+  createAt       DateTime? @default(now())
+  updateAt       DateTime? @updatedAt
+  userName       String?
 }
 
 model localidade {
