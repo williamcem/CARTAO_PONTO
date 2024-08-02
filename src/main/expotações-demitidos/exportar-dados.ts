@@ -48,8 +48,15 @@ export const exportarDadosDemitidosParaArquivo = async (
       return callback(null, "Nenhum funcionário encontrado com os critérios fornecidos.");
     }
 
-    // Log para depuração
-    console.log("Funcionários encontrados:", JSON.stringify(funcionarios, null, 2));
+    // Buscar os tipos de faltas
+    const tiposFaltas = await prisma.tipo_faltas_expotacao.findMany();
+    const faltasMap: Record<string, { nome: string; codigo: string }> = tiposFaltas.reduce(
+      (map, falta) => {
+        map[falta.nome] = { nome: falta.nome, codigo: falta.codigo };
+        return map;
+      },
+      {} as Record<string, { nome: string; codigo: string }>,
+    );
 
     // Preparar os dados para o arquivo
     const linhas = funcionarios.flatMap((funcionario) => {
@@ -65,12 +72,34 @@ export const exportarDadosDemitidosParaArquivo = async (
 
           const linhasDia = [];
 
+          // Verificar e adicionar faltas injustificadas
           if (minutosInjustificados > 0) {
-            linhasDia.push(`${funcionario.identificacao};${formatarData(dia.data)};FALTA INJUSTIFICADA ${minutosInjustificados}`);
+            if (minutosInjustificados === dia.cargaHor) {
+              const tipoFalta = faltasMap["FALTA INJUSTIFICADA TOTAL"];
+              linhasDia.push(
+                `${funcionario.identificacao};${formatarData(dia.data)};${tipoFalta.nome} ${minutosInjustificados};${tipoFalta.codigo}`,
+              );
+            } else if (minutosInjustificados < dia.cargaHor) {
+              const tipoFalta = faltasMap["FALTA INJUSTIFICADA PARCIAL"];
+              linhasDia.push(
+                `${funcionario.identificacao};${formatarData(dia.data)};${tipoFalta.nome} ${minutosInjustificados};${tipoFalta.codigo}`,
+              );
+            }
           }
 
+          // Verificar e adicionar faltas justificadas
           if (minutosJustificados > 0) {
-            linhasDia.push(`${funcionario.identificacao};${formatarData(dia.data)};FALTA JUSTIFICADA ${minutosJustificados}`);
+            if (minutosJustificados === dia.cargaHor) {
+              const tipoFalta = faltasMap["FALTA JUSTIFICADA TOTAL"];
+              linhasDia.push(
+                `${funcionario.identificacao};${formatarData(dia.data)};${tipoFalta.nome} ${minutosJustificados};${tipoFalta.codigo}`,
+              );
+            } else if (minutosJustificados < dia.cargaHor) {
+              const tipoFalta = faltasMap["FALTA JUSTIFICADA PARCIAL"];
+              linhasDia.push(
+                `${funcionario.identificacao};${formatarData(dia.data)};${tipoFalta.nome} ${minutosJustificados};${tipoFalta.codigo}`,
+              );
+            }
           }
 
           return linhasDia;
