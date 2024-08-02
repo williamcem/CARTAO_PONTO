@@ -1,6 +1,5 @@
 generator client {
-  provider        = "prisma-client-js"
-  previewFeatures = ["metrics"]
+  provider = "prisma-client-js"
 }
 
 datasource db {
@@ -318,10 +317,10 @@ model tipo_certidao_obito {
 }
 
 model entradas_saidas_atestado {
-  id                   Int                  @id @default(autoincrement())
-  atestadoId           Int
-  entrada              String
-  saida                String
+  id         Int    @id @default(autoincrement())
+  atestadoId Int
+  entrada    String
+  saida      String
 
   atestado_funcionario atestado_funcionario @relation(fields: [atestadoId], references: [id])
 }
