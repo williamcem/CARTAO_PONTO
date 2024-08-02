@@ -25,6 +25,7 @@ import listarComprovantes from "../routes/horarios/listar-comprovantes";
 import listarDocumento from "../routes/horarios/listar-documento-routes";
 import listarFilial from "../routes/horarios/listar-filial-routes";
 import ocorrenciageral from "../routes/horarios/listar-ocorrencia-geral-routes";
+import geralSolucionadas from "../routes/horarios/listar-ocorrencia-geral-solucionada-routes";
 import ocorrencia from "../routes/horarios/listar-ocorrencia-routes";
 import ocorrenciaSolucionadas from "../routes/horarios/listar-ocorrencia-solucionadas-routes";
 import listarOcupacao from "../routes/horarios/listar-ocupacao-routes";
@@ -82,4 +83,5 @@ export const setupRoutes = (app: Express): void => {
   listarUsuario(router);
   AlterarUsuario(router);
   ocorrenciaSolucionadas(router);
+  geralSolucionadas(router);
 };
