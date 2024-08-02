@@ -299,10 +299,10 @@ model tipo_certidao_obito {
 }
 
 model entradas_saidas_atestado {
-  id                   Int                  @id @default(autoincrement())
-  atestadoId           Int
-  entrada              String
-  saida                String
+  id         Int    @id @default(autoincrement())
+  atestadoId Int
+  entrada    String
+  saida      String
 
   atestado_funcionario atestado_funcionario @relation(fields: [atestadoId], references: [id])
 }
@@ -333,6 +333,12 @@ model tipo_eventos {
   nome                 String
   eventos              eventos[]
   atestado_funcionario atestado_funcionario[]
+}
+
+model tipo_faltas_expotacao {
+  id     Int    @id
+  nome   String @unique
+  codigo String @unique
 }
 
 model grupo_trabalho {
