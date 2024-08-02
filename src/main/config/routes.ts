@@ -1,5 +1,6 @@
 import { Express, Router } from "express";
 
+import AlterarUsuario from "../routes/horarios/alterar-usuario-routes";
 import todosfuncionarios from "../routes/horarios/buscar-todos-funcionarios-routes";
 import cadastrarAtestado from "../routes/horarios/cadastrar-atestado";
 import calcularresumo from "../routes/horarios/calcular-resumo-routes";
@@ -25,19 +26,19 @@ import listarDocumento from "../routes/horarios/listar-documento-routes";
 import listarFilial from "../routes/horarios/listar-filial-routes";
 import ocorrenciageral from "../routes/horarios/listar-ocorrencia-geral-routes";
 import ocorrencia from "../routes/horarios/listar-ocorrencia-routes";
+import ocorrenciaSolucionadas from "../routes/horarios/listar-ocorrencia-solucionadas-routes";
 import listarOcupacao from "../routes/horarios/listar-ocupacao-routes";
 import listarPerfil from "../routes/horarios/listar-perfil-routes";
 import tipoevento from "../routes/horarios/listar-solucoes-eventos-routes";
 import listarStatusDocumento from "../routes/horarios/listar-status-documento-routes";
 import listarSolucaoAtestado from "../routes/horarios/listar-status-solucao-atestado";
 import listarTodosAtestado from "../routes/horarios/listar-todos-atestados-routes";
+import listarUsuario from "../routes/horarios/listar-usuario-routes";
 import procurarLocalidade from "../routes/horarios/procurar-localidade-routes";
 import respaldarAtestado from "../routes/horarios/respaldar-atestado-routes";
 import retornarsolucao from "../routes/horarios/retornar-solucao-routes";
 import solucaoeventos from "../routes/horarios/solucao-eventos-routes";
 import upload from "../routes/horarios/upload-routes-routes";
-import listarUsuario from "../routes/horarios/listar-usuario-routes";
-import AlterarUsuario from "../routes/horarios/alterar-usuario-routes";
 
 export const setupRoutes = (app: Express): void => {
   const router = Router();
@@ -80,4 +81,5 @@ export const setupRoutes = (app: Express): void => {
   funcionarioImpressaoCalculo(router);
   listarUsuario(router);
   AlterarUsuario(router);
+  ocorrenciaSolucionadas(router);
 };
