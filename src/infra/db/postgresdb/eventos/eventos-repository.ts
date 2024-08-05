@@ -62,23 +62,27 @@ export class CriarEventosPostgresRepository implements AdicionarEventos {
 
     const validEventosData = eventosData.filter((evento) => evento.cartaoDiaId && evento.hora);
 
-    const existingEvents = await this.prisma.eventos.findMany({
-      where: {
-        OR: validEventosData.map((evento) => ({
+    const indexParaRemover: number[] = [];
+
+    for (let index = 0; index < validEventosData.length; index++) {
+      const evento = validEventosData[index];
+
+      const exist = await this.prisma.eventos.findFirst({
+        where: {
           cartaoDiaId: evento.cartaoDiaId,
           funcionarioId: evento.funcionarioId,
           hora: evento.hora,
-        })),
-      },
-    });
+        },
+      });
 
-    const newEventosData = validEventosData.filter((evento) => {
-      return !existingEvents.some(
-        (existingEvent) =>
-          existingEvent.cartaoDiaId === evento.cartaoDiaId &&
-          existingEvent.funcionarioId === evento.funcionarioId &&
-          existingEvent.hora === evento.hora,
-      );
+      if (exist) indexParaRemover.push(index);
+    }
+
+    let newEventosData = [];
+
+    newEventosData = validEventosData.filter((evento, index) => {
+      const exist = indexParaRemover.some((i) => i === index);
+      if (!exist) return evento;
     });
 
     if (newEventosData.length === 0) {
