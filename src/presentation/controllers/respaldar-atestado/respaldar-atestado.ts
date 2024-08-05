@@ -34,9 +34,6 @@ export class RespaldarController implements Controller {
       if (!statusId) return badRequest(new FuncionarioParamError("Falta status!"));
       if (!userName) return badRequest(new FuncionarioParamError("Falta usuário para lançar cartão"));
 
-      if (!inicio) return badRequest(new FuncionarioParamError("Falta inicio!"));
-      if (!fim) return badRequest(new FuncionarioParamError("Falta fim!"));
-
       if (!new Date(inicio).getTime()) return badRequest(new FuncionarioParamError("Data de início inválida!"));
       if (!new Date(fim).getTime()) return badRequest(new FuncionarioParamError("Data de fim inválida!"));
 
@@ -81,19 +78,22 @@ export class RespaldarController implements Controller {
 
       if (atestado.statusId !== 1) return badRequest(new FuncionarioParamError("Atestado já tratado!"));
 
-      const dataInicio = moment.utc(inicio).set({ h: 0, minute: 0, second: 0, millisecond: 0 }).toDate();
-
-      const dias = await this.respaldarAtestadoPostgresRepository.findManyCartaoDia({
-        inicio: dataInicio,
-        fim: fim,
-        funcionarioId: atestado.funcionarioId,
-      });
-
       let message = "";
 
       switch (statusId) {
         case 2:
           {
+            if (!inicio) return badRequest(new FuncionarioParamError("Falta inicio!"));
+            if (!fim) return badRequest(new FuncionarioParamError("Falta fim!"));
+
+            const dataInicio = moment.utc(inicio).set({ h: 0, minute: 0, second: 0, millisecond: 0 }).toDate();
+
+            const dias = await this.respaldarAtestadoPostgresRepository.findManyCartaoDia({
+              inicio: dataInicio,
+              fim: fim,
+              funcionarioId: atestado.funcionarioId,
+            });
+
             message = await this.abonar({ dias, atestado: { id: atestado.id, fim, inicio, observacao, statusId }, userName });
           }
           break;
