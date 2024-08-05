@@ -46,7 +46,7 @@ export class BuscarTodosFuncionarioController implements Controller {
               }
             }
 
-            andamento = Number(((totalDiasTrabalhados * 100) / totalDiasParaTrabalhar).toFixed(2));
+            andamento = Number(((totalDiasTrabalhados * 100) / totalDiasParaTrabalhar).toFixed());
           }
 
           cartoes.push({ andamento });
