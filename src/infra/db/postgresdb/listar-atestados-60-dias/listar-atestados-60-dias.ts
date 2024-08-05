@@ -20,7 +20,7 @@ export class ListarAtestados60DiasRepository implements ListarAtestados60Dias {
       where: {
         funcionarioId: Number(funcionarioId),
         statusId: {
-          in: [1, 2],
+          in: [2],
         },
         data: {
           gte: sessentaDiasAtras,
@@ -36,6 +36,8 @@ export class ListarAtestados60DiasRepository implements ListarAtestados60Dias {
         tipo_eventos: true,
         funcao: true,
         tipo_comprovante_ausencia: true,
+        tipo_certidao_obito: true,
+        entradas_saidas_atestado: true,
       },
       orderBy: {
         data: "desc",
@@ -53,19 +55,25 @@ export class ListarAtestados60DiasRepository implements ListarAtestados60Dias {
       userName: atestado.userName,
       funcionarioId: atestado.funcionarioId,
       idade_paciente: atestado.idade_paciente,
-      sintomas: atestado.sintomas,
       trabalhou_dia: atestado.trabalhou_dia,
-      horario_trabalhado_inicio: atestado.horario_trabalhado_inicio,
-      horario_trabalhado_fim: atestado.horario_trabalhado_fim,
+      observacao: atestado.observacao,
       nome: atestado.nomeFuncionario,
-      identificacao: atestado.funcionario?.identificacao,
+      exame: atestado.exame,
+      nome_acompanhante: atestado.nome_acompanhante,
+      identificacao: atestado.funcionario.identificacao,
+      sintomas: atestado.sintomas,
       nomeAcao: atestado.tipo_eventos?.nome,
       nomeAcompanhante: atestado.tipo_acompanhante?.nome,
       nomeOcupacao: atestado.tipo_ocupacao?.nome,
       nomeStatus: atestado.tipo_status?.nome,
-      nomeDocumento: atestado.tipos_documentos?.nome,
+      nomeDocumento: atestado.tipos_documentos.nome,
       nomeComprovante: atestado.tipo_comprovante_ausencia?.nome,
-      dias: atestado?.inicio && atestado.fim ? moment(atestado.fim).diff(moment(atestado.inicio), "d") : 0,
+      nomeCertidao: atestado.tipo_certidao_obito?.nome,
+      horarios: atestado.entradas_saidas_atestado.map((valor) => ({
+        entrada: valor.entrada,
+        saida: valor.saida,
+      })),
+      dias: atestado.inicio && atestado.fim ? moment(atestado.fim).diff(moment(atestado.inicio), "d") : 0,
       funcaoFuncionario: atestado.funcao.nome,
     }));
   }

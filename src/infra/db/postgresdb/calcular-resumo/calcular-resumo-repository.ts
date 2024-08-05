@@ -1,5 +1,8 @@
 import { PrismaClient } from "@prisma/client";
+import moment from "moment";
+
 import { ResumoModel } from "@domain/models/calcular-resumo";
+
 import { CalcularResumoDia } from "../../../../domain/usecases/calcular-resumo";
 import { prisma } from "../../../database/Prisma";
 import { arredondarParteDecimal, arredondarParteDecimalHoras } from "./utils";
@@ -9,6 +12,14 @@ export class CalcularResumoPostgresRepository implements CalcularResumoDia {
 
   constructor() {
     this.prisma = prisma;
+  }
+
+  private pegarCargaHorarioCompleta(input: string) {
+    const horaMinutos = input.replaceAll(".", ":").split(";");
+    return horaMinutos.map((a) => {
+      const [hora, minuto] = a.split(":");
+      return { hora: Number(hora), minuto: Number(minuto) };
+    });
   }
 
   private calcularResumo(funcionario: any) {
@@ -23,7 +34,8 @@ export class CalcularResumoPostgresRepository implements CalcularResumoDia {
     let horasNoturno100 = 0;
 
     for (const cartao of funcionario.cartao) {
-      for (const cartao_dia of cartao.dias) {
+      const dias = cartao.dias || []; // Garantir que dias é um array
+      for (const cartao_dia of dias) {
         const resumoDia = cartao_dia.ResumoDia || {
           movimentacao60: 0,
           movimentacao100: 0,
@@ -67,6 +79,10 @@ export class CalcularResumoPostgresRepository implements CalcularResumoDia {
       },
       saldoAnterior: saldoAnterior,
     };
+  }
+
+  public calcularResumoPublico(funcionario: any) {
+    return this.calcularResumo(funcionario);
   }
 
   public async calc(identificacao: string): Promise<ResumoModel> {
@@ -149,13 +165,21 @@ export class CalcularResumoPostgresRepository implements CalcularResumoDia {
           eventosDiurnos.reduce((sum, evento) => sum + evento.minutos, 0) +
           cartao_dia.atestado_abonos.reduce((sum, abono) => sum + abono.minutos, 0);
 
-        let movimentacao60 = totalMinutos - cartao_dia.cargaHor;
+        const cargaHorariaCompletaArray = this.pegarCargaHorarioCompleta(cartao_dia.cargaHorariaCompleta);
+        const isFolga = cargaHorariaCompletaArray.every((horario) => horario.hora === 0 && horario.minuto === 0);
+
+        let movimentacao60 = 0;
         let movimentacao100 = 0;
         let movimentacaoNoturna60 = eventosNoturnos.reduce((sum, evento) => sum + evento.minutos, 0);
 
-        if (movimentacao60 > 120) {
-          movimentacao100 = movimentacao60 - 120;
-          movimentacao60 = 120;
+        if (isFolga) {
+          movimentacao100 = totalMinutos;
+        } else {
+          movimentacao60 = totalMinutos - cartao_dia.cargaHor;
+          if (movimentacao60 > 120) {
+            movimentacao100 = movimentacao60 - 120;
+            movimentacao60 = 120;
+          }
         }
 
         return {
@@ -184,21 +208,17 @@ export class CalcularResumoPostgresRepository implements CalcularResumoDia {
 
     // Aplicar a regra adicional
     let saldoSessenta = resumoCalculado.movimentacao.sessenta;
-    const diasDivididos = new Set(); // Set para armazenar dias divididos
+    const diasDivididos = new Set<string>(); // Set para armazenar dias divididos
 
     const cartoesAtualizados = cartoes.map((cartao) => {
       const dias = cartao.dias.map((cartao_dia) => {
-        if (
-          typeof cartao_dia.ResumoDia.movimentacao60 === "number" &&
-          cartao_dia.ResumoDia.movimentacao60 < 0 &&
-          !diasDivididos.has(cartao_dia.data)
-        ) {
-          if (saldoSessenta > 0) {
+        const dataFormatada = moment.utc(cartao_dia.data).format("YYYY-MM-DD");
+        if (typeof cartao_dia.ResumoDia.movimentacao60 === "number" && cartao_dia.ResumoDia.movimentacao60 < 0) {
+          if (saldoSessenta > 0 && !diasDivididos.has(dataFormatada)) {
             const diferenca = Math.abs(cartao_dia.ResumoDia.movimentacao60);
-            cartao_dia.ResumoDia.movimentacao60 /= 1.6;
-            cartao_dia.ResumoDia.movimentacao60 = arredondarParteDecimal(cartao_dia.ResumoDia.movimentacao60);
+            cartao_dia.ResumoDia.movimentacao60 = arredondarParteDecimal(cartao_dia.ResumoDia.movimentacao60 / 1.6);
             saldoSessenta -= diferenca;
-            diasDivididos.add(cartao_dia.data); // Marca o dia como dividido
+            diasDivididos.add(dataFormatada); // Marca o dia como dividido
           }
         }
         return cartao_dia;
@@ -207,6 +227,20 @@ export class CalcularResumoPostgresRepository implements CalcularResumoDia {
     });
 
     // Recalcular o resumo após aplicar a regra adicional
+    resumoCalculado = this.calcularResumo({ cartao: cartoesAtualizados });
+
+    // Garantir que os dias divididos permanecem divididos
+    cartoesAtualizados.forEach((cartao) => {
+      cartao.dias.forEach((cartao_dia) => {
+        const dataFormatada = moment.utc(cartao_dia.data).format("YYYY-MM-DD");
+        if (diasDivididos.has(dataFormatada)) {
+          // Aqui certificamos que não revertam a divisão
+          cartao_dia.ResumoDia.movimentacao60 = arredondarParteDecimal(Number(cartao_dia.ResumoDia.movimentacao60));
+        }
+      });
+    });
+
+    // Recalcular o resumo após garantir a persistência das divisões
     resumoCalculado = this.calcularResumo({ cartao: cartoesAtualizados });
 
     // Retornar os dados completos

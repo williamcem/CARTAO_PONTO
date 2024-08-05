@@ -1,7 +1,7 @@
 type IUpsert = {
   periodoId: number;
-  entrada: Date;
-  saida: Date;
+  entrada: Date | undefined;
+  saida: Date | undefined;
   cartao_dia_id: number;
   statusId: number;
 };

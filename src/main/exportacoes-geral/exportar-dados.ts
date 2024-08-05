@@ -13,11 +13,8 @@ export const exportarDadosParaArquivo = async (callback: (err: Error | null, fil
           include: {
             cartao_dia: {
               include: {
-                cartao_dia_lancamentos: {
-                  orderBy: {
-                    entrada: "asc", // Ordena os lançamentos por entrada em ordem crescente
-                  },
-                },
+                eventos: true,
+                atestado_abonos: true,
               },
               orderBy: {
                 data: "asc", // Ordena os dias de cartão por data em ordem crescente
@@ -28,29 +25,61 @@ export const exportarDadosParaArquivo = async (callback: (err: Error | null, fil
       },
     });
 
+    // Buscar os tipos de faltas
+    const tiposFaltas = await prisma.tipo_faltas_expotacao.findMany();
+    const faltasMap: Record<string, string> = tiposFaltas.reduce(
+      (map, falta) => {
+        map[falta.nome] = falta.codigo;
+        return map;
+      },
+      {} as Record<string, string>,
+    );
+
     // Preparar os dados para o arquivo
     const linhas = funcionarios.flatMap((funcionario) => {
       return funcionario.cartao.flatMap((cartao) => {
-        return cartao.cartao_dia.map((dia) => {
-          const lancamentos = dia.cartao_dia_lancamentos;
-          // Verificar se há lançamentos para este dia
-          if (lancamentos && lancamentos.length > 0) {
-            const entradasSaidas = lancamentos
-              .map((lancamento) => {
-                // Ajustar para o fuso horário local antes de formatar o tempo
-                const entradaLocal = ajustarFusoHorario(lancamento.entrada, 3); // Ajuste de 3 horas
-                const saidaLocal = ajustarFusoHorario(lancamento.saida, 3); // Ajuste de 3 horas
-                const entrada = formatarTempo(entradaLocal);
-                const saida = formatarTempo(saidaLocal);
-                return `${entrada};${saida}`;
-              })
-              .join(";");
+        return cartao.cartao_dia.flatMap((dia) => {
+          // Filtrar os eventos com tipoId igual a 5
+          const eventosFiltrados = dia.eventos.filter((evento) => evento.tipoId === 5);
+          const minutosInjustificados = eventosFiltrados.reduce((total, evento) => total + evento.minutos, 0);
 
-            return `${funcionario.identificacao};${formatarData(dia.data)};${entradasSaidas}`;
-          } else {
-            // Se não houver lançamentos, retornar a identificação e a data sem lançamentos
-            return `${funcionario.identificacao};${formatarData(dia.data)};`;
+          // Filtrar os abonos justificados
+          const abonosJustificados = dia.atestado_abonos;
+          const minutosJustificados = abonosJustificados.reduce((total, abono) => total + abono.minutos, 0);
+
+          const linhasDia = [];
+
+          // Verificar e adicionar faltas injustificadas
+          if (minutosInjustificados > 0) {
+            if (minutosInjustificados === dia.cargaHor) {
+              const tipoFalta = "FALTA INJUSTIFICADA TOTAL";
+              linhasDia.push(
+                `${funcionario.identificacao};${formatarData(dia.data)};${tipoFalta} ${minutosInjustificados};${faltasMap[tipoFalta]}`,
+              );
+            } else if (minutosInjustificados < dia.cargaHor) {
+              const tipoFalta = "FALTA INJUSTIFICADA PARCIAL";
+              linhasDia.push(
+                `${funcionario.identificacao};${formatarData(dia.data)};${tipoFalta} ${minutosInjustificados};${faltasMap[tipoFalta]}`,
+              );
+            }
           }
+
+          // Verificar e adicionar faltas justificadas
+          if (minutosJustificados > 0) {
+            if (minutosJustificados === dia.cargaHor) {
+              const tipoFalta = "FALTA JUSTIFICADA TOTAL";
+              linhasDia.push(
+                `${funcionario.identificacao};${formatarData(dia.data)};${tipoFalta} ${minutosJustificados};${faltasMap[tipoFalta]}`,
+              );
+            } else if (minutosJustificados < dia.cargaHor) {
+              const tipoFalta = "FALTA JUSTIFICADA PARCIAL";
+              linhasDia.push(
+                `${funcionario.identificacao};${formatarData(dia.data)};${tipoFalta} ${minutosJustificados};${faltasMap[tipoFalta]}`,
+              );
+            }
+          }
+
+          return linhasDia;
         });
       });
     });
@@ -74,27 +103,6 @@ export const exportarDadosParaArquivo = async (callback: (err: Error | null, fil
   } finally {
     await prisma.$disconnect();
   }
-};
-
-// Função para formatar o tempo
-const formatarTempo = (tempo: Date | null | undefined): string => {
-  if (!tempo) return ""; // Retorna uma string vazia se o tempo for nulo ou indefinido
-
-  const data = new Date(tempo);
-  const horas = data.getHours().toString().padStart(2, "0");
-  const minutos = data.getMinutes().toString().padStart(2, "0");
-  return `${horas}:${minutos}`;
-};
-
-// Função para ajustar o fuso horário para o fuso horário local
-const ajustarFusoHorario = (tempo: Date | null | undefined, ajuste: number): Date | null | undefined => {
-  if (!tempo) return tempo; // Retorna o tempo original se for nulo ou indefinido
-
-  // Converter o ajuste de horas para milissegundos
-  const ajusteMs = ajuste * 60 * 60 * 1000;
-
-  // Ajustar o tempo para o fuso horário local
-  return new Date(tempo.getTime() + ajusteMs);
 };
 
 // Função para formatar a data sem hífens

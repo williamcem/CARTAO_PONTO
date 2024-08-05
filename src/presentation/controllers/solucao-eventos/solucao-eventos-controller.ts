@@ -14,9 +14,9 @@ export class CriarEventoController implements Controller {
       if (!tipoId) return badRequest(new FuncionarioParamError("Falta o tipo de solução!"));
       const eventoCriado = await this.solucaoEventoRepository.add({ id, tipoId });
 
-      if (!eventoCriado) throw "Erro ao criar evento!";
+      if (!eventoCriado) throw "Não foi possivel aplicar a solução!";
 
-      return ok({ message: "Evento criado com sucesso" });
+      return ok({ message: "Solução aplicada com sucesso" });
     } catch (error) {
       console.error(error);
       return serverError();

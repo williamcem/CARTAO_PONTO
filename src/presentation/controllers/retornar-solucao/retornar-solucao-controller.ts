@@ -4,19 +4,27 @@ import { badRequest, ok, serverError } from "../../helpers/http-helpers";
 import { Controller, HttpRequest, HttpResponse } from "./retornar-solucao";
 
 export class RetornarSolucaoController implements Controller {
-  constructor(private readonly retornoSolucaoRepository: RetornoSolucaoRepository) { }
+  constructor(private readonly retornoSolucaoRepository: RetornoSolucaoRepository) {}
 
   async handle(httpRequest: HttpRequest): Promise<HttpResponse> {
-    const { cartaoDiaId } = httpRequest?.body;
+    const { eventoId, cartaoDiaId } = httpRequest?.body;
 
     try {
-      if (!cartaoDiaId) return badRequest(new FuncionarioParamError("Falta irformar o dia!"));
+      if (!eventoId) {
+        return badRequest(new FuncionarioParamError("Falta informar o Id do evento!"));
+      }
 
-      const eventosResetados = await this.retornoSolucaoRepository.resetTratado({ cartaoDiaId });
+      if (!cartaoDiaId) {
+        return badRequest(new FuncionarioParamError("Falta informar o Id do cartão dia!"));
+      }
 
-      if (!eventosResetados) throw "Erro ao resetar eventos!";
+      const eventosResetados = await this.retornoSolucaoRepository.resetTratado({ eventoId, cartaoDiaId });
 
-      return ok({ message: "Eventos resetados com sucesso" });
+      if (!eventosResetados) {
+        throw "Erro ao reverter solução!";
+      }
+
+      return ok({ message: "Solução revertida com sucesso" });
     } catch (error) {
       console.error(error);
       return serverError();

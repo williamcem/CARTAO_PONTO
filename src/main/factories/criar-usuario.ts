@@ -1,10 +1,10 @@
 import { Controller } from "../../presentation/protocols";
 import { LogControllerDecorator } from "../decorators/log";
-import { LogarController } from "../../presentation/controllers/logar/logar-controler";
-import { LogarPostgresRepository } from "@infra/db/postgresdb/logar/logar-repository";
+import { CriarUsuarioController } from "../../presentation/controllers/criar-usuario/criar-usuario-controler";
+import { CriarUsuarioPostgresRepository } from "@infra/db/postgresdb/criar-usuario/criar-usuario-repository";
 
 export const makeCriarUsuarioController = (): Controller => {
-  const logarPostgresRepository = new LogarPostgresRepository();
-  const logarController = new LogarController(logarPostgresRepository);
-  return new LogControllerDecorator(logarController);
+  const criarUsuarioPostgresRepository = new CriarUsuarioPostgresRepository();
+  const criarUsuarioController = new CriarUsuarioController(criarUsuarioPostgresRepository);
+  return new LogControllerDecorator(criarUsuarioController);
 };

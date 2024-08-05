@@ -18,14 +18,15 @@ export interface AddAtestadoModel {
   statusId: number;
   observacao: string;
   sintomas?: string;
-  horario_trabalhado_inicio?: Date;
-  horario_trabalhado_fim?: Date;
+  horario_trabalhado_inicio?: string[];
+  horario_trabalhado_fim?: string[];
   trabalhou_dia: boolean;
   tipo_comprovanteId?: number;
   funcionarioFuncaoId: number;
   nomeFuncionario: string;
   nome_acompanhante?: string;
   exame?: string;
+  tipoGrauParentescoId?: number;
 }
 
 export interface AddAtestado {

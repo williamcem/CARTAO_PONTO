@@ -1,4 +1,5 @@
 import { PrismaClient } from "@prisma/client";
+
 import { ListarAtestado } from "../../../../data/usecase/add-listar-atestados/add-listar-atestados";
 import { prisma } from "../../../database/Prisma";
 
@@ -25,6 +26,8 @@ export class ListarAtestadoRepsository implements ListarAtestado {
         tipo_eventos: true,
         tipo_comprovante_ausencia: true,
         funcao: true,
+        tipo_certidao_obito: true,
+        entradas_saidas_atestado: true,
       },
       orderBy: {
         data: "asc",
@@ -43,17 +46,24 @@ export class ListarAtestadoRepsository implements ListarAtestado {
       funcionarioId: atestado.funcionarioId,
       idade_paciente: atestado.idade_paciente,
       trabalhou_dia: atestado.trabalhou_dia,
-      horario_trabalhado_inicio: atestado.horario_trabalhado_inicio,
-      horario_trabalhado_fim: atestado.horario_trabalhado_fim,
+      observacao: atestado.observacao,
       nome: atestado.nomeFuncionario,
+      exame: atestado.exame,
+      nome_acompanhante: atestado.nome_acompanhante,
       identificacao: atestado.funcionario?.identificacao,
+      sintomas: atestado.sintomas,
       nomeAcao: atestado.tipo_eventos?.nome,
       nomeAcompanhante: atestado.tipo_acompanhante?.nome,
       nomeOcupacao: atestado.tipo_ocupacao?.nome,
       nomeStatus: atestado.tipo_status?.nome,
       nomeDocumento: atestado.tipos_documentos?.nome,
       nomeComprovante: atestado.tipo_comprovante_ausencia?.nome,
+      nomeCertidao: atestado.tipo_certidao_obito?.nome,
       funcao: atestado.funcao.nome,
+      horarios: atestado.entradas_saidas_atestado.map((valor) => ({
+        entrada: valor.entrada,
+        saida: valor.saida,
+      })),
     }));
   }
 }

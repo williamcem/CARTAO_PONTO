@@ -37,6 +37,24 @@ model funcionario {
   atestado_funcionario atestado_funcionario[]
 }
 
+model funcionario_historico {
+  historicoId    Int       @id @default(autoincrement())
+  id             Int
+  filial         String
+  identificacao  String
+  nome           String
+  turnoId        Int
+  centroCustoId  Int
+  funcaoId       Int
+  localidadeId   String
+  dataNascimento DateTime
+  dataAdmissao   DateTime
+  dataDemissao   DateTime?
+  createAt       DateTime? @default(now())
+  updateAt       DateTime? @updatedAt
+  userName       String?
+}
+
 model localidade {
   codigo       String        @id @unique
   nome         String
@@ -217,14 +235,15 @@ model atestado_funcionario {
   statusId                  Int
   idade_paciente            Int?
   trabalhou_dia             Boolean   @default(false)
-  horario_trabalhado_fim    DateTime?
-  horario_trabalhado_inicio DateTime?
+  horario_trabalhado_fim    String? // Atualizado para array
+  horario_trabalhado_inicio String? // Atualizado para array
   exame                     String?
   acao                      Int       @default(1)
   observacao                String?
   sintomas                  String?
   nome_acompanhante         String?
   funcionarioFuncaoId       Int       @default(1)
+  tipoGrauParentescoId      Int?
   nomeFuncionario           String    @default("")
   ocupacaoId                Int?
   createAt                  DateTime  @default(now())
@@ -238,7 +257,9 @@ model atestado_funcionario {
   funcao                    funcao                     @relation(fields: [funcionarioFuncaoId], references: [id])
   tipo_eventos              tipo_eventos?              @relation(fields: [acao], references: [id])
   atestado_abonos           atestado_abono[]
+  entradas_saidas_atestado  entradas_saidas_atestado[]
   tipo_comprovante_ausencia tipo_comprovante_ausencia? @relation(fields: [tipo_comprovanteId], references: [id])
+  tipo_certidao_obito       tipo_certidao_obito?       @relation(fields: [tipoGrauParentescoId], references: [id])
 }
 
 model atestado_abono {
@@ -288,8 +309,25 @@ model tipo_comprovante_ausencia {
   atestado_funcionario atestado_funcionario[]
 }
 
+model tipo_certidao_obito {
+  id   Int    @id @default(autoincrement())
+  nome String @unique
+
+  atestado_funcionario atestado_funcionario[]
+}
+
+model entradas_saidas_atestado {
+  id         Int    @id @default(autoincrement())
+  atestadoId Int
+  entrada    String
+  saida      String
+
+  atestado_funcionario atestado_funcionario @relation(fields: [atestadoId], references: [id])
+}
+
 model descricaco_cid {
   id         Int    @id @default(autoincrement())
+  atestadoId Int
   grupo_cid  String
   descricaco String
 }
@@ -313,6 +351,12 @@ model tipo_eventos {
   nome                 String
   eventos              eventos[]
   atestado_funcionario atestado_funcionario[]
+}
+
+model tipo_faltas_expotacao {
+  id     Int    @id
+  nome   String @unique
+  codigo String @unique
 }
 
 model grupo_trabalho {

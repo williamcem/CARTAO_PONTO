@@ -27,6 +27,9 @@ export class ListarTodosAtestadoRepsository implements ListarTodosAtestados {
         tipos_documentos: true,
         tipo_eventos: true,
         tipo_comprovante_ausencia: true,
+        tipo_certidao_obito: true,
+        funcao: true,
+        entradas_saidas_atestado: true,
       },
       orderBy: {
         data: "desc",
@@ -46,6 +49,9 @@ export class ListarTodosAtestadoRepsository implements ListarTodosAtestados {
       idade_paciente: atestado.idade_paciente,
       sintomas: atestado.sintomas,
       trabalhou_dia: atestado.trabalhou_dia,
+      observacao: atestado.observacao,
+      exame: atestado.exame,
+      nome_acompanhante: atestado.nome_acompanhante,
       horario_trabalhado_inicio: atestado.horario_trabalhado_inicio,
       horario_trabalhado_fim: atestado.horario_trabalhado_fim,
       nome: atestado.funcionario?.nome,
@@ -56,6 +62,12 @@ export class ListarTodosAtestadoRepsository implements ListarTodosAtestados {
       nomeStatus: atestado.tipo_status?.nome,
       nomeDocumento: atestado.tipos_documentos?.nome,
       nomeComprovante: atestado.tipo_comprovante_ausencia?.nome,
+      nomeCertidao: atestado.tipo_certidao_obito?.nome,
+      funcao: atestado.funcao.nome,
+      horarios: atestado.entradas_saidas_atestado.map((valor) => ({
+        entrada: valor.entrada,
+        saida: valor.saida,
+      })),
     }));
   }
 }

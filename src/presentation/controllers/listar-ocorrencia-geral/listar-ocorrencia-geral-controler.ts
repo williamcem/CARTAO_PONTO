@@ -1,4 +1,5 @@
 import { OcorrenciaGeralPostgresRepository } from "../../../infra/db/postgresdb/listar-ocorrencias-geral/listar-ocorrencias-repository";
+import { FuncionarioParamError, OcorrenciasNull } from "../../errors/Funcionario-param-error";
 import { badRequest, notFoundRequest, ok, serverError } from "../../helpers/http-helpers";
 import { Controller, HttpRequest, HttpResponse } from "./listar-ocorrencias-protocols";
 
@@ -26,6 +27,9 @@ export class OcorrenciaGeralController implements Controller {
 
       return ok(output);
     } catch (error) {
+      if (error instanceof OcorrenciasNull) {
+        return badRequest(new FuncionarioParamError(error.message));
+      }
       console.error(error);
       return serverError();
     }
