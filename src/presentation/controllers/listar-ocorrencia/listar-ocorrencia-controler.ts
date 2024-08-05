@@ -44,6 +44,7 @@ export class OcorrenciaController implements Controller {
           }[];
         }[];
         resumo: ResumoModel;
+        eventos: [];
       }[] = [];
 
       for (const funcionario of data.funcionarios) {
@@ -61,8 +62,29 @@ export class OcorrenciaController implements Controller {
             lancamentos: dia.lancamentos,
           })),
           resumo: funcionario.Resumo, // Usando o resumo calculado diretamente
+          eventos: [],
         });
       }
+
+      const eventos: any = [];
+
+      output.map((funcionario) =>
+        funcionario.dias.map((dia) => {
+          dia.eventos.map((evento) => {
+            if (evento.tipoId == 8) eventos.push(evento);
+          });
+        }),
+      );
+
+      output.map((funcionario) =>
+        funcionario.dias.map((dia) => {
+          dia.eventos.map((evento) => {
+            if (evento.tipoId != 8) eventos.push(evento);
+          });
+        }),
+      );
+
+      output[0].eventos = eventos;
 
       return ok(output);
     } catch (error) {
