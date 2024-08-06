@@ -18,7 +18,6 @@ export class BuscarTodosFuncionarioController implements Controller {
       const output = [];
       //Busca a % preencida do cartão
       for (let index = 0; index < funcionarios.length; index++) {
-        console.log(funcionarios);
         const funcionario = funcionarios[index];
         const cartoes = [];
 
