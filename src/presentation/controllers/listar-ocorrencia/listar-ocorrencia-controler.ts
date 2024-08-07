@@ -84,6 +84,8 @@ export class OcorrenciaController implements Controller {
         }),
       );
 
+      if (output.length == 0) return notFoundRequest(new FuncionarioParamError("Não há ocorrências para essa identificação"));
+
       output[0].eventos = eventos;
 
       return ok(output);
