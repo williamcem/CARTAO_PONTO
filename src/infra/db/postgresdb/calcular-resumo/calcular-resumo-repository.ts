@@ -157,7 +157,7 @@ export class CalcularResumoPostgresRepository implements CalcularResumoDia {
 
         const eventosNoturnos = cartao_dia.eventos.filter((evento) => evento.tipoId === 4);
         const eventosDiurnos = cartao_dia.eventos.filter(
-          (evento) => evento.tipoId !== 2 && evento.tipoId !== 8 && evento.tipoId !== 4,
+          (evento) => evento.tipoId !== 2 && evento.tipoId !== 8 && evento.tipoId !== 11 && evento.tipoId !== 4,
         );
 
         // Somar minutos dos eventos diurnos e dos atestados/abonos
