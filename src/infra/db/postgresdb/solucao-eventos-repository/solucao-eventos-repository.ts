@@ -24,7 +24,7 @@ export class SolucaoEventoRepository implements AdicionarSolucao {
     let minutos;
     if (tipoId === 3 || tipoId === 7) {
       minutos = 0;
-    } else if (tipoId === 5 || tipoId === 6) {
+    } else if (tipoId === 5 || tipoId === 6 || tipoId === 12) {
       minutos = Math.abs(eventoOriginal.minutos);
     } else {
       minutos = eventoOriginal.minutos;
@@ -54,6 +54,9 @@ export class SolucaoEventoRepository implements AdicionarSolucao {
       const eventosEntreMenos1EMenos5 = await this.prisma.eventos.findMany({
         where: {
           cartaoDiaId: eventoOriginal.cartaoDiaId,
+          tipoId: {
+            in: [2],
+          },
           minutos: { gte: -5, lte: -1 },
           tratado: false,
         },

@@ -1,9 +1,11 @@
 import { PrismaClient } from "@prisma/client";
 import moment from "moment";
+
 import { prisma } from "@infra/database/Prisma";
+
 import { AdicionarEventos } from "../../../../data/usecase/add-eventos/add-eventos";
-import { criarEventoIntervaloEntrePeriodos } from "./intervaloEntrePeriodos";
 import { criarEventoAdicionalNoturno } from "./adicionalNoturno";
+import { criarEventoIntervaloEntrePeriodos } from "./intervaloEntrePeriodos";
 
 export class CriarEventosPostgresRepository implements AdicionarEventos {
   private prisma: PrismaClient;
@@ -26,32 +28,57 @@ export class CriarEventosPostgresRepository implements AdicionarEventos {
         },
       },
       where: {
-        cartao_dia: { cartao: { funcionario: { identificacao: input?.identificacao } } },
+        cartao_dia: { cartao: { funcionario: { identificacao: input?.identificacao }, statusId: 1 } },
       },
       orderBy: [{ cartao_dia: { cartao: { funcionarioId: "asc" } } }, { cartao_dia_id: "asc" }, { periodoId: "asc" }],
     });
 
-    const eventosData = this.gerarEventos({ lancamentos });
+    const eventosData = await this.gerarEventos({ lancamentos });
+
+    const abonosRegra: {
+      cartaoDiaId: number;
+      minutos: { minutos: number; periodoId: number }[];
+    }[] = [];
+
+    eventosData.map((evento) => {
+      if (evento.tipoId === 9) {
+        const existeIndexAbono = abonosRegra.findIndex((abono) => abono.cartaoDiaId === evento.cartaoDiaId);
+
+        if (existeIndexAbono === -1) {
+          abonosRegra.push({
+            cartaoDiaId: evento.cartaoDiaId,
+            minutos: [{ minutos: evento.minutos, periodoId: evento.periodoId }],
+          });
+        } else {
+          abonosRegra[existeIndexAbono].minutos.push({ minutos: evento.minutos, periodoId: evento.periodoId });
+        }
+      }
+      return undefined;
+    });
 
     const validEventosData = eventosData.filter((evento) => evento.cartaoDiaId && evento.hora);
 
-    const existingEvents = await this.prisma.eventos.findMany({
-      where: {
-        OR: validEventosData.map((evento) => ({
+    const indexParaRemover: number[] = [];
+
+    for (let index = 0; index < validEventosData.length; index++) {
+      const evento = validEventosData[index];
+
+      const exist = await this.prisma.eventos.findFirst({
+        where: {
           cartaoDiaId: evento.cartaoDiaId,
           funcionarioId: evento.funcionarioId,
           hora: evento.hora,
-        })),
-      },
-    });
+        },
+      });
 
-    const newEventosData = validEventosData.filter((evento) => {
-      return !existingEvents.some(
-        (existingEvent) =>
-          existingEvent.cartaoDiaId === evento.cartaoDiaId &&
-          existingEvent.funcionarioId === evento.funcionarioId &&
-          existingEvent.hora === evento.hora,
-      );
+      if (exist) indexParaRemover.push(index);
+    }
+
+    let newEventosData = [];
+
+    newEventosData = validEventosData.filter((evento, index) => {
+      const exist = indexParaRemover.some((i) => i === index);
+      if (!exist) return evento;
     });
 
     if (newEventosData.length === 0) {
@@ -60,13 +87,16 @@ export class CriarEventosPostgresRepository implements AdicionarEventos {
     }
 
     await this.prisma.eventos.createMany({
-      data: newEventosData,
+      data: newEventosData.map((evento) => {
+        delete evento.periodoId;
+        return evento;
+      }),
     });
 
     return true;
   }
 
-  public gerarEventos(input: {
+  public async gerarEventos(input: {
     lancamentos: {
       entrada: Date | null;
       saida: Date | null;
@@ -75,11 +105,13 @@ export class CriarEventosPostgresRepository implements AdicionarEventos {
         id: number;
         data: Date;
         cargaHorariaCompleta: string;
+        cargaHorSegundoPeriodo: number;
         cartao: {
           funcionario: {
             id: number;
           };
         };
+        periodoDescanso: number;
       };
     }[];
   }) {
@@ -108,12 +140,19 @@ export class CriarEventosPostgresRepository implements AdicionarEventos {
         minuto: cargaHorariaCompletaArray[0].minuto,
         utc: false,
       });
-      const horarioSaidaEsperado = this.pegarHorarioCargaHoraria({
-        data: lancamento.cartao_dia.data,
-        hora: cargaHorariaCompletaArray[cargaHorariaCompletaArray.length - 2].hora,
-        minuto: cargaHorariaCompletaArray[cargaHorariaCompletaArray.length - 2].minuto,
-        utc: false,
-      });
+      const horarioSaidaEsperado = lancamento.cartao_dia.cargaHorSegundoPeriodo
+        ? this.pegarHorarioCargaHoraria({
+            data: lancamento.cartao_dia.data,
+            hora: cargaHorariaCompletaArray[cargaHorariaCompletaArray.length - 2].hora,
+            minuto: cargaHorariaCompletaArray[cargaHorariaCompletaArray.length - 2].minuto,
+            utc: false,
+          })
+        : this.pegarHorarioCargaHoraria({
+            data: lancamento.cartao_dia.data,
+            hora: cargaHorariaCompletaArray[1].hora,
+            minuto: cargaHorariaCompletaArray[1].minuto,
+            utc: false,
+          });
 
       console.log(`Horário Entrada Esperado: ${horarioEntradaEsperado1.format("HH:mm")}`);
       console.log(`Horário Saída Esperado: ${horarioSaidaEsperado.format("HH:mm")}`);
@@ -137,34 +176,51 @@ export class CriarEventosPostgresRepository implements AdicionarEventos {
         if (proximoLancamento.periodoId === lancamento.periodoId + 1) {
           const horarioSaidaPeriodoAtual = saida;
           const horarioEntradaProximoPeriodo = moment.utc(proximoLancamento.entrada);
-          this.extrairIntervalosEntrePeriodos(horarioSaidaPeriodoAtual, horarioEntradaProximoPeriodo, lancamento, eventos);
+          this.extrairIntervalosEntrePeriodos(
+            horarioSaidaPeriodoAtual,
+            horarioEntradaProximoPeriodo,
+            lancamento,
+            eventos,
+            lancamento.cartao_dia.periodoDescanso,
+          );
         }
       }
 
-      if (excedeu) {
-        eventosExcendentes.forEach((value) => {
-          const novoEventos: any[] = [];
+      eventosExcendentes.forEach((value) => {
+        const novoEventos: any[] = [];
 
-          eventos.map((evento) => {
-            if (evento.cartaoDiaId === value.cartaoDiaId && evento.hora === value.hora && evento.tipoId === 9) {
-              console.log("entuo");
-            } else {
-              novoEventos.push(evento);
-            }
+        eventos.map((evento) => {
+          if (evento.cartaoDiaId === value.cartaoDiaId && evento.hora === value.hora && evento.tipoId === 9) {
+            console.log("entuo");
+          } else {
+            novoEventos.push(evento);
+          }
 
-            return undefined;
-          });
-
-          novoEventos.push(value);
-
-          eventos = novoEventos;
-
-          //eventos.push(value);
+          return undefined;
         });
 
-        eventosExcendentes = [];
-      }
+        novoEventos.push(value);
+
+        eventos = novoEventos;
+
+        //eventos.push(value);
+      });
+
+      eventosExcendentes = [];
     });
+
+    {
+      //eventos = await this.aplicarEventosHorarioNaoTrabalhado({ eventos });
+    }
+
+    {
+      eventos = await this.removerEventosNegativoIncorreto({ eventos });
+    }
+
+    //APLICAR REGRA +10 -10
+    {
+      eventos = await this.aplicarTolerancia10Minutos({ eventos });
+    }
 
     return eventos;
   }
@@ -204,7 +260,7 @@ export class CriarEventosPostgresRepository implements AdicionarEventos {
     if (isUltimoPeriodo) {
       const eventoAdicionalNoturno = criarEventoAdicionalNoturno(horarioSaidaEsperado, saida, lancamento);
       if (eventoAdicionalNoturno) {
-        eventos.push(eventoAdicionalNoturno);
+        eventos.push({ ...eventoAdicionalNoturno, ...{ periodoId: lancamento.periodoId } });
         console.log(
           `Evento Adicional Noturno criado: ${eventoAdicionalNoturno.hora} - Tipo: ${eventoAdicionalNoturno.tipoId} - Minutos: ${eventoAdicionalNoturno.minutos}`,
         );
@@ -224,8 +280,11 @@ export class CriarEventosPostgresRepository implements AdicionarEventos {
   ) {
     let excedeu = false;
 
+    // Verificar se todos os horários são zero
+    const cargaHorariaCompletaArray = this.pegarCargaHorarioCompleta(lancamento.cartao_dia.cargaHorariaCompleta);
+    const isFolga = cargaHorariaCompletaArray.every((horario) => horario.hora === 0 && horario.minuto === 0);
+
     if (entrada.isBefore(horarioEntradaEsperado1)) {
-      console.log("Entrou");
       const eventoPeriodoReal = {
         cartaoDiaId: lancamento.cartao_dia.id,
         hora: `${horarioEntradaEsperado1.format("HH:mm")} - ${saida.format("HH:mm")}`,
@@ -233,28 +292,10 @@ export class CriarEventosPostgresRepository implements AdicionarEventos {
         funcionarioId: lancamento.cartao_dia.cartao.funcionario.id,
         minutos: saida.diff(horarioEntradaEsperado1, "minutes"),
       };
-      eventos.push(eventoPeriodoReal);
+      eventos.push({ ...eventoPeriodoReal, ...{ periodoId: 1 } });
       console.log(
         `Evento criado: ${eventoPeriodoReal.hora} - Tipo: ${eventoPeriodoReal.tipoId} - Minutos: ${eventoPeriodoReal.minutos}`,
       );
-
-      ///////////////////////////////// testar
-      /*       const minutosExcedentes = horarioEntradaEsperado1.diff(entrada, "minutes");
-
-      if (minutosExcedentes > 5) {
-        const eventoExcedentePositivoReal = {
-          cartaoDiaId: lancamento.cartao_dia.id,
-          hora: `${entrada.format("HH:mm")} - ${horarioEntradaEsperado1.format("HH:mm")}`,
-          tipoId: 1,
-          funcionarioId: lancamento.cartao_dia.cartao.funcionario.id,
-          minutos: horarioEntradaEsperado1.diff(entrada, "minutes"),
-        };
-
-        eventos.push(eventoExcedentePositivoReal);
-        console.log(
-          `Evento criado: ${eventoPeriodoReal.hora} - Tipo: ${eventoPeriodoReal.tipoId} - Minutos: ${eventoPeriodoReal.minutos}`,
-        );
-      } */
     } else {
       const eventoPeriodo1 = {
         cartaoDiaId: lancamento.cartao_dia.id,
@@ -264,7 +305,7 @@ export class CriarEventosPostgresRepository implements AdicionarEventos {
         minutos: saida.diff(entrada, "minutes"),
       };
 
-      eventos.push(eventoPeriodo1);
+      eventos.push({ ...eventoPeriodo1, ...{ periodoId: 1 } });
       console.log(`Evento criado: ${eventoPeriodo1.hora} - Tipo: ${eventoPeriodo1.tipoId} - Minutos: ${eventoPeriodo1.minutos}`);
     }
 
@@ -276,7 +317,7 @@ export class CriarEventosPostgresRepository implements AdicionarEventos {
       minutos: horarioEntradaEsperado1.diff(entrada, "minutes"),
     };
 
-    if (eventoExcedentePositivo.minutos < 0) {
+    if (eventoExcedentePositivo.minutos < 0 && !isFolga) {
       eventoExcedentePositivo.tipoId = 2;
     }
 
@@ -288,22 +329,15 @@ export class CriarEventosPostgresRepository implements AdicionarEventos {
       excedeu = true;
     }
 
-    if (Math.abs(eventoExcedentePositivo.minutos) > 0) {
-      eventosExcendentes.push(eventoExcedentePositivo);
+    if (Math.abs(eventoExcedentePositivo.minutos) > 0 && !(isFolga && eventoExcedentePositivo.minutos < 0)) {
+      eventosExcendentes.push({ ...eventoExcedentePositivo, ...{ periodoId: 1 } });
     }
 
     if (excedeu) {
       console.log(
         `Evento criado: ${eventoExcedentePositivo.hora} - Tipo: ${eventoExcedentePositivo.tipoId} - Minutos: ${eventoExcedentePositivo.minutos}`,
       );
-    } else if (eventoExcedentePositivo.minutos < 0) {
-      const eventoPositivo = { ...eventoExcedentePositivo, tipoId: 9, minutos: Math.abs(eventoExcedentePositivo.minutos) };
-
-      eventos.push(eventoPositivo);
-
-      console.log(
-        `Evento positivo criado: ${eventoPositivo.hora} - Tipo: ${eventoPositivo.tipoId} - Minutos: ${eventoPositivo.minutos}`,
-      );
+    } else if (eventoExcedentePositivo.minutos < 0 && !isFolga) {
     }
 
     return excedeu;
@@ -319,6 +353,10 @@ export class CriarEventosPostgresRepository implements AdicionarEventos {
   ) {
     let excedeu = false;
 
+    // Verificar se todos os horários são zero
+    const cargaHorariaCompletaArray = this.pegarCargaHorarioCompleta(lancamento.cartao_dia.cargaHorariaCompleta);
+    const isFolga = cargaHorariaCompletaArray.every((horario) => horario.hora === 0 && horario.minuto === 0);
+
     if (saida.isBefore(horarioSaidaEsperado)) {
       const eventoPeriodoReal = {
         cartaoDiaId: lancamento.cartao_dia.id,
@@ -327,7 +365,7 @@ export class CriarEventosPostgresRepository implements AdicionarEventos {
         funcionarioId: lancamento.cartao_dia.cartao.funcionario.id,
         minutos: saida.diff(entrada, "minutes"),
       };
-      eventos.push(eventoPeriodoReal);
+      eventos.push({ ...eventoPeriodoReal, ...{ periodoId: 2 } });
       console.log(
         `Evento criado: ${eventoPeriodoReal.hora} - Tipo: ${eventoPeriodoReal.tipoId} - Minutos: ${eventoPeriodoReal.minutos}`,
       );
@@ -346,8 +384,8 @@ export class CriarEventosPostgresRepository implements AdicionarEventos {
         excedeu = true;
       }
 
-      if (Math.abs(eventoExcedentePositivo.minutos) > 0) {
-        eventosExcendentes.push(eventoExcedentePositivo);
+      if (Math.abs(eventoExcedentePositivo.minutos) > 0 && !(isFolga && eventoExcedentePositivo.minutos < 0)) {
+        eventosExcendentes.push({ ...eventoExcedentePositivo, ...{ periodoId: 2 } });
       }
 
       if (eventoExcedentePositivo.minutos < 0) {
@@ -358,13 +396,7 @@ export class CriarEventosPostgresRepository implements AdicionarEventos {
         console.log(
           `Evento criado000000000: ${eventoExcedentePositivo.hora} - Tipo: ${eventoExcedentePositivo.tipoId} - Minutos: ${eventoExcedentePositivo.minutos}`,
         );
-      } else if (eventoExcedentePositivo.minutos < 0) {
-        const eventoPositivo = {
-          ...eventoExcedentePositivo,
-          tipoId: 9,
-          minutos: Math.abs(eventoExcedentePositivo.minutos),
-        };
-        eventos.push(eventoPositivo);
+      } else if (eventoExcedentePositivo.minutos < 0 && !isFolga) {
       }
     } else {
       const eventoPeriodoEsperado = {
@@ -374,7 +406,7 @@ export class CriarEventosPostgresRepository implements AdicionarEventos {
         funcionarioId: lancamento.cartao_dia.cartao.funcionario.id,
         minutos: horarioSaidaEsperado.diff(entrada, "minutes"),
       };
-      eventos.push(eventoPeriodoEsperado);
+      eventos.push({ ...eventoPeriodoEsperado, ...{ periodoId: 2 } });
       console.log(
         `Evento criado: ${eventoPeriodoEsperado.hora} - Tipo: ${eventoPeriodoEsperado.tipoId} - Minutos: ${eventoPeriodoEsperado.minutos}`,
       );
@@ -391,21 +423,15 @@ export class CriarEventosPostgresRepository implements AdicionarEventos {
         excedeu = true;
       }
 
-      if (Math.abs(eventoExcedentePositivo.minutos) > 0) {
-        eventosExcendentes.push(eventoExcedentePositivo);
+      if (Math.abs(eventoExcedentePositivo.minutos) > 0 && !(isFolga && eventoExcedentePositivo.minutos < 0)) {
+        eventosExcendentes.push({ ...eventoExcedentePositivo, ...{ periodoId: 2 } });
       }
 
       if (excedeu) {
         console.log(
           `Evento criado: ${eventoExcedentePositivo.hora} - Tipo: ${eventoExcedentePositivo.tipoId} - Minutos: ${eventoExcedentePositivo.minutos}`,
         );
-      } else if (eventoExcedentePositivo.minutos < 0) {
-        const eventoPositivo = {
-          ...eventoExcedentePositivo,
-          tipoId: 9,
-          minutos: Math.abs(eventoExcedentePositivo.minutos),
-        };
-        eventos.push(eventoPositivo);
+      } else if (eventoExcedentePositivo.minutos < 0 && !isFolga) {
       }
     }
 
@@ -417,6 +443,7 @@ export class CriarEventosPostgresRepository implements AdicionarEventos {
     horarioEntradaProximoPeriodo: moment.Moment,
     lancamento: any,
     eventos: any[],
+    descanso: number,
   ) {
     const eventoIntervalo = criarEventoIntervaloEntrePeriodos(
       horarioSaidaPeriodoAtual,
@@ -424,8 +451,38 @@ export class CriarEventosPostgresRepository implements AdicionarEventos {
       lancamento,
       eventos.length,
     );
+
     if (eventoIntervalo) {
-      eventos.push(eventoIntervalo);
+      const inicioHorarioDescansoPrevisto = this.pegarCargaHorarioCompleta(lancamento.cartao_dia.cargaHorariaCompleta)[2];
+      const dataInicioHorarioDescansoPrevisto = this.pegarHorarioCargaHoraria({
+        data: lancamento.cartao_dia.data,
+        hora: inicioHorarioDescansoPrevisto.hora,
+        minuto: inicioHorarioDescansoPrevisto.minuto,
+        utc: false,
+      });
+
+      const saiuAntesDescansoProgramado = dataInicioHorarioDescansoPrevisto.isSameOrAfter(horarioSaidaPeriodoAtual);
+      eventos.push({ ...eventoIntervalo, ...{ periodoId: saiuAntesDescansoProgramado ? 1 : 2 } });
+
+      const execenteDescanso = descanso - eventoIntervalo.minutos;
+
+      if (execenteDescanso < 0) {
+        const carga = this.pegarCargaHorarioCompleta(lancamento.cartao_dia.cargaHorariaCompleta);
+        const inicioDescanso = this.pegarHorarioCargaHoraria({
+          data: lancamento.cartao_dia.data,
+          hora: carga[1].hora,
+          minuto: carga[1].minuto,
+        });
+
+        eventos.push({
+          cartaoDiaId: lancamento.cartao_dia.id,
+          hora: `${moment(horarioSaidaPeriodoAtual).format("HH:mm")} - ${moment(horarioEntradaProximoPeriodo).format("HH:mm")}`,
+          tipoId: 11,
+          funcionarioId: lancamento.cartao_dia.cartao.funcionario.id,
+          minutos: execenteDescanso,
+          periodoId: inicioDescanso.isAfter(lancamento.saida) ? 1 : 2,
+        });
+      }
       console.log(`Evento Intervalo: ${eventoIntervalo.hora} - Minutos: ${eventoIntervalo.minutos}`);
     }
   }
@@ -455,5 +512,310 @@ export class CriarEventosPostgresRepository implements AdicionarEventos {
 
   public formatarDataCartao(input: { data: Date }) {
     return moment.utc(input.data).format("YYYY-MM-DD");
+  }
+
+  public acharRegraMinutosResiduais(input: { primeiroPeriodo: number; segundoPeriodo: number }) {
+    let regra: 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 = 0;
+
+    if (
+      (input.primeiroPeriodo >= -5 && input.primeiroPeriodo <= 5 && input.segundoPeriodo <= -6) ||
+      (input.segundoPeriodo >= -5 && input.segundoPeriodo <= 5 && input.primeiroPeriodo >= 6)
+    )
+      regra = 1;
+
+    if (input.primeiroPeriodo >= -5 && input.primeiroPeriodo <= 5 && input.segundoPeriodo >= -5 && input.segundoPeriodo <= 5)
+      regra = 2;
+
+    if (
+      (input.primeiroPeriodo <= 0 && input.segundoPeriodo <= 0 && input.primeiroPeriodo + input.segundoPeriodo <= -11) ||
+      (input.primeiroPeriodo >= 0 && input.segundoPeriodo >= 0 && input.primeiroPeriodo + input.segundoPeriodo >= 11)
+    )
+      regra = 3;
+
+    return regra;
+  }
+
+  //VALIDAR MINUTOS RESIDUAIS
+  private async aplicarMinutosResiduais(input: { eventos: any[] }) {
+    const eventosAgrupadosPorDia: {
+      cartaoDiaId: number;
+      funcionarioId: number;
+      eventos: { hora: string; tipoId: number; minutos: number; periodoId: number }[];
+    }[] = [];
+
+    input.eventos.map((evento) => {
+      const existIndex = eventosAgrupadosPorDia.findIndex((eventoAgrupado) => eventoAgrupado.cartaoDiaId === evento.cartaoDiaId);
+
+      if (existIndex === -1) {
+        eventosAgrupadosPorDia.push({
+          cartaoDiaId: evento.cartaoDiaId,
+          funcionarioId: evento.funcionarioId,
+          eventos: [{ hora: evento.hora, minutos: evento.minutos, tipoId: evento.tipoId, periodoId: evento.periodoId }],
+        });
+      } else {
+        eventosAgrupadosPorDia[existIndex].eventos.push({
+          hora: evento.hora,
+          minutos: evento.minutos,
+          tipoId: evento.tipoId,
+          periodoId: evento.periodoId,
+        });
+      }
+    });
+
+    for (const eventoAgrupado of eventosAgrupadosPorDia) {
+      const dia = await this.prisma.cartao_dia.findFirst({ where: { id: eventoAgrupado.cartaoDiaId } });
+      if (dia?.cargaHor) {
+        let minutosTrabalhados = 0;
+        let minutosTrabalhadosPrimeiroPeriodo = 0;
+        let minutosTrabalhadosSegundoPeriodo = 0;
+
+        eventoAgrupado.eventos.map((evento) => {
+          if (evento.tipoId === 1) {
+            minutosTrabalhados += evento.minutos;
+            if (evento.periodoId === 1) minutosTrabalhadosPrimeiroPeriodo += evento.minutos;
+            if (evento.periodoId === 2) minutosTrabalhadosSegundoPeriodo += evento.minutos;
+          }
+        });
+
+        const diferencaMinutosTrabalhosPrimeiroPeriodo = minutosTrabalhadosPrimeiroPeriodo - dia.cargaHorPrimeiroPeriodo;
+        const diferencaMinutosTrabalhosSegundoPeriodo = minutosTrabalhadosSegundoPeriodo - dia.cargaHorSegundoPeriodo;
+
+        const somaMinutosResiduais = diferencaMinutosTrabalhosPrimeiroPeriodo + diferencaMinutosTrabalhosSegundoPeriodo;
+        const regra = this.acharRegraMinutosResiduais({
+          primeiroPeriodo: diferencaMinutosTrabalhosPrimeiroPeriodo,
+          segundoPeriodo: diferencaMinutosTrabalhosSegundoPeriodo,
+        });
+
+        switch (regra) {
+          case 1:
+            {
+              let valorMaior = 0;
+              if (Math.abs(diferencaMinutosTrabalhosPrimeiroPeriodo) > Math.abs(diferencaMinutosTrabalhosSegundoPeriodo))
+                valorMaior = diferencaMinutosTrabalhosPrimeiroPeriodo; //maior
+              else valorMaior = diferencaMinutosTrabalhosSegundoPeriodo; //maior
+
+              if (valorMaior < 0) {
+                input.eventos.map((evento, index) => {
+                  if (evento.cartaoDiaId === eventoAgrupado.cartaoDiaId && evento.tipoId === 11) input.eventos[index].tipoId = 2;
+                });
+              }
+            }
+            break;
+          case 2:
+            break;
+          case 3:
+            break;
+
+          default:
+            break;
+        }
+      }
+    }
+
+    return input.eventos;
+  }
+
+  private async aplicarTolerancia10Minutos(input: { eventos: any[] }) {
+    const eventosAgrupadosPorDia: {
+      cartaoDiaId: number;
+      funcionarioId: number;
+      eventos: { hora: string; tipoId: number; minutos: number; periodoId: number }[];
+    }[] = [];
+
+    input.eventos.map((evento) => {
+      const existIndex = eventosAgrupadosPorDia.findIndex((eventoAgrupado) => eventoAgrupado.cartaoDiaId === evento.cartaoDiaId);
+
+      if (existIndex === -1) {
+        eventosAgrupadosPorDia.push({
+          cartaoDiaId: evento.cartaoDiaId,
+          funcionarioId: evento.funcionarioId,
+          eventos: [{ hora: evento.hora, minutos: evento.minutos, tipoId: evento.tipoId, periodoId: evento.periodoId }],
+        });
+      } else {
+        eventosAgrupadosPorDia[existIndex].eventos.push({
+          hora: evento.hora,
+          minutos: evento.minutos,
+          tipoId: evento.tipoId,
+          periodoId: evento.periodoId,
+        });
+      }
+    });
+
+    for (const eventoAgrupado of eventosAgrupadosPorDia) {
+      const dia = await this.prisma.cartao_dia.findFirst({ where: { id: eventoAgrupado.cartaoDiaId } });
+      if (dia?.cargaHor) {
+        let minutosTrabalhados = 0;
+        let minutosTrabalhadosPrimeiroPeriodo = 0;
+        let minutosTrabalhadosSegundoPeriodo = 0;
+
+        eventoAgrupado.eventos.map((evento) => {
+          if (evento.tipoId === 1) {
+            minutosTrabalhados += evento.minutos;
+            if (evento.periodoId === 1) minutosTrabalhadosPrimeiroPeriodo += evento.minutos;
+            if (evento.periodoId === 2) minutosTrabalhadosSegundoPeriodo += evento.minutos;
+          }
+        });
+
+        const diferencaComCargaHoraria = dia?.cargaHor - minutosTrabalhados;
+
+        /*         if (eventoAgrupado.cartaoDiaId === 105398) {
+          console.log("bateu");
+        } */
+
+        if (diferencaComCargaHoraria >= -10 && diferencaComCargaHoraria <= 10) {
+          const removerNegativoIndex: number[] = [];
+          input.eventos.map((evento, index) => {
+            if (evento.cartaoDiaId === eventoAgrupado.cartaoDiaId && evento.minutos < 0) {
+              removerNegativoIndex.push(index);
+            }
+          });
+          input.eventos = input.eventos.filter((_, index) => !removerNegativoIndex.find((negativo) => negativo === index));
+
+          if (diferencaComCargaHoraria !== 0) {
+            input.eventos.push({
+              funcionarioId: eventoAgrupado.funcionarioId,
+              cartaoDiaId: eventoAgrupado.cartaoDiaId,
+              minutos: diferencaComCargaHoraria,
+              tipoId: 12,
+              hora: "ABONO",
+            });
+          }
+        }
+      }
+    }
+
+    return input.eventos;
+  }
+
+  private async aplicarEventosHorarioNaoTrabalhado(input: { eventos: any[] }) {
+    const eventosAgrupadosPorDia: {
+      cartaoDiaId: number;
+      funcionarioId: number;
+      eventos: { hora: string; tipoId: number; minutos: number; periodoId: number }[];
+    }[] = [];
+
+    input.eventos.map((evento) => {
+      const existIndex = eventosAgrupadosPorDia.findIndex((eventoAgrupado) => eventoAgrupado.cartaoDiaId === evento.cartaoDiaId);
+
+      if (existIndex === -1) {
+        eventosAgrupadosPorDia.push({
+          cartaoDiaId: evento.cartaoDiaId,
+          funcionarioId: evento.funcionarioId,
+          eventos: [{ hora: evento.hora, minutos: evento.minutos, tipoId: evento.tipoId, periodoId: evento.periodoId }],
+        });
+      } else {
+        eventosAgrupadosPorDia[existIndex].eventos.push({
+          hora: evento.hora,
+          minutos: evento.minutos,
+          tipoId: evento.tipoId,
+          periodoId: evento.periodoId,
+        });
+      }
+    });
+
+    for (const eventoAgrupado of eventosAgrupadosPorDia) {
+      const dia = await this.prisma.cartao_dia.findFirst({ where: { id: eventoAgrupado.cartaoDiaId } });
+      if (dia?.cargaHor) {
+        let minutosTrabalhados = 0;
+        let minutosTrabalhadosPrimeiroPeriodo = 0;
+        let minutosTrabalhadosSegundoPeriodo = 0;
+
+        eventoAgrupado.eventos.map((evento) => {
+          if (evento.tipoId === 1) {
+            minutosTrabalhados += evento.minutos;
+            if (evento.periodoId === 1) minutosTrabalhadosPrimeiroPeriodo += evento.minutos;
+            if (evento.periodoId === 2) minutosTrabalhadosSegundoPeriodo += evento.minutos;
+          }
+        });
+
+        const diferencaComCargaHoraria = dia?.cargaHor - minutosTrabalhados;
+
+        //Verificar se contêm evento negativo
+        if (diferencaComCargaHoraria > 10) {
+          let totalNegativo = 0;
+          eventoAgrupado.eventos.map((evento) => {
+            if (evento.tipoId === 2) totalNegativo += evento.minutos;
+          });
+
+          if (Math.abs(diferencaComCargaHoraria) > Math.abs(totalNegativo)) {
+            const diferencaHorarioNaoTrabalhoComEventoGerado = totalNegativo + diferencaComCargaHoraria;
+            if (diferencaHorarioNaoTrabalhoComEventoGerado) {
+              input.eventos.push({
+                funcionarioId: eventoAgrupado.funcionarioId,
+                cartaoDiaId: eventoAgrupado.cartaoDiaId,
+                minutos: -diferencaHorarioNaoTrabalhoComEventoGerado,
+                tipoId: 2,
+                hora: "NÃO TRABALHADO",
+              });
+            }
+          }
+        }
+      }
+    }
+
+    return input.eventos;
+  }
+
+  private async removerEventosNegativoIncorreto(input: { eventos: any[] }) {
+    const eventosAgrupadosPorDia: {
+      cartaoDiaId: number;
+      funcionarioId: number;
+      eventos: { hora: string; tipoId: number; minutos: number; periodoId: number }[];
+    }[] = [];
+
+    input.eventos.map((evento) => {
+      const existIndex = eventosAgrupadosPorDia.findIndex((eventoAgrupado) => eventoAgrupado.cartaoDiaId === evento.cartaoDiaId);
+
+      if (existIndex === -1) {
+        eventosAgrupadosPorDia.push({
+          cartaoDiaId: evento.cartaoDiaId,
+          funcionarioId: evento.funcionarioId,
+          eventos: [{ hora: evento.hora, minutos: evento.minutos, tipoId: evento.tipoId, periodoId: evento.periodoId }],
+        });
+      } else {
+        eventosAgrupadosPorDia[existIndex].eventos.push({
+          hora: evento.hora,
+          minutos: evento.minutos,
+          tipoId: evento.tipoId,
+          periodoId: evento.periodoId,
+        });
+      }
+    });
+
+    for (const eventoAgrupado of eventosAgrupadosPorDia) {
+      const dia = await this.prisma.cartao_dia.findFirst({ where: { id: eventoAgrupado.cartaoDiaId } });
+      if (dia?.cargaHor) {
+        let minutosTrabalhados = 0;
+        let minutosTrabalhadosPrimeiroPeriodo = 0;
+        let minutosTrabalhadosSegundoPeriodo = 0;
+
+        eventoAgrupado.eventos.map((evento) => {
+          if (evento.tipoId === 1) {
+            minutosTrabalhados += evento.minutos;
+            if (evento.periodoId === 1) minutosTrabalhadosPrimeiroPeriodo += evento.minutos;
+            if (evento.periodoId === 2) minutosTrabalhadosSegundoPeriodo += evento.minutos;
+          }
+        });
+
+        const diferencaComCargaHoraria = dia?.cargaHor - minutosTrabalhados;
+
+        if (eventoAgrupado.cartaoDiaId === 105398) {
+          console.log(eventoAgrupado.cartaoDiaId);
+        }
+
+        if (diferencaComCargaHoraria < -10) {
+          const eventosNegativosIndex: number[] = [];
+          input.eventos.map((evento, index) => {
+            if (evento.tipoId == 2 && evento.cartaoDiaId === eventoAgrupado.cartaoDiaId) eventosNegativosIndex.push(index);
+          });
+
+          input.eventos = input.eventos.filter(
+            (evento, index) => !eventosNegativosIndex.find((indexNegativo) => index === indexNegativo),
+          );
+        }
+      }
+    }
+
+    return input.eventos;
   }
 }

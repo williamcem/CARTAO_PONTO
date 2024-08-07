@@ -1,6 +1,6 @@
-import { ListarAtestadoRepsository } from "@infra/db/postgresdb/listar-atestados-não-analisados/listar-atestados";
+import { ListarAtestadoRepsository } from "@infra/db/postgresdb/listar-atestados-não-analisados/listar-atestados-nao-analisados";
 
-import { ListarAtestadoController } from "../../presentation/controllers/listar-atestados-não-analisados/listar-atestados-controler";
+import { ListarAtestadoController } from "../../presentation/controllers/listar-atestados-não-analisados/listar-atestados-nao-analisados-controler";
 import { Controller } from "../../presentation/protocols";
 import { LogControllerDecorator } from "../decorators/log";
 

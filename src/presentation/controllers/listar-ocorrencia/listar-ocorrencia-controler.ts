@@ -1,9 +1,9 @@
 import { CalcularResumoPostgresRepository } from "@infra/db/postgresdb/calcular-resumo/calcular-resumo-repository";
 import { ResumoModel } from "@domain/models/calcular-resumo";
 import { OcorrenciaPostgresRepository } from "../../../infra/db/postgresdb/listar-ocorrencias/listar-ocorrencias-repository";
-import { FuncionarioParamError } from "../../errors/Funcionario-param-error";
+import { FuncionarioParamError, OcorrenciasNull } from "../../errors/Funcionario-param-error";
 import { badRequest, notFoundRequest, ok, serverError } from "../../helpers/http-helpers";
-import { Controller, HttpRequest, HttpResponse } from "./listar-ocorrencias-protocols";
+import { Controller, HttpRequest, HttpResponse } from "./listar-ocorrencia-protocols";
 
 export class OcorrenciaController implements Controller {
   constructor(
@@ -44,6 +44,7 @@ export class OcorrenciaController implements Controller {
           }[];
         }[];
         resumo: ResumoModel;
+        eventos: [];
       }[] = [];
 
       for (const funcionario of data.funcionarios) {
@@ -61,11 +62,37 @@ export class OcorrenciaController implements Controller {
             lancamentos: dia.lancamentos,
           })),
           resumo: funcionario.Resumo, // Usando o resumo calculado diretamente
+          eventos: [],
         });
       }
 
+      const eventos: any = [];
+
+      output.map((funcionario) =>
+        funcionario.dias.map((dia) => {
+          dia.eventos.map((evento) => {
+            if (evento.tipoId == 8) eventos.push(evento);
+          });
+        }),
+      );
+
+      output.map((funcionario) =>
+        funcionario.dias.map((dia) => {
+          dia.eventos.map((evento) => {
+            if (evento.tipoId != 8) eventos.push(evento);
+          });
+        }),
+      );
+
+      if (output.length == 0) return notFoundRequest(new FuncionarioParamError("Não há ocorrências para essa identificação"));
+
+      output[0].eventos = eventos;
+
       return ok(output);
     } catch (error) {
+      if (error instanceof OcorrenciasNull) {
+        return badRequest(new FuncionarioParamError(error.message));
+      }
       console.error(error);
       return serverError();
     }

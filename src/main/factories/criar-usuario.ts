@@ -1,9 +1,7 @@
-import { CriarUsuarioPostgresRepository } from "@infra/db/postgresdb/criar-usuario/criar-usuario-repository";
-import { OcorrenciaGeralPostgresRepository } from "../../infra/db/postgresdb/listar-ocorrencias-geral/listar-ocorrencias-repository";
-import { CriarUsuarioController } from "../../presentation/controllers/criar-usuario/criar-usuario-controler";
-
 import { Controller } from "../../presentation/protocols";
 import { LogControllerDecorator } from "../decorators/log";
+import { CriarUsuarioController } from "../../presentation/controllers/criar-usuario/criar-usuario-controler";
+import { CriarUsuarioPostgresRepository } from "@infra/db/postgresdb/criar-usuario/criar-usuario-repository";
 
 export const makeCriarUsuarioController = (): Controller => {
   const criarUsuarioPostgresRepository = new CriarUsuarioPostgresRepository();

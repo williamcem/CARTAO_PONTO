@@ -16,10 +16,11 @@ export interface AtestadoModel {
   statusId: number;
   observacao: string;
   sintomas?: string;
-  horario_trabalhado_inicio?: string;
-  horario_trabalhado_fim?: string;
+  horario_trabalhado_inicio?: string[];
+  horario_trabalhado_fim?: string[];
   trabalhou_dia: boolean;
   tipo_comprovanteId?: number;
   nome_acompanhante?: string;
   exame?: string;
+  tipoGrauParentescoId?: number;
 }

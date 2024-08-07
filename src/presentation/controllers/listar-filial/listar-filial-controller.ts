@@ -15,7 +15,9 @@ export class ListarStatusController implements Controller {
         return badRequest(new FuncionarioParamError("Localidade não fornecida"));
       }
 
-      const funcionarios = await this.listarFilialRepsository.listByLocalidade(localidade);
+      const funcionarios = (await this.listarFilialRepsository.listByLocalidade(localidade)).sort(
+        (a, b) => Number(a.identificacao) - Number(b.identificacao),
+      );
 
       return ok({ funcionarios });
     } catch (error) {

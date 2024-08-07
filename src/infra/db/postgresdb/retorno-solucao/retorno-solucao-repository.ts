@@ -10,14 +10,29 @@ export class RetornoSolucaoRepository implements RetornarSolucao {
     this.prisma = prisma;
   }
 
-  public async resetTratado(input: { cartaoDiaId: number }): Promise<boolean> {
-    const { cartaoDiaId } = input;
+  public async resetTratado(input: { eventoId: number; cartaoDiaId: number }): Promise<boolean> {
+    const { eventoId, cartaoDiaId } = input;
 
-    const eventosAtualizados = await this.prisma.eventos.updateMany({
-      where: { cartaoDiaId: cartaoDiaId },
+    // Busca o evento específico pelo ID e cartaoDiaId
+    const evento = await this.prisma.eventos.findUnique({
+      where: { id: eventoId, cartaoDiaId: cartaoDiaId },
+    });
+
+    if (!evento) {
+      return false;
+    }
+
+    // Busca e exclui qualquer evento com a mesma hora
+    await this.prisma.eventos.deleteMany({
+      where: { hora: evento.hora, id: { not: eventoId } },
+    });
+
+    // Atualiza o evento específico
+    const eventoAtualizado = await this.prisma.eventos.update({
+      where: { id: eventoId },
       data: { tratado: false },
     });
 
-    return eventosAtualizados.count > 0;
+    return !!eventoAtualizado;
   }
 }

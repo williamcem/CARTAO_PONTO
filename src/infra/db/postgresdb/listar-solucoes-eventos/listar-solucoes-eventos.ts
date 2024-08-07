@@ -14,7 +14,7 @@ export class SolucoesEventosPostgresRepository implements ProcurarSolucoes {
     return await this.prisma.tipo_eventos.findMany({
       where: {
         id: {
-          in: [3, 5, 7],
+          in: [3, 5, 7, 12],
         },
       },
     });

@@ -34,7 +34,7 @@ export class CriarUsuarioController implements Controller {
       if (usuario)
         return badRequest(new FuncionarioParamError(`O perfil ${perfil.nome} já existe para a localidade ${localidade.nome}!`));
 
-      const saltRounds = 10;
+      const saltRounds = Number(process.env.SALTS);
       const myPlaintextPassword = senha;
 
       const salt = bcrypt.genSaltSync(saltRounds);

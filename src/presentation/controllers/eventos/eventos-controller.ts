@@ -7,8 +7,7 @@ export class CriarEventosController implements Controller {
 
   async handle(req: HttpRequest): Promise<HttpResponse> {
     try {
-      console.log("req.query.identificacao", req.query.identificacao);
-      const eventosCriados = await this.criarEventosPostgresRepository.add({ identificao: req.query.identificacao });
+      const eventosCriados = await this.criarEventosPostgresRepository.add({ identificacao: req.query.identificacao });
 
       if (!eventosCriados) throw "Erro ao criar eventos!";
 

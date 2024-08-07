@@ -2,6 +2,7 @@ import { PrismaClient } from "@prisma/client";
 
 import { ListarOcorrenciasGeral } from "../../../../data/usecase/listar-ocorrencias/add-listar-ocorrencias";
 import { prisma } from "../../../database/Prisma";
+import { OcorrenciasNull } from "../../../../presentation/errors/Funcionario-param-error";
 
 export class OcorrenciaGeralPostgresRepository implements ListarOcorrenciasGeral {
   private prisma: PrismaClient;
@@ -39,8 +40,9 @@ export class OcorrenciaGeralPostgresRepository implements ListarOcorrenciasGeral
       orderBy: { id: "asc" },
     });
 
-    if (!funcionarios) return { funcionarios: [] };
-
+    if (!funcionarios || funcionarios.length === 0) {
+      throw new OcorrenciasNull("Nenhuma funcionario da localidade apresenta ocorrencias");
+    }
     return {
       funcionarios: funcionarios
         .map((funcionario) => {

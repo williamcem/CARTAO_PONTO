@@ -5,10 +5,10 @@ import { AfastamentoRepository } from "@infra/db/postgresdb/afastamento/afastame
 import { CartaoPostgresRepository } from "@infra/db/postgresdb/funcionario/cartao-repository";
 import { FuncionarioPostgresRepository } from "@infra/db/postgresdb/funcionario/funcionario-repository";
 import { GrupoDeTrabalhoRepositoryPrisma } from "@infra/db/postgresdb/grupo-trabalho/grupo-trabalho-repository";
+import { RespaldarAtestadoPostgresRepository } from "@infra/db/postgresdb/respaldar-atestado/respaldar-atestado";
 
 import { BuscarHorarioNortunoEmMinutos } from "../../presentation/controllers/get-funcionário/utils";
 import { RespaldarController } from "../../presentation/controllers/respaldar-atestado/respaldar-atestado";
-import { RespaldarAtestadoPostgresRepository } from "@infra/db/postgresdb/respaldar-atestado/respaldar-atestado";
 
 export async function importarArquivoGrupoTrabalho(
   req: { file?: Express.Multer.File | undefined; body: { userName: string } },
@@ -166,7 +166,7 @@ export async function importarArquivoFuncionario(
         endereco: { cep, bairro, cidade, complemento, estado, numero, rua },
         filial,
         funcao: { nome: descricaoFuncao },
-        identificacao,
+        identificacao: identificacao.trim(),
         turno: {
           nome: descricaoTurno,
           cod_turno: codigoTurnoFormatado,
@@ -177,7 +177,7 @@ export async function importarArquivoFuncionario(
         },
         userName: (req?.body?.userName || "").toUpperCase(),
       });
-      console.log(codigoTurnoFormatado);
+      console.log(saved, "Identificação:", identificacao, "Nome:", nome);
 
       if (!saved) {
         errors.push({ identificacao, nome });
@@ -241,6 +241,9 @@ export async function importarArquivoCartao(
       userName: (req?.body?.userName || "").toUpperCase(),
     };
 
+    const ultimaIdentificacao = cartaoDias[cartaoDias.length - 2].split(";")[2];
+    const ultimaDia = cartaoDias[cartaoDias.length - 2].split(";")[4];
+
     for (const dia of cartaoDias) {
       const [
         ,
@@ -261,11 +264,7 @@ export async function importarArquivoCartao(
       const descanso = descansoSemFormato.replace("\r", "");
 
       if (identificacao !== cartao.identificacao) {
-        if (cartao.identificacao !== "") {
-          const cartaoSalvo = await cartaoPostgresRepository.upsert(cartao);
-
-          if (cartaoSalvo) await abonarAtestado({ cartao: cartaoSalvo, userName: req.body.userName });
-        }
+        if (cartao.identificacao !== "") await salvarCartao({ cartao });
 
         cartao.identificacao = identificacao;
         cartao.saldoAnterior100 = 0;
@@ -343,6 +342,8 @@ export async function importarArquivoCartao(
         cargaHorSegundoPeriodo,
         cargaHorNoturna,
       });
+
+      if (ultimaDia === data && ultimaIdentificacao === identificacao) await salvarCartao({ cartao });
     }
 
     return res.json({ message: "Arquivo importado com sucesso", errors });
@@ -363,7 +364,7 @@ const abonarAtestado = async (input: { cartao: { dias: { data: Date }[]; funcion
   });
 
   for (const atestado of atestados) {
-    if (atestado.abonos.length == 0 && atestado.fim && atestado.inicio) {
+    if (atestado.abonos.length === 0 && atestado.fim && atestado.inicio) {
       const dataInicio = moment.utc(atestado.inicio).set({ h: 0, minute: 0, second: 0, millisecond: 0 }).toDate();
 
       const dias = await respaldarAtestadoPostgresRepository.findManyCartaoDia({
@@ -451,3 +452,34 @@ export async function importarArquivosAfastamento(
     return res.send(error).status(400);
   }
 }
+
+const salvarCartao = async (input: {
+  cartao: {
+    identificacao: string;
+    funcionarioId: number;
+    referencia: Date;
+    saldoAnterior60: number;
+    saldoAnterior100: number;
+    status: { descricao: "IMPORTADO"; id: 1 };
+    dias: {
+      data: Date;
+      periodoDescanso: number;
+      cargaHor: number;
+      cargaHorPrimeiroPeriodo: number;
+      cargaHorSegundoPeriodo: number;
+      cargaHorariaCompleta: string;
+      cargaHorNoturna: number;
+      status: {
+        id: number;
+        descricao: string;
+      };
+    }[];
+    userName: string;
+  };
+}) => {
+  const cartaoPostgresRepository = new CartaoPostgresRepository();
+
+  const cartaoSalvo = await cartaoPostgresRepository.upsert(input.cartao);
+  console.log(cartaoSalvo?.id, "Linha exportada:", input.cartao.identificacao);
+  if (cartaoSalvo) await abonarAtestado({ cartao: cartaoSalvo, userName: input.cartao.userName });
+};
