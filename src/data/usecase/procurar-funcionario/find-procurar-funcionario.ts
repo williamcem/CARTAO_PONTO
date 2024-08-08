@@ -6,10 +6,6 @@ export interface GetFuncionarioIdent {
   findFisrt(funcionarioData: string, localidade: string): Promise<GetFuncionarioModel | undefined>;
 }
 
-export interface GetFuncionarioIdentCalculo {
-  findAllByLocalidade(localidade: string): Promise<GetFuncionarioModel[]>;
-}
-
 export interface CalcularResumoDia {
   calc(identificacao: string): Promise<ResumoModel>;
 }
