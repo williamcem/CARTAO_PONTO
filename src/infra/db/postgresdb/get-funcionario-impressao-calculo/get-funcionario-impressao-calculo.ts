@@ -1,18 +1,17 @@
 import { PrismaClient } from "@prisma/client";
 
-import { GetFuncionarioIdentCalculo } from "../../../../data/usecase/procurar-funcionario/find-procurar-funcionario";
 import { prisma } from "../../../database/Prisma";
 
-export class FuncionarioImpressaoCalculoPostgresRepository implements GetFuncionarioIdentCalculo {
+export class FuncionarioImpressaoCalculoPostgresRepository {
   private prisma: PrismaClient;
 
   constructor() {
     this.prisma = prisma;
   }
 
-  public async findAllByLocalidade(localidade: string): Promise<any> {
+  public async findAllByLocalidade(localidade: string, funcionarioId?: number) {
     const funcionarios = await this.prisma.funcionario.findMany({
-      where: { localidadeId: localidade },
+      where: { localidadeId: localidade, id: funcionarioId },
       include: {
         cartao: {
           include: {
@@ -24,6 +23,8 @@ export class FuncionarioImpressaoCalculoPostgresRepository implements GetFuncion
                   },
                 },
                 cartao_dia_status: true,
+                eventos: true,
+                atestado_abonos: true,
               },
               orderBy: { id: "asc" },
             },
@@ -36,10 +37,10 @@ export class FuncionarioImpressaoCalculoPostgresRepository implements GetFuncion
         afastamento: {
           include: { funcionarios_afastados_status: true },
         },
+        centro_custo: true,
       },
       orderBy: { id: "asc" },
     });
-    console.log("Bateu");
 
     // Retorna os funcionários mapeados
     return funcionarios;
