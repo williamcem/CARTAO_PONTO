@@ -79,10 +79,10 @@ export class GetFuncionarioImpressaoCalculoController implements Controller {
 
             let data = moment.utc(dia.data).format("DD/MM/YYYY ddd").toUpperCase();
 
-            return { ...{ referencia: cartao.referencia }, resumo, periodos, data };
+            return { resumo, periodos, data };
           });
 
-          return { ...{ id: cartao.id }, ...{ dias, resumo: resumoCartao } };
+          return { ...{ id: cartao.id }, ...{ dias, resumo: resumoCartao, referencia: cartao.referencia } };
         });
 
         return {
@@ -93,6 +93,7 @@ export class GetFuncionarioImpressaoCalculoController implements Controller {
             nome: funcionario.nome,
             turno: funcionario.turno.nome,
             centroCusto: funcionario.centro_custo.nome,
+            filia: funcionario.filial,
           },
           ...{ cartoes },
         };
