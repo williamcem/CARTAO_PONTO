@@ -34,14 +34,14 @@ export class RespaldarController implements Controller {
       if (!statusId) return badRequest(new FuncionarioParamError("Falta status!"));
       if (!userName) return badRequest(new FuncionarioParamError("Falta usuário para lançar cartão"));
 
-      if (!new Date(inicio).getTime()) return badRequest(new FuncionarioParamError("Data de início inválida!"));
-      if (!new Date(fim).getTime()) return badRequest(new FuncionarioParamError("Data de fim inválida!"));
-
-      if (moment(inicio).isAfter(fim)) return badRequest(new FuncionarioParamError("Data inicial não pode ser após o fim!"));
-
       const atestado = await this.respaldarAtestadoPostgresRepository.findfirst({ id });
 
       if (!atestado) return notFoundRequest(new FuncionarioParamError("Atestado não encontrado!"));
+
+      const abonosExistentes = await this.respaldarAtestadoPostgresRepository.findManyAbono({ atestadoId: atestado.id });
+
+      if (abonosExistentes.length != 0)
+        await this.respaldarAtestadoPostgresRepository.deleteManyAbono(abonosExistentes.map((abono) => abono.id));
 
       switch (statusId) {
         case 1:
@@ -76,8 +76,6 @@ export class RespaldarController implements Controller {
           return badRequest(new FuncionarioParamError(`Documento ${statusId} não tratado!`));
       }
 
-      if (atestado.statusId !== 1) return badRequest(new FuncionarioParamError("Atestado já tratado!"));
-
       let message = "";
 
       switch (statusId) {
@@ -85,6 +83,12 @@ export class RespaldarController implements Controller {
           {
             if (!inicio) return badRequest(new FuncionarioParamError("Falta inicio!"));
             if (!fim) return badRequest(new FuncionarioParamError("Falta fim!"));
+
+            if (!new Date(inicio).getTime()) return badRequest(new FuncionarioParamError("Data de início inválida!"));
+            if (!new Date(fim).getTime()) return badRequest(new FuncionarioParamError("Data de fim inválida!"));
+
+            if (moment(inicio).isAfter(fim))
+              return badRequest(new FuncionarioParamError("Data inicial não pode ser após o fim!"));
 
             const dataInicio = moment.utc(inicio).set({ h: 0, minute: 0, second: 0, millisecond: 0 }).toDate();
 
