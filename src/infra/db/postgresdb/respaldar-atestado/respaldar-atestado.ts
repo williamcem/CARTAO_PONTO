@@ -1,5 +1,5 @@
 import { PrismaClient } from "@prisma/client";
-import { prisma } from "../../../database/Prisma";
+import { prisma, prismaPromise } from "../../../database/Prisma";
 import { RespaldarAtestado } from "../../../../data/usecase/respaldar-atestado/respaldar-atestado";
 
 export class RespaldarAtestadoPostgresRepository implements RespaldarAtestado {
@@ -122,5 +122,33 @@ export class RespaldarAtestadoPostgresRepository implements RespaldarAtestado {
       }),
     );
     return output;
+  }
+
+  public async findManyAbono(input: { atestadoId: number }): Promise<{ id: number }[]> {
+    const output: {
+      id: number;
+    }[] = [];
+    const result = await this.prisma.atestado_abono.findMany({
+      where: {
+        atestadoId: input.atestadoId,
+      },
+    });
+
+    result.map((atestado) =>
+      output.push({
+        id: atestado.id,
+      }),
+    );
+
+    return output;
+  }
+
+  public async deleteManyAbono(ids: number[]): Promise<boolean> {
+    const query: prismaPromise[] = [];
+    ids.map((id) => {
+      query.push(this.prisma.atestado_abono.delete({ where: { id } }));
+    });
+
+    return Boolean(await this.prisma.$transaction(query));
   }
 }

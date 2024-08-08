@@ -38,6 +38,11 @@ export class RespaldarController implements Controller {
 
       if (!atestado) return notFoundRequest(new FuncionarioParamError("Atestado não encontrado!"));
 
+      const abonosExistentes = await this.respaldarAtestadoPostgresRepository.findManyAbono({ atestadoId: atestado.id });
+
+      if (abonosExistentes.length != 0)
+        await this.respaldarAtestadoPostgresRepository.deleteManyAbono(abonosExistentes.map((abono) => abono.id));
+
       switch (statusId) {
         case 1:
           return badRequest(new FuncionarioParamError(`Não é possível resolver com status 1`));
@@ -70,8 +75,6 @@ export class RespaldarController implements Controller {
         default:
           return badRequest(new FuncionarioParamError(`Documento ${statusId} não tratado!`));
       }
-
-      if (atestado.statusId !== 1) return badRequest(new FuncionarioParamError("Atestado já tratado!"));
 
       let message = "";
 
