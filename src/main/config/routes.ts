@@ -41,6 +41,7 @@ import upload from "../routes/horarios/upload-routes-routes";
 import criarUsuario from "../routes/horarios/criar-usuario-routes";
 import login from "../routes/horarios/fazer-login-routes";
 import alterarFuncionario from "../routes/horarios/altrera-localidade-routes";
+import buscarAtestados from "../routes/horarios/buscar-atestados-routes";
 
 export const setupRoutes = (app: Express): void => {
   const router = Router();
@@ -86,4 +87,5 @@ export const setupRoutes = (app: Express): void => {
   ocorrenciaSolucionadas(router);
   geralSolucionadas(router);
   alterarFuncionario(router);
+  buscarAtestados(router);
 };

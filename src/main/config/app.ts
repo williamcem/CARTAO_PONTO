@@ -1,13 +1,18 @@
 import cors from "cors";
-import Express from "express";
+import Express, { NextFunction, Request, Response } from "express";
 
 import setupMiddlewares from "./middlewares";
 import { setupRoutes } from "./routes";
 
 const app = Express();
+app.use((req: Request, resp: Response, next: NextFunction) => {
+  console.log(req.ip, req.url, req.body);
+  next();
+});
 app.use(cors());
 setupMiddlewares(app);
 setupRoutes(app);
+
 export default app;
 
 /* import cors from "cors";
