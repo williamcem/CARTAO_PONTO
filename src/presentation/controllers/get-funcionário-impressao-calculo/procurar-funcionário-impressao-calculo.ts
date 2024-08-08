@@ -93,7 +93,7 @@ export class GetFuncionarioImpressaoCalculoController implements Controller {
             nome: funcionario.nome,
             turno: funcionario.turno.nome,
             centroCusto: funcionario.centro_custo.nome,
-            filia: funcionario.filial,
+            filial: funcionario.filial,
           },
           ...{ cartoes },
         };
