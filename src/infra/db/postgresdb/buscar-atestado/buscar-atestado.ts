@@ -22,7 +22,7 @@ export class BuscarAtestadoPostgresRepository {
       where: { statusId: { equals: input.statusId, not: input.not?.statusId } },
       orderBy: input.orderBy,
       include: {
-        atestado_abonos: true,
+        atestado_abonos: { include: { cartao_dia: { select: { data: true } } } },
         tipo_acompanhante: true,
         tipo_ocupacao: true,
         tipo_certidao_obito: true,
