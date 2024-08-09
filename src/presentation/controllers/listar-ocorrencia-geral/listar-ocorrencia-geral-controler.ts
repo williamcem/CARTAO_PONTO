@@ -22,6 +22,12 @@ export class OcorrenciaGeralController implements Controller {
         funcionario.cartao.map((cartao) => {
           cartao.cartao_dia.map((dia) => {
             let adicionar = false;
+
+            if (dia.cartao_dia_lancamentos.length !== 0) {
+              const naoValidado = dia.cartao_dia_lancamentos.find((lancamento) => !lancamento.validadoPeloOperador);
+              if (naoValidado) return;
+            }
+
             const ocorrencia = dia.eventos.find((evento) => evento.tipoId === 2);
 
             if (ocorrencia) adicionar = true;
