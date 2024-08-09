@@ -43,6 +43,7 @@ import login from "../routes/horarios/fazer-login-routes";
 import alterarFuncionario from "../routes/horarios/altrera-localidade-routes";
 import buscarAtestados from "../routes/horarios/buscar-atestados-routes";
 import buscarReferenciaAgrupada from "../routes/horarios/buscar-referencia-agrupada-routes";
+import buscarFuncionarioReferenciaLocalidade from "../routes/horarios/buscar-funcionario-referencia-localidade-routes";
 
 export const setupRoutes = (app: Express): void => {
   const router = Router();
@@ -90,4 +91,5 @@ export const setupRoutes = (app: Express): void => {
   alterarFuncionario(router);
   buscarAtestados(router);
   buscarReferenciaAgrupada(router);
+  buscarFuncionarioReferenciaLocalidade(router);
 };
