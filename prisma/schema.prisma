@@ -390,6 +390,7 @@ model grupo_trabalho {
 model parametros {
   id                       Int @id
   qtdeDiasAnteriorAtestado Int @default(60)
+  qtdeDiasAnteriorCartao   Int @default(120)
 }
 
 model usuario {
