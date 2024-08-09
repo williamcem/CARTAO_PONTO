@@ -1,26 +1,25 @@
 import { PrismaClient } from "@prisma/client";
 
-import { ListarOcorrenciasGeral } from "../../../../data/usecase/listar-ocorrencias/add-listar-ocorrencias";
 import { prisma } from "../../../database/Prisma";
-import { OcorrenciasNull } from "../../../../presentation/errors/Funcionario-param-error";
 
-export class OcorrenciaGeralPostgresRepository implements ListarOcorrenciasGeral {
+export class OcorrenciaGeralPostgresRepository {
   private prisma: PrismaClient;
 
   constructor() {
     this.prisma = prisma;
   }
 
-  public async findOcorrencia(localidade: string): Promise<{
-    funcionarios: {
-      identificacao: string;
-      nome: string;
-    }[];
-  }> {
+  public async findOcorrencia(localidade: string) {
     const funcionarios = await this.prisma.funcionario.findMany({
       where: {
         localidadeId: localidade,
-        cartao: { some: { cartao_dia: { some: { cartao_dia_lancamentos: { some: { validadoPeloOperador: true } } } } } },
+        cartao: {
+          some: {
+            cartao_dia: {
+              some: { cartao_dia_lancamentos: { some: { validadoPeloOperador: true } }, eventos: { some: { tratado: false } } },
+            },
+          },
+        },
       },
       include: {
         cartao: {
@@ -28,7 +27,7 @@ export class OcorrenciaGeralPostgresRepository implements ListarOcorrenciasGeral
             cartao_dia: {
               include: {
                 eventos: {
-                  where: { tipoId: 2, tratado: false },
+                  where: { tratado: false },
                 },
               },
               orderBy: { id: "asc" },
@@ -40,28 +39,6 @@ export class OcorrenciaGeralPostgresRepository implements ListarOcorrenciasGeral
       orderBy: { id: "asc" },
     });
 
-    if (!funcionarios || funcionarios.length === 0) {
-      throw new OcorrenciasNull("Nenhuma funcionario da localidade apresenta ocorrencias");
-    }
-    return {
-      funcionarios: funcionarios
-        .map((funcionario) => {
-          const hasValidEvent = funcionario.cartao.some((cartao) =>
-            cartao.cartao_dia.some((cartao_dia) => cartao_dia.eventos.length > 0),
-          );
-
-          if (hasValidEvent) {
-            return {
-              identificacao: funcionario.identificacao,
-              nome: funcionario.nome,
-            };
-          }
-          return null;
-        })
-        .filter((funcionario) => funcionario !== null) as {
-        identificacao: string;
-        nome: string;
-      }[],
-    };
+    return funcionarios;
   }
 }
