@@ -16,16 +16,31 @@ export class OcorrenciaGeralController implements Controller {
 
       const data = await this.ocorrenciaGeralPostgresRepository.findOcorrencia(localidade);
 
-      if (data.funcionarios.length === 0) {
-        return notFoundRequest(new Error("Nenhum funcionário encontrado"));
-      }
+      const funcionarios: { id: number; identificacao: string; nome: string }[] = [];
 
-      const output = data.funcionarios.map((funcionario) => ({
-        nome: funcionario.nome,
-        identificacao: funcionario.identificacao,
-      }));
+      data.map((funcionario) => {
+        funcionario.cartao.map((cartao) => {
+          cartao.cartao_dia.map((dia) => {
+            let adicionar = false;
+            const ocorrencia = dia.eventos.find((evento) => evento.tipoId === 2);
 
-      return ok(output);
+            if (ocorrencia) adicionar = true;
+
+            const intervalos = dia.eventos.filter((evento) => evento.tipoId === 8);
+
+            if (intervalos.length > 1) adicionar = true;
+
+            if (adicionar) {
+              const existeIndexFuncionario = funcionarios.findIndex((func) => funcionario.id === func.id);
+
+              if (existeIndexFuncionario === -1)
+                funcionarios.push({ id: funcionario.id, identificacao: funcionario.identificacao, nome: funcionario.nome });
+            }
+          });
+        });
+      });
+
+      return ok(funcionarios);
     } catch (error) {
       if (error instanceof OcorrenciasNull) {
         return badRequest(new FuncionarioParamError(error.message));

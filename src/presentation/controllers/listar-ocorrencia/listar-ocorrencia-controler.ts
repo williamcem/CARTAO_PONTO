@@ -28,24 +28,7 @@ export class OcorrenciaController implements Controller {
         return notFoundRequest(new Error("Nenhum funcionário encontrado"));
       }
 
-      const output: {
-        identificacao: string;
-        nome: string;
-        nomeTurno: string;
-        codigoLocalidade: string;
-        referencia: Date | null;
-        dias: {
-          data: Date;
-          eventos: any[];
-          lancamentos: {
-            periodoId: number;
-            entrada: Date | null;
-            saida: Date | null;
-          }[];
-        }[];
-        resumo: ResumoModel;
-        eventos: [];
-      }[] = [];
+      let output: any[] = [];
 
       for (const funcionario of data.funcionarios) {
         if (funcionario.dias.length === 0) continue;
@@ -69,24 +52,24 @@ export class OcorrenciaController implements Controller {
       const eventos: any = [];
 
       output.map((funcionario) =>
-        funcionario.dias.map((dia) => {
-          dia.eventos.map((evento) => {
-            if (evento.tipoId == 8) eventos.push(evento);
+        funcionario.dias.map((dia: any) => {
+          dia.eventos.map((evento: any) => {
+            if (evento.tipoId == 8) eventos.push({ ...evento, ...{ data: dia.data } });
           });
         }),
       );
 
       output.map((funcionario) =>
-        funcionario.dias.map((dia) => {
-          dia.eventos.map((evento) => {
-            if (evento.tipoId != 8) eventos.push(evento);
+        funcionario.dias.map((dia: any) => {
+          dia.eventos.map((evento: any) => {
+            if (evento.tipoId != 8) eventos.push({ ...evento, ...{ data: dia.data } });
           });
         }),
       );
 
       if (output.length == 0) return notFoundRequest(new FuncionarioParamError("Não há ocorrências para essa identificação"));
 
-      output[0].eventos = eventos;
+      output = [{ eventos }];
 
       return ok(output);
     } catch (error) {
