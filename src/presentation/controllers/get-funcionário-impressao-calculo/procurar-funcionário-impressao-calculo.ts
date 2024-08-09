@@ -26,14 +26,20 @@ export class GetFuncionarioImpressaoCalculoController implements Controller {
 
   async handle(httpRequest: HttpRequest): Promise<HttpResponse> {
     try {
-      const { localidade, funcionarioId, onlyDay } = httpRequest?.query;
+      const { localidade, funcionariosId, onlyDay } = httpRequest?.query;
+
+      const onlyDays = Number(onlyDay);
 
       if (!localidade) return badRequest(new FuncionarioParamError("localidade não fornecido!"));
 
-      const funcionarios = await this.funcionarioImpressaoCalculoPostgresRepository.findAllByLocalidade(
-        localidade,
-        funcionarioId ? Number(funcionarioId) : undefined,
-      );
+      let ids: number[] | undefined = undefined;
+
+      if (funcionariosId) {
+        ids = JSON.parse(funcionariosId);
+        if (ids?.length === 0) return badRequest(new FuncionarioParamError("Id's dos funcionários não informado!"));
+      }
+
+      const funcionarios = await this.funcionarioImpressaoCalculoPostgresRepository.findAllByLocalidade(localidade, ids);
 
       // Verifica se nenhum funcionário foi encontrado
       if (!funcionarios || funcionarios.length === 0)
@@ -47,42 +53,50 @@ export class GetFuncionarioImpressaoCalculoController implements Controller {
           };
 
           const dias = cartao.cartao_dia.map((dia) => {
-            const eventos = dia.eventos.map((evento) => {
-              return { minutos: evento.minutos, tipoId: evento.tipoId || 0, tratado: evento.tratado };
-            });
-
-            const abono = { minutos: 0 };
-
-            dia.atestado_abonos.map((abono) => abono.minutos + abono.minutos);
-
-            const resumo = this.calcularResumoPorDia({
-              dia: { id: cartao.id, eventos, abono, cargaHorariaTotal: dia.cargaHor },
-            });
-
-            resumoCartao.atual.diurno.ext1 += resumo.diurno.ext1;
-            resumoCartao.atual.diurno.ext2 += resumo.diurno.ext2;
-            resumoCartao.atual.diurno.ext3 += resumo.diurno.ext3;
-
-            resumoCartao.atual.noturno.ext1 += resumo.noturno.ext1;
-            resumoCartao.atual.noturno.ext2 += resumo.noturno.ext2;
-            resumoCartao.atual.noturno.ext3 += resumo.noturno.ext3;
-
-            const periodos: { entrada: string; saida: string; periodoId: number }[] = [];
-
-            dia.cartao_dia_lancamentos.map((lancamento) => {
-              periodos.push({
-                entrada: moment.utc(lancamento.entrada).format("HH:mm"),
-                saida: moment.utc(lancamento.saida).format("HH:mm"),
-                periodoId: lancamento.periodoId,
-              });
-            });
-
             let data = moment.utc(dia.data).format("DD/MM/YYYY ddd").toUpperCase();
 
-            return { resumo, periodos, data };
+            if (!onlyDays) {
+              const eventos = dia.eventos.map((evento) => {
+                return { minutos: evento.minutos, tipoId: evento.tipoId || 0, tratado: evento.tratado };
+              });
+
+              const abono = { minutos: 0 };
+
+              dia.atestado_abonos.map((abono) => abono.minutos + abono.minutos);
+
+              const resumo = this.calcularResumoPorDia({
+                dia: { id: cartao.id, eventos, abono, cargaHorariaTotal: dia.cargaHor },
+              });
+
+              resumoCartao.atual.diurno.ext1 += resumo.diurno.ext1;
+              resumoCartao.atual.diurno.ext2 += resumo.diurno.ext2;
+              resumoCartao.atual.diurno.ext3 += resumo.diurno.ext3;
+
+              resumoCartao.atual.noturno.ext1 += resumo.noturno.ext1;
+              resumoCartao.atual.noturno.ext2 += resumo.noturno.ext2;
+              resumoCartao.atual.noturno.ext3 += resumo.noturno.ext3;
+
+              const periodos: { entrada: string; saida: string; periodoId: number }[] = [];
+
+              dia.cartao_dia_lancamentos.map((lancamento) => {
+                periodos.push({
+                  entrada: moment.utc(lancamento.entrada).format("HH:mm"),
+                  saida: moment.utc(lancamento.saida).format("HH:mm"),
+                  periodoId: lancamento.periodoId,
+                });
+              });
+
+              return { resumo, periodos, data };
+            }
+
+            return { data };
           });
 
-          return { ...{ id: cartao.id }, ...{ dias, resumo: resumoCartao, referencia: cartao.referencia } };
+          if (!onlyDays) {
+            return { ...{ id: cartao.id }, ...{ dias, resumo: resumoCartao, referencia: cartao.referencia } };
+          }
+
+          return { ...{ id: cartao.id }, ...{ dias, referencia: cartao.referencia } };
         });
 
         return {

@@ -9,9 +9,9 @@ export class FuncionarioImpressaoCalculoPostgresRepository {
     this.prisma = prisma;
   }
 
-  public async findAllByLocalidade(localidade: string, funcionarioId?: number) {
+  public async findAllByLocalidade(localidade: string, funcionarioId?: number[]) {
     const funcionarios = await this.prisma.funcionario.findMany({
-      where: { localidadeId: localidade, id: funcionarioId },
+      where: { localidadeId: localidade, id: { in: funcionarioId } },
       include: {
         cartao: {
           include: {
