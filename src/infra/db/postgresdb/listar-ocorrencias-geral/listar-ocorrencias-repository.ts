@@ -16,7 +16,7 @@ export class OcorrenciaGeralPostgresRepository {
         cartao: {
           some: {
             cartao_dia: {
-              some: { cartao_dia_lancamentos: { some: { validadoPeloOperador: true } }, eventos: { some: { tratado: false } } },
+              some: { eventos: { some: { tratado: false } } },
             },
           },
         },
@@ -29,6 +29,7 @@ export class OcorrenciaGeralPostgresRepository {
                 eventos: {
                   where: { tratado: false },
                 },
+                cartao_dia_lancamentos: true,
               },
               orderBy: { id: "asc" },
             },

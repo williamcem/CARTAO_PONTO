@@ -1,16 +1,14 @@
 import { PrismaClient } from "@prisma/client";
-
-import { GetFuncionarioIdent } from "../../../../data/usecase/procurar-funcionario/find-procurar-funcionario";
 import { prisma } from "../../../database/Prisma";
 
-export class FuncionarioPostgresRepository implements GetFuncionarioIdent {
+export class FuncionarioPostgresRepository {
   private prisma: PrismaClient;
 
   constructor() {
     this.prisma = prisma;
   }
 
-  public async findFisrt(identificacao: string, localidade: string): Promise<any> {
+  public async findFisrt(identificacao: string, localidade: string) {
     const funcionario = await this.prisma.funcionario.findFirst({
       where: { identificacao: { endsWith: identificacao }, localidadeId: localidade },
       include: {
@@ -23,6 +21,7 @@ export class FuncionarioPostgresRepository implements GetFuncionarioIdent {
                     cartao_dia_lancamento_status: true, // Inclui a tabela 'cartao_dia_lancamento_status'
                   },
                 },
+                eventos: true,
                 cartao_dia_status: true,
               },
               orderBy: { id: "asc" },
