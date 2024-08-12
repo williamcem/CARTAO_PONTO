@@ -246,6 +246,7 @@ model atestado_funcionario {
   tipoGrauParentescoId      Int?
   nomeFuncionario           String    @default("")
   ocupacaoId                Int?
+  crm                       String?
   createAt                  DateTime  @default(now())
   updateAt                  DateTime  @default(now()) @updatedAt
 

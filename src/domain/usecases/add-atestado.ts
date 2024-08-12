@@ -27,6 +27,7 @@ export interface AddAtestadoModel {
   nome_acompanhante?: string;
   exame?: string;
   tipoGrauParentescoId?: number;
+  crm?: string;
 }
 
 export interface AddAtestado {
