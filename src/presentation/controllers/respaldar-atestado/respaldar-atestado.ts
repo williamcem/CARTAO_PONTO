@@ -28,7 +28,54 @@ export class RespaldarController implements Controller {
         inicio,
         fim,
         observacao,
-      }: { id: number; statusId: number; userName: string; inicio: Date; fim: Date; observacao: string } = httpRequest?.body;
+        data,
+        grupo_cid,
+        acidente_trabalho,
+        tipoAcompanhanteId,
+        descricao,
+        tipo_comprovanteId,
+        nome_acompanhante,
+        tipoId,
+        idade_paciente,
+        trabalhou_dia,
+        horario_trabalhado_inicio,
+        horario_trabalhado_fim,
+        exame,
+        acao,
+        sintomas,
+        tipoGrauParentescoId,
+        nomeFuncionario,
+        ocupacaoId,
+        crm,
+        funcao,
+      }: {
+        id: number;
+        data: Date;
+        inicio: Date;
+        fim: Date;
+        grupo_cid: string;
+        acidente_trabalho: boolean;
+        tipoAcompanhanteId: number;
+        descricao: string;
+        tipo_comprovanteId: number;
+        nome_acompanhante: string;
+        tipoId: number;
+        statusId: number;
+        idade_paciente: number;
+        trabalhou_dia: boolean;
+        horario_trabalhado_inicio: string;
+        horario_trabalhado_fim: string;
+        exame: string;
+        acao: number;
+        observacao: string;
+        sintomas: string;
+        tipoGrauParentescoId: number;
+        userName: string;
+        nomeFuncionario: string;
+        ocupacaoId: number;
+        funcao: number;
+        crm: string;
+      } = httpRequest?.body;
 
       if (!id) return badRequest(new FuncionarioParamError("Falta id do periodo!"));
       if (!statusId) return badRequest(new FuncionarioParamError("Falta status!"));
@@ -45,7 +92,6 @@ export class RespaldarController implements Controller {
 
       switch (statusId) {
         case 1:
-          return badRequest(new FuncionarioParamError(`Não é possível resolver com status 1`));
 
         case 2:
           break;
@@ -79,6 +125,43 @@ export class RespaldarController implements Controller {
       let message = "";
 
       switch (statusId) {
+        case 1:
+          {
+            const atualizado = await this.respaldarAtestadoPostgresRepository.updateAtestado({
+              id: atestado.id,
+              statusId,
+              userName,
+              abonos: [],
+              observacao,
+              fim,
+              inicio,
+              acao,
+              acidente_trabalho,
+              crm,
+              data,
+              descricao,
+              exame,
+              funcao,
+              grupo_cid,
+              horario_trabalhado_fim,
+              horario_trabalhado_inicio,
+              idade_paciente,
+              nome_acompanhante,
+              nomeFuncionario,
+              ocupacaoId,
+              sintomas,
+              tipo_comprovanteId,
+              tipoAcompanhanteId,
+              tipoGrauParentescoId,
+              tipoId,
+              trabalhou_dia,
+            });
+
+            if (!atualizado) return serverError();
+
+            message = "Atestado alterado com sucesso!";
+          }
+          break;
         case 2:
           {
             if (!inicio) return badRequest(new FuncionarioParamError("Falta inicio!"));
@@ -112,6 +195,26 @@ export class RespaldarController implements Controller {
               observacao,
               fim,
               inicio,
+              acao,
+              acidente_trabalho,
+              crm,
+              data,
+              descricao,
+              exame,
+              funcao,
+              grupo_cid,
+              horario_trabalhado_fim,
+              horario_trabalhado_inicio,
+              idade_paciente,
+              nome_acompanhante,
+              nomeFuncionario,
+              ocupacaoId,
+              sintomas,
+              tipo_comprovanteId,
+              tipoAcompanhanteId,
+              tipoGrauParentescoId,
+              tipoId,
+              trabalhou_dia,
             });
 
             if (!atualizado) return serverError();
@@ -262,7 +365,33 @@ export class RespaldarController implements Controller {
   }
 
   public async abonar(input: {
-    atestado: { id: number; inicio: Date; fim: Date; observacao: string; statusId: number };
+    atestado: {
+      id: number;
+      inicio: Date;
+      fim: Date;
+      observacao: string;
+      statusId: number;
+      grupo_cid?: string;
+      acidente_trabalho?: boolean;
+      tipoAcompanhanteId?: number;
+      descricao?: string;
+      tipo_comprovanteId?: number;
+      nome_acompanhante?: string;
+      tipoId?: number;
+      idade_paciente?: number;
+      trabalhou_dia?: boolean;
+      horario_trabalhado_inicio?: string;
+      horario_trabalhado_fim?: string;
+      exame?: string;
+      acao?: number;
+      sintomas?: string;
+      tipoGrauParentescoId?: number;
+      nomeFuncionario?: string;
+      ocupacaoId?: number;
+      funcao?: number;
+      crm?: string;
+      data?: Date;
+    };
     userName: string;
     dias: IDia[];
   }): Promise<string> {
@@ -278,6 +407,26 @@ export class RespaldarController implements Controller {
       observacao: input.atestado.observacao,
       fim: input.atestado.fim,
       inicio: input.atestado.inicio,
+      acao: input.atestado.acao,
+      acidente_trabalho: input.atestado.acidente_trabalho,
+      crm: input.atestado.crm,
+      data: input.atestado.data,
+      descricao: input.atestado.descricao,
+      exame: input.atestado.exame,
+      funcao: input.atestado.funcao,
+      grupo_cid: input.atestado.grupo_cid,
+      horario_trabalhado_fim: input.atestado.horario_trabalhado_fim,
+      horario_trabalhado_inicio: input.atestado.horario_trabalhado_inicio,
+      idade_paciente: input.atestado.idade_paciente,
+      nome_acompanhante: input.atestado.nome_acompanhante,
+      nomeFuncionario: input.atestado.nomeFuncionario,
+      ocupacaoId: input.atestado.ocupacaoId,
+      sintomas: input.atestado.sintomas,
+      tipo_comprovanteId: input.atestado.tipo_comprovanteId,
+      tipoAcompanhanteId: input.atestado.tipoAcompanhanteId,
+      tipoGrauParentescoId: input.atestado.tipoGrauParentescoId,
+      tipoId: input.atestado.tipoId,
+      trabalhou_dia: input.atestado.trabalhou_dia,
     });
 
     if (!atualizado) return "Erro ao atualizar atestado";

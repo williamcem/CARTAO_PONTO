@@ -60,6 +60,26 @@ export class RespaldarAtestadoPostgresRepository implements RespaldarAtestado {
     userName: string;
     observacao?: string;
     abonos: { cartaoDiaId: number; minutos: number }[];
+    grupo_cid?: string;
+    acidente_trabalho?: boolean;
+    tipoAcompanhanteId?: number;
+    descricao?: string;
+    tipo_comprovanteId?: number;
+    nome_acompanhante?: string;
+    tipoId?: number;
+    idade_paciente?: number;
+    trabalhou_dia?: boolean;
+    horario_trabalhado_inicio?: string;
+    horario_trabalhado_fim?: string;
+    exame?: string;
+    acao?: number;
+    sintomas?: string;
+    tipoGrauParentescoId?: number;
+    data?: Date;
+    crm?: string;
+    funcao?: number;
+    nomeFuncionario?: string;
+    ocupacaoId?: number;
   }): Promise<boolean> {
     return Boolean(
       await this.prisma.atestado_funcionario.update({
@@ -77,6 +97,26 @@ export class RespaldarAtestadoPostgresRepository implements RespaldarAtestado {
               update: { cartaoDiaId: abono.cartaoDiaId, minutos: abono.minutos, userName: input.userName },
             })),
           },
+          acao: input.acao,
+          acidente_trabalho: input.acidente_trabalho,
+          crm: input.crm,
+          data: input.data,
+          descricao: input.descricao,
+          exame: input.exame,
+          funcionarioFuncaoId: input.funcao,
+          grupo_cid: input.grupo_cid,
+          horario_trabalhado_fim: input.horario_trabalhado_fim,
+          horario_trabalhado_inicio: input.horario_trabalhado_inicio,
+          idade_paciente: input.idade_paciente,
+          nome_acompanhante: input.nome_acompanhante,
+          nomeFuncionario: input.nomeFuncionario,
+          ocupacaoId: input.ocupacaoId,
+          sintomas: input.sintomas,
+          trabalhou_dia: input.trabalhou_dia,
+          tipo_comprovanteId: input.tipo_comprovanteId,
+          tipoAcompanhanteId: input.tipoAcompanhanteId,
+          tipoGrauParentescoId: input.tipoGrauParentescoId,
+          tipoId: input.tipoId,
         },
       }),
     );
