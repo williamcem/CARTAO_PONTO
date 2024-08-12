@@ -26,11 +26,15 @@ export class GetFuncionarioImpressaoCalculoController implements Controller {
 
   async handle(httpRequest: HttpRequest): Promise<HttpResponse> {
     try {
-      const { localidade, funcionariosId, onlyDay } = httpRequest?.query;
+      const { localidade, funcionariosId, onlyDay, referencia } = httpRequest?.query;
 
       const onlyDays = Number(onlyDay);
 
-      if (!localidade) return badRequest(new FuncionarioParamError("localidade não fornecido!"));
+      if (!referencia) return badRequest(new FuncionarioParamError("Falta referência!"));
+
+      if (!localidade) return badRequest(new FuncionarioParamError("Localidade não fornecido!"));
+
+      if (!moment(referencia).isValid()) return badRequest(new FuncionarioParamError("Referência inválida!"));
 
       let ids: number[] | undefined = undefined;
 
@@ -39,77 +43,93 @@ export class GetFuncionarioImpressaoCalculoController implements Controller {
         if (ids?.length === 0) return badRequest(new FuncionarioParamError("Id's dos funcionários não informado!"));
       }
 
-      const funcionarios = await this.funcionarioImpressaoCalculoPostgresRepository.findAllByLocalidade(localidade, ids);
+      const cartoes = await this.funcionarioImpressaoCalculoPostgresRepository.findAllByLocalidade(
+        localidade,
+        new Date(referencia),
+        ids,
+      );
 
       // Verifica se nenhum funcionário foi encontrado
-      if (!funcionarios || funcionarios.length === 0)
-        return notFoundRequest({ message: "Nenhum funcionário encontrado!", name: "Error" });
+      if (!cartoes || cartoes.length === 0) return notFoundRequest({ message: "Nenhum cartão encontrado!", name: "Error" });
 
-      const output = funcionarios.map((funcionario) => {
-        const cartoes = funcionario.cartao.map((cartao) => {
-          const resumoCartao = {
-            atual: { diurno: { ext1: 0, ext2: 0, ext3: 0 }, noturno: { ext1: 0, ext2: 0, ext3: 0 } },
-            anterior: { diurno: { ext1: 0, ext2: 0, ext3: 0 }, noturno: { ext1: 0, ext2: 0, ext3: 0 } },
-          };
+      const output = cartoes.map((cartao) => {
+        const resumoCartao = {
+          atual: { diurno: { ext1: 0, ext2: 0, ext3: 0 }, noturno: { ext1: 0, ext2: 0, ext3: 0 } },
+          anterior: { diurno: { ext1: 0, ext2: 0, ext3: 0 }, noturno: { ext1: 0, ext2: 0, ext3: 0 } },
+        };
 
-          const dias = cartao.cartao_dia.map((dia) => {
-            let data = moment.utc(dia.data).format("DD/MM/YYYY ddd").toUpperCase();
-
-            if (!onlyDays) {
-              const eventos = dia.eventos.map((evento) => {
-                return { minutos: evento.minutos, tipoId: evento.tipoId || 0, tratado: evento.tratado };
-              });
-
-              const abono = { minutos: 0 };
-
-              dia.atestado_abonos.map((abono) => abono.minutos + abono.minutos);
-
-              const resumo = this.calcularResumoPorDia({
-                dia: { id: cartao.id, eventos, abono, cargaHorariaTotal: dia.cargaHor },
-              });
-
-              resumoCartao.atual.diurno.ext1 += resumo.diurno.ext1;
-              resumoCartao.atual.diurno.ext2 += resumo.diurno.ext2;
-              resumoCartao.atual.diurno.ext3 += resumo.diurno.ext3;
-
-              resumoCartao.atual.noturno.ext1 += resumo.noturno.ext1;
-              resumoCartao.atual.noturno.ext2 += resumo.noturno.ext2;
-              resumoCartao.atual.noturno.ext3 += resumo.noturno.ext3;
-
-              const periodos: { entrada: string; saida: string; periodoId: number }[] = [];
-
-              dia.cartao_dia_lancamentos.map((lancamento) => {
-                periodos.push({
-                  entrada: moment.utc(lancamento.entrada).format("HH:mm"),
-                  saida: moment.utc(lancamento.saida).format("HH:mm"),
-                  periodoId: lancamento.periodoId,
-                });
-              });
-
-              return { resumo, periodos, data };
-            }
-
-            return { data };
-          });
+        const dias = cartao.cartao_dia.map((dia) => {
+          let data = moment.utc(dia.data).format("DD/MM/YYYY ddd").toUpperCase();
 
           if (!onlyDays) {
-            return { ...{ id: cartao.id }, ...{ dias, resumo: resumoCartao, referencia: cartao.referencia } };
+            const eventos = dia.eventos.map((evento) => {
+              return { minutos: evento.minutos, tipoId: evento.tipoId || 0, tratado: evento.tratado };
+            });
+
+            const abono = { minutos: 0 };
+
+            dia.atestado_abonos.map((abono) => abono.minutos + abono.minutos);
+
+            const resumo = this.calcularResumoPorDia({
+              dia: { id: cartao.id, eventos, abono, cargaHorariaTotal: dia.cargaHor },
+            });
+
+            resumoCartao.atual.diurno.ext1 += resumo.diurno.ext1;
+            resumoCartao.atual.diurno.ext2 += resumo.diurno.ext2;
+            resumoCartao.atual.diurno.ext3 += resumo.diurno.ext3;
+
+            resumoCartao.atual.noturno.ext1 += resumo.noturno.ext1;
+            resumoCartao.atual.noturno.ext2 += resumo.noturno.ext2;
+            resumoCartao.atual.noturno.ext3 += resumo.noturno.ext3;
+
+            const periodos: { entrada: string; saida: string; periodoId: number }[] = [];
+
+            dia.cartao_dia_lancamentos.map((lancamento) => {
+              periodos.push({
+                entrada: moment.utc(lancamento.entrada).format("HH:mm"),
+                saida: moment.utc(lancamento.saida).format("HH:mm"),
+                periodoId: lancamento.periodoId,
+              });
+            });
+
+            return { resumo, periodos, data };
           }
 
-          return { ...{ id: cartao.id }, ...{ dias, referencia: cartao.referencia } };
+          return { data };
         });
 
+        if (!onlyDays) {
+          return {
+            ...{ id: cartao.id },
+            ...{
+              dias,
+              resumo: resumoCartao,
+              referencia: cartao.referencia,
+              ...{
+                id: cartao.funcionario.id,
+                identificacao: cartao.funcionario.identificacao,
+                localidade: cartao.funcionario.localidade,
+                nome: cartao.funcionario.nome,
+                turno: cartao.funcionario.turno.nome,
+                centroCusto: cartao.funcionario.centro_custo.nome,
+                filial: cartao.funcionario.filial,
+              },
+            },
+          };
+        }
+
         return {
+          ...{ id: cartao.id },
+          ...{ dias, referencia: cartao.referencia },
           ...{
-            id: funcionario.id,
-            identificacao: funcionario.identificacao,
-            localidade: funcionario.localidade,
-            nome: funcionario.nome,
-            turno: funcionario.turno.nome,
-            centroCusto: funcionario.centro_custo.nome,
-            filial: funcionario.filial,
+            id: cartao.funcionario.id,
+            identificacao: cartao.funcionario.identificacao,
+            localidade: cartao.funcionario.localidade,
+            nome: cartao.funcionario.nome,
+            turno: cartao.funcionario.turno.nome,
+            centroCusto: cartao.funcionario.centro_custo.nome,
+            filial: cartao.funcionario.filial,
           },
-          ...{ cartoes },
         };
       });
 
