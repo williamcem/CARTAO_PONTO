@@ -22,6 +22,15 @@ export class GetFuncionarioController implements Controller {
       // Verifica se nenhum funcionário foi encontrado
       if (!funcionario) return notFoundRequest({ message: "Identificador não encontrado", name: "Error" });
 
+      funcionario.cartao = funcionario?.cartao.map((cartao) => {
+        const dias = cartao.cartao_dia.map((dia) => {
+          const contemAusencia = dia.eventos.some((evento) => evento.tipoId === 2);
+
+          return { ...dia, ...{ contemAusencia } };
+        });
+        return { ...cartao, ...{ cartao_dia: dias } };
+      });
+
       // Calcular o resumo
       const resumoCalculado = await this.calcularResumoPostgresRepository.calc(identificacao);
 
