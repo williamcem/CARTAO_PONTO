@@ -1,10 +1,12 @@
 import { Controller } from "../../presentation/protocols";
 import { LogControllerDecorator } from "../decorators/log";
-import { ListarTurnoPostgresRepository } from "@infra/db/postgresdb/listar-turno/listar-turno";
 import { LancarFaltaController } from "../../presentation/controllers/lancar-falta/lancar-falta";
+import { LancarFaltaPostgresRepository } from "@infra/db/postgresdb/lancar-falta/lancar-falta";
+import { CriarEventosPostgresRepository } from "@infra/db/postgresdb/eventos/eventos-repository";
 
 export const makeLancarFaltaController = (): Controller => {
-  const listarTurnoPostgresRepository = new ListarTurnoPostgresRepository();
-  const lancarFaltaController = new LancarFaltaController(listarTurnoPostgresRepository);
+  const lancarFaltaPostgresRepository = new LancarFaltaPostgresRepository();
+  const criarEventosPostgresRepository = new CriarEventosPostgresRepository();
+  const lancarFaltaController = new LancarFaltaController(lancarFaltaPostgresRepository, criarEventosPostgresRepository);
   return new LogControllerDecorator(lancarFaltaController);
 };
