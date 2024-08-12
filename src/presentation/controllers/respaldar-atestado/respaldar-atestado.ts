@@ -30,7 +30,7 @@ export class RespaldarController implements Controller {
         observacao,
       }: { id: number; statusId: number; userName: string; inicio: Date; fim: Date; observacao: string } = httpRequest?.body;
 
-      if (!id) return badRequest(new FuncionarioParamError("Falta id do periodo!"));
+      if (!id) return badRequest(new FuncionarioParamError("Falta id do atestado!"));
       if (!statusId) return badRequest(new FuncionarioParamError("Falta status!"));
       if (!userName) return badRequest(new FuncionarioParamError("Falta usuário para lançar cartão"));
 
