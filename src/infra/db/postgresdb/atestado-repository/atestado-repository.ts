@@ -82,6 +82,7 @@ export class AtestadoRepository implements AddAtestado {
             statusId: 1,
             funcionarioFuncaoId: input.funcionarioFuncaoId,
             nomeFuncionario: input.nomeFuncionario,
+            crm: input.crm,
           },
         });
 
