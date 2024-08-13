@@ -181,7 +181,40 @@ export class RespaldarController implements Controller {
               funcionarioId: atestado.funcionarioId,
             });
 
-            message = await this.abonar({ dias, atestado: { id: atestado.id, fim, inicio, observacao, statusId }, userName });
+            message = await this.abonar({
+              dias,
+              atestado: {
+                ...{
+                  id: atestado.id,
+                  fim,
+                  inicio,
+                  observacao,
+                  statusId,
+                  userName,
+                  acao,
+                  acidente_trabalho,
+                  crm,
+                  data,
+                  descricao,
+                  exame,
+                  funcao,
+                  grupo_cid,
+                  horario_trabalhado_fim,
+                  horario_trabalhado_inicio,
+                  idade_paciente,
+                  nome_acompanhante,
+                  nomeFuncionario,
+                  ocupacaoId,
+                  sintomas,
+                  tipo_comprovanteId,
+                  tipoAcompanhanteId,
+                  tipoGrauParentescoId,
+                  tipoId,
+                  trabalhou_dia,
+                },
+              },
+              userName,
+            });
           }
           break;
 
