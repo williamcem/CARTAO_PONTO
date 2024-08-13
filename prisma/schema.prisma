@@ -68,6 +68,7 @@ model turno {
   cod_turno String @unique
 
   funcionarios funcionario[]
+  turno_dias   turno_dia[]
 }
 
 model centro_custo {
@@ -294,6 +295,19 @@ model tipo_ocupacao {
   nome String @unique
 
   atestado_funcionario atestado_funcionario[]
+}
+
+model turno_dia {
+  id                          Int   @id @default(autoincrement())
+  turnoId                     Int
+  diaSemana                   Int   @default(0)
+  cargaHoraria                Int   @default(0)
+  cargaHorariaPrimeiroPeriodo Int   @default(0)
+  cargaHorariaSegundoPeriodo  Int   @default(0)
+  periodoDescanso             Int   @default(0)
+  turno                       turno @relation(fields: [turnoId], references: [id])
+
+  @@unique([turnoId, diaSemana])
 }
 
 model tipo_status {

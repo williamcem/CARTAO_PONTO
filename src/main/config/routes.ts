@@ -46,6 +46,7 @@ import buscarReferenciaAgrupada from "../routes/horarios/buscar-referencia-agrup
 import buscarFuncionarioReferenciaLocalidade from "../routes/horarios/buscar-funcionario-referencia-localidade-routes";
 import listarTurnos from "../routes/horarios/listar-turnos-routes";
 import lancarFalta from "../routes/horarios/lancar-falta-routes";
+import recalcularTurnos from "../routes/horarios/recalcular-turnos-routes";
 
 export const setupRoutes = (app: Express): void => {
   const router = Router();
@@ -96,4 +97,5 @@ export const setupRoutes = (app: Express): void => {
   buscarFuncionarioReferenciaLocalidade(router);
   listarTurnos(router);
   lancarFalta(router);
+  recalcularTurnos(router);
 };
