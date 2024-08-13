@@ -41,7 +41,7 @@ export class RecalcularTurnoController implements Controller {
 
       if (!created) return serverError();
 
-      return ok({ message: dias });
+      return ok({ message: dias, errors });
     } catch (error) {
       console.error(error);
       return serverError();
