@@ -51,6 +51,8 @@ export class AtestadoController implements Controller {
         return badRequest(new FuncionarioParamError("Faltam os sintomas ou o grupo CID"));
       }
 
+      if (tipoId === 1 && !crm) return badRequest(new FuncionarioParamError("Falta crm!"));
+
       if (tipo_comprovanteId === 1 && !tipoGrauParentescoId) {
         return badRequest(new FuncionarioParamError("Colocar grau de parentesco"));
       }

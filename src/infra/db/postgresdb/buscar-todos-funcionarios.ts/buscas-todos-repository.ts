@@ -42,6 +42,7 @@ export class BuscarTodosPostgresRepository implements BuscraTodosRepository {
           descricaoDoTurno: funcionario.turno.nome, // Renomeia o campo 'nome' para 'periodo'
         },
         turno: undefined, // Remove o campo turno original
+        cartao: funcionario.cartao.sort((a, b) => a.id - b.id),
       }));
     } catch (error) {
       console.error("Erro ao buscar funcionários", error);
