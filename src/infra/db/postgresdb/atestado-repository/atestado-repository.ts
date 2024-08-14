@@ -15,9 +15,6 @@ export class AtestadoRepository implements AddAtestado {
     const prisma = this.prisma;
 
     try {
-      // Log de entrada para depuração
-      console.log("Entrada:", input);
-
       // Converte horários de strings para arrays, se necessário
       const horarioTrabalhadoInicio: string[] =
         (typeof input.horario_trabalhado_inicio === "string"
