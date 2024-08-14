@@ -33,8 +33,9 @@ model funcionario {
   afastamento  funcionarios_afastados[]
   eventos      eventos[]
 
-  localidade           localidade             @relation(fields: [localidadeId], references: [codigo], onDelete: Cascade)
+  localidade           localidade                    @relation(fields: [localidadeId], references: [codigo], onDelete: Cascade)
   atestado_funcionario atestado_funcionario[]
+  alteracoesTurno      funcionario_alteracao_turno[]
 }
 
 model funcionario_historico {
@@ -67,8 +68,9 @@ model turno {
   nome      String
   cod_turno String @unique
 
-  funcionarios funcionario[]
-  turno_dias   turno_dia[]
+  funcionarios               funcionario[]
+  turno_dias                 turno_dia[]
+  funcionarioAlteracoesTurno funcionario_alteracao_turno[]
 }
 
 model centro_custo {
@@ -138,24 +140,27 @@ model cartao_status {
 }
 
 model cartao_dia {
-  id                      Int                     @id @default(autoincrement())
-  data                    DateTime
-  statusId                Int
-  cartaoId                Int
-  periodoDescanso         Int
-  cargaHor                Int
-  cargaHorPrimeiroPeriodo Int
-  cargaHorSegundoPeriodo  Int
-  cargaHorariaCompleta    String
-  cargaHorariaNoturna     Int                     @default(0)
-  createAt                DateTime?               @default(now())
-  updateAt                DateTime?               @updatedAt
-  userName                String?
-  cartao_dia_status       cartao_dia_status       @relation(fields: [statusId], references: [id], onDelete: Cascade)
-  cartao                  cartao                  @relation(fields: [cartaoId], references: [id], onDelete: Cascade)
-  cartao_dia_lancamentos  cartao_dia_lancamento[]
-  eventos                 eventos[]
-  atestado_abonos         atestado_abono[]
+  id                          Int       @id @default(autoincrement())
+  data                        DateTime
+  statusId                    Int
+  cartaoId                    Int
+  periodoDescanso             Int
+  cargaHor                    Int
+  cargaHorPrimeiroPeriodo     Int
+  cargaHorSegundoPeriodo      Int
+  cargaHorariaCompleta        String
+  cargaHorariaNoturna         Int       @default(0)
+  createAt                    DateTime? @default(now())
+  updateAt                    DateTime? @updatedAt
+  userName                    String?
+  funcionarioAlteracaoTurnoId Int?
+
+  cartao_dia_status           cartao_dia_status            @relation(fields: [statusId], references: [id], onDelete: Cascade)
+  cartao                      cartao                       @relation(fields: [cartaoId], references: [id], onDelete: Cascade)
+  cartao_dia_lancamentos      cartao_dia_lancamento[]
+  eventos                     eventos[]
+  atestado_abonos             atestado_abono[]
+  funcionario_alteracao_turno funcionario_alteracao_turno? @relation(fields: [funcionarioAlteracaoTurnoId], references: [id])
 
   @@unique([cartaoId, data])
 }
@@ -430,4 +435,15 @@ model usuario_perfil {
   acesso Int
 
   usuarios usuario[]
+}
+
+model funcionario_alteracao_turno {
+  id            Int    @id @default(autoincrement())
+  turnoId       Int
+  funcionarioId Int
+  userName      String
+
+  dias        cartao_dia[]
+  turno       turno        @relation(fields: [turnoId], references: [id])
+  funcionario funcionario  @relation(fields: [funcionarioId], references: [id])
 }

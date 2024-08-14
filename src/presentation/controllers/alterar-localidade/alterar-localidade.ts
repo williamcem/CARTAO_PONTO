@@ -3,9 +3,13 @@ import { FuncionarioParamError } from "../../errors/Funcionario-param-error";
 import { badRequest, notFoundRequest, ok, serverError } from "../../helpers/http-helpers";
 import { Controller, HttpRequest, HttpResponse } from "./alterar-localidade-protocols";
 import moment from "moment";
+import { CriarEventosController } from "../eventos/eventos-controller";
 
 export class AlterarLocalidadeController implements Controller {
-  constructor(private readonly alterarLocalidadePostgresRepository: AlterarLocalidadePostgresRepository) {}
+  constructor(
+    private readonly alterarLocalidadePostgresRepository: AlterarLocalidadePostgresRepository,
+    private readonly criarEventosController: CriarEventosController,
+  ) {}
 
   async handle(httpRequest: HttpRequest): Promise<HttpResponse> {
     try {
@@ -43,7 +47,6 @@ export class AlterarLocalidadeController implements Controller {
           cargaHorariaCompleta: string;
           cargaHorariaNoturna: number;
           updateAt: Date;
-          userName: string;
         }[];
         localidadeId?: string;
       } = { dias: [], localidadeId };
@@ -82,7 +85,6 @@ export class AlterarLocalidadeController implements Controller {
             periodoDescanso: 0,
             statusId: 6,
             updateAt,
-            userName,
           });
         else
           update.dias.push({
@@ -95,17 +97,20 @@ export class AlterarLocalidadeController implements Controller {
             periodoDescanso: existeTurnoDia.periodoDescanso,
             statusId: 1,
             updateAt,
-            userName,
           });
       });
 
       const saved = await this.alterarLocalidadePostgresRepository.updateFuncionario({
         id: funcionario.id,
         localidadeId,
+        turnoId: turno.id,
         dias: update.dias,
+        userName: userName,
       });
 
       if (!saved) serverError();
+
+      await this.criarEventosController.handle({ query: { identificacao: funcionario.identificacao } });
 
       return ok({ message: "Funcionário alterado com sucesso!" });
     } catch (error) {

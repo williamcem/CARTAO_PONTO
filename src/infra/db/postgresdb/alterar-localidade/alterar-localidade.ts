@@ -9,23 +9,15 @@ export class AlterarLocalidadePostgresRepository {
     this.prisma = prisma;
   }
 
-  public async findFisrtFuncionario(input: { id: number }): Promise<
-    | {
-        id: number;
-        localidadeId: string;
-        turnoId: number;
-      }
-    | undefined
-  > {
-    const result = await this.prisma.funcionario.findFirst({ where: { id: input.id } });
+  public async findFisrtFuncionario(input: { id: number }) {
+    const result = await this.prisma.funcionario.findFirst({
+      where: { id: input.id },
+      select: { id: true, localidadeId: true, turnoId: true, identificacao: true },
+    });
 
     if (!result) return undefined;
 
-    return {
-      id: result.id,
-      localidadeId: result.localidadeId,
-      turnoId: result.turnoId,
-    };
+    return result;
   }
 
   public async findFisrtLocalidade(input: { id: string }): Promise<
@@ -56,6 +48,7 @@ export class AlterarLocalidadePostgresRepository {
   public async updateFuncionario(input: {
     id: number;
     localidadeId?: string;
+    turnoId: number;
     dias: {
       id: number;
       statusId: number;
@@ -66,8 +59,8 @@ export class AlterarLocalidadePostgresRepository {
       cargaHorariaCompleta: string;
       cargaHorariaNoturna: number;
       updateAt: Date;
-      userName: string;
     }[];
+    userName: string;
   }): Promise<boolean> {
     const queries: prismaPromise[] = [];
     queries.push(
@@ -90,11 +83,23 @@ export class AlterarLocalidadePostgresRepository {
             periodoDescanso: dia.periodoDescanso,
             statusId: dia.statusId,
             updateAt: dia.updateAt,
-            userName: dia.userName,
+            userName: input.userName,
           },
         }),
       );
+      queries.push(this.prisma.eventos.deleteMany({ where: { cartaoDiaId: dia.id } }));
     });
+
+    queries.push(
+      this.prisma.funcionario_alteracao_turno.create({
+        data: {
+          userName: input.userName,
+          funcionarioId: input.id,
+          turnoId: input.turnoId,
+          dias: { connect: input.dias.map((dia) => ({ id: dia.id })) },
+        },
+      }),
+    );
 
     return Boolean((await this.prisma.$transaction(queries)).length);
   }
