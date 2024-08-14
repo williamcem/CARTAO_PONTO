@@ -1,8 +1,6 @@
 import { Prisma, PrismaClient } from "@prisma/client";
 
-const db = new PrismaClient();
-
-db.$extends({
+export const prisma = new PrismaClient().$extends({
   query: {
     funcionario: {
       $allOperations({ model, operation, args, query }) {
@@ -47,8 +45,6 @@ db.$extends({
     },
   },
 });
-
-export const prisma = db;
 
 export type prismaPromise = Prisma.PrismaPromise<any>;
 
