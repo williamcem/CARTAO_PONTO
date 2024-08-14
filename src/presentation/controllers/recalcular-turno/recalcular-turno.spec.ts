@@ -299,24 +299,64 @@ describe("Validar turnos", () => {
   });
 });
 
-describe("Extrair horário turno", () => {
-  test(`Horário ${horarios[0]}`, async () => {
-    const horario = recalcularTurnoController.extrairHorariosTurno({ nome: horarios[0] });
-    expect(horario).toStrictEqual({ SEGaSEX: ["07:12", "12:30", "13:30", "17:00"] });
+describe("Extrair minutos noturno", () => {
+  test(`Está exatamente no horario noturno`, async () => {
+    const minutos = recalcularTurnoController.localizarMinutosNoturno({
+      inicio: new Date("2024-07-01T22:00:00Z"),
+      fim: new Date("2024-07-02T05:00:00Z"),
+      data: new Date("2024-07-01T00:00:00Z"),
+    });
+
+    expect(minutos).toStrictEqual(420);
   });
 
-  test(`Horário ${horarios[1]}`, async () => {
-    const horario = recalcularTurnoController.extrairHorariosTurno({ nome: horarios[1] });
-    expect(horario).toStrictEqual({
-      SEGaSEX: ["14:00", "19:00", "20:00", "21:20"],
-      SAB: ["11:12", "16:00", "17:00", "19:32"],
+  test(`Está dentro do horario noturno`, async () => {
+    const minutos = recalcularTurnoController.localizarMinutosNoturno({
+      inicio: new Date("2024-07-01T22:50:00Z"),
+      fim: new Date("2024-07-02T04:02:00Z"),
+      data: new Date("2024-07-01T00:00:00Z"),
     });
+
+    expect(minutos).toStrictEqual(312);
   });
 
-  test(`Horário ${horarios[2]}`, async () => {
-    const horario = recalcularTurnoController.extrairHorariosTurno({ nome: horarios[2] });
-    expect(horario).toStrictEqual({
-      SEGaSEX: ["07:12", "12:00", "13:00", "17:00"],
+  test(`Termina com horario noturno`, async () => {
+    const minutos = recalcularTurnoController.localizarMinutosNoturno({
+      inicio: new Date("2024-07-01T17:50:00Z"),
+      fim: new Date("2024-07-01T23:00:00Z"),
+      data: new Date("2024-07-01T00:00:00Z"),
     });
+
+    expect(minutos).toStrictEqual(60);
+  });
+
+  test(`Inicia com horario noturno e termina no final horario noturno`, async () => {
+    const minutos = recalcularTurnoController.localizarMinutosNoturno({
+      inicio: new Date("2024-07-01T23:00:00Z"),
+      fim: new Date("2024-07-02T05:00:00Z"),
+      data: new Date("2024-07-01T00:00:00Z"),
+    });
+
+    expect(minutos).toStrictEqual(360);
+  });
+
+  test(`Inicia com horario noturno e termina após horario noturno`, async () => {
+    const minutos = recalcularTurnoController.localizarMinutosNoturno({
+      inicio: new Date("2024-07-01T23:00:00Z"),
+      fim: new Date("2024-07-02T06:00:00Z"),
+      data: new Date("2024-07-01T00:00:00Z"),
+    });
+
+    expect(minutos).toStrictEqual(360);
+  });
+
+  test(`Termina com horário noturno`, async () => {
+    const minutos = recalcularTurnoController.localizarMinutosNoturno({
+      inicio: new Date("2024-07-01T21:30:00Z"),
+      fim: new Date("2024-07-01T22:54:00Z"),
+      data: new Date("2024-07-01T00:00:00Z"),
+    });
+
+    expect(minutos).toStrictEqual(54);
   });
 });

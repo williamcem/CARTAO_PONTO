@@ -298,14 +298,16 @@ model tipo_ocupacao {
 }
 
 model turno_dia {
-  id                          Int   @id @default(autoincrement())
+  id                          Int    @id @default(autoincrement())
   turnoId                     Int
-  diaSemana                   Int   @default(0)
-  cargaHoraria                Int   @default(0)
-  cargaHorariaPrimeiroPeriodo Int   @default(0)
-  cargaHorariaSegundoPeriodo  Int   @default(0)
-  periodoDescanso             Int   @default(0)
-  turno                       turno @relation(fields: [turnoId], references: [id])
+  diaSemana                   Int    @default(0)
+  cargaHoraria                Int    @default(0)
+  cargaHorariaPrimeiroPeriodo Int    @default(0)
+  cargaHorariaSegundoPeriodo  Int    @default(0)
+  periodoDescanso             Int    @default(0)
+  cargaHorariaNoturna         Int    @default(0)
+  cargaHorariaCompleta        String @default("")
+  turno                       turno  @relation(fields: [turnoId], references: [id])
 
   @@unique([turnoId, diaSemana])
 }

@@ -10,6 +10,8 @@ export class RecalcularTurnoController implements Controller {
   private regex =
     /^(SEGaSEX|SEG|TERaSEX|DOM|SEGaSAB|DOMaSEX|SEGaDOM|SEGaSEXeDOM|SEGaQUI|SEGeQUAeSEX)(-\d{2}:\d{2}\/\d{2}:\d{2}(_\d{2}:\d{2}\/\d{2}:\d{2})?)(\s(SAB|SEGaSEX|SEG|TERaSEX|DOM|SEX|TEReQUI)-\d{2}:\d{2}\/\d{2}:\d{2}(_\d{2}:\d{2}\/\d{2}:\d{2})?)*$/;
   private localeData = moment.localeData();
+  public inicioNoturno = { hora: 22, minuto: 0 };
+  public fimNoturno = { hora: 5, minuto: 0 };
 
   async handle(httpRequest: HttpRequest): Promise<HttpResponse> {
     try {
@@ -22,6 +24,8 @@ export class RecalcularTurnoController implements Controller {
         cargaHorariaPrimeiroPeriodo: number;
         cargaHorariaSegundoPeriodo: number;
         periodoDescanso: number;
+        cargaHorariaNoturna: number;
+        cargaHorariaCompleta: string;
       }[] = [];
 
       const errors: string[] = [];
@@ -59,6 +63,8 @@ export class RecalcularTurnoController implements Controller {
       cargaHorariaPrimeiroPeriodo: number;
       cargaHorariaSegundoPeriodo: number;
       periodoDescanso: number;
+      cargaHorariaNoturna: number;
+      cargaHorariaCompleta: string;
     }[] = [];
 
     // Expressão regular para capturar cada dia com seus horários
@@ -90,7 +96,16 @@ export class RecalcularTurnoController implements Controller {
           cargaHorariaPrimeiroPeriodo: number;
           cargaHorariaSegundoPeriodo: number;
           periodoDescanso: number;
-        } = { cargaHoraria: 0, cargaHorariaPrimeiroPeriodo: 0, cargaHorariaSegundoPeriodo: 0, periodoDescanso: 0 };
+          cargaHorariaNoturna: number;
+          cargaHorariaCompleta: string;
+        } = {
+          cargaHoraria: 0,
+          cargaHorariaPrimeiroPeriodo: 0,
+          cargaHorariaSegundoPeriodo: 0,
+          periodoDescanso: 0,
+          cargaHorariaNoturna: 0,
+          cargaHorariaCompleta: "",
+        };
 
         const horariosDoDia = horariosPorSemana[dia];
 
@@ -98,6 +113,11 @@ export class RecalcularTurnoController implements Controller {
         localOutput.cargaHorariaPrimeiroPeriodo = this.localizarPrimeiroPeriodo({ horarios: horariosDoDia });
         localOutput.cargaHorariaSegundoPeriodo = this.localizarSegundoPeriodo({ horarios: horariosDoDia });
         localOutput.cargaHoraria = localOutput.cargaHorariaPrimeiroPeriodo + localOutput.cargaHorariaSegundoPeriodo;
+        localOutput.cargaHorariaNoturna = this.localizarCargaHorariaNoturna({ horarios: horariosDoDia });
+        localOutput.cargaHorariaCompleta = this.gerarCargaHorariaCompleta({
+          horarios: horariosDoDia,
+          periodoDescanso: localOutput.periodoDescanso,
+        });
 
         const diasSemana = this.montarDiasDaSemana({ ...localOutput, ...{ dia } });
         diasSemana.map((diaSemanaLocal) => output.push({ ...diaSemanaLocal, ...{} }));
@@ -178,12 +198,127 @@ export class RecalcularTurnoController implements Controller {
     return minutos;
   }
 
+  private localizarCargaHorariaNoturna(input: { horarios: string[] }) {
+    let minutos = 0;
+    const [horaEntrada, minutoEntrada] = input.horarios[0].split(":");
+    const [horaSaida, minutoSaida] = input.horarios[1].split(":");
+
+    const inicio = moment()
+      .utc()
+      .set({
+        h: Number(horaEntrada),
+        m: Number(minutoEntrada),
+      });
+    const fim = moment()
+      .utc()
+      .set({
+        h: Number(horaSaida),
+        m: Number(minutoSaida),
+      });
+    minutos = minutos + this.localizarMinutosNoturno({ fim: fim.toDate(), inicio: inicio.toDate(), data: inicio.toDate() });
+
+    //2º Periodo se houver
+    if (input.horarios.length === 4) {
+      const [horaEntrada, minutoEntrada] = input.horarios[2].split(":");
+      const [horaSaida, minutoSaida] = input.horarios[3].split(":");
+
+      const inicioSegundo = moment()
+        .utc()
+        .set({
+          h: Number(horaEntrada),
+          m: Number(minutoEntrada),
+        });
+
+      const fimSegundo = moment()
+        .utc()
+        .set({
+          h: Number(horaSaida),
+          m: Number(minutoSaida),
+        });
+
+      if (inicio.isAfter(inicioSegundo)) inicioSegundo.add(1, "d");
+      if (inicio.isAfter(fimSegundo)) fimSegundo.add(1, "d");
+
+      minutos =
+        minutos +
+        this.localizarMinutosNoturno({ fim: fimSegundo.toDate(), inicio: inicioSegundo.toDate(), data: inicio.toDate() });
+    }
+
+    return minutos;
+  }
+
+  public localizarMinutosNoturno(input: { data: Date; inicio: Date; fim: Date }) {
+    let minutos = 0;
+    const inicioHorarioNoturno = moment.utc(input.data).set({
+      minute: this.inicioNoturno.minuto,
+      hour: this.inicioNoturno.hora,
+      second: -1,
+    });
+
+    const fimHorarioNoturno = moment.utc(input.data).set({
+      minute: this.fimNoturno.minuto,
+      hour: this.fimNoturno.hora,
+      second: 1,
+    });
+
+    fimHorarioNoturno.add(1, "day");
+
+    //Se o horario inicio e fim está completamente dentro do horario noturno
+    {
+      const inicioEstaEntreNoturno = moment.utc(input.inicio).isBetween(inicioHorarioNoturno, fimHorarioNoturno);
+      const fimEstaEntreNoturno = moment.utc(input.fim).isBetween(inicioHorarioNoturno, fimHorarioNoturno);
+
+      if (inicioEstaEntreNoturno && fimEstaEntreNoturno) return moment(input.fim).diff(input.inicio, "minutes");
+    }
+
+    //O fim termina com horario noturno
+    {
+      const estaNoFim = moment.utc(input.fim).isBetween(inicioHorarioNoturno, fimHorarioNoturno);
+
+      if (estaNoFim) return moment.utc(input.fim).diff(inicioHorarioNoturno, "minutes");
+    }
+
+    //Inicia com horario noturno e termina após horario noturno
+    {
+      const inicioEntre = moment.utc(input.inicio).isBetween(inicioHorarioNoturno, fimHorarioNoturno);
+      const fimDepois = moment.utc(input.fim).isAfter(fimHorarioNoturno);
+
+      if (inicioEntre && fimDepois) return moment.utc(fimHorarioNoturno).diff(input.inicio, "minutes");
+    }
+
+    return minutos;
+  }
+
+  public gerarCargaHorariaCompleta(input: { horarios: string[]; periodoDescanso: number }) {
+    let output = "";
+    for (let index = 0; index <= 3; index++) {
+      const horario = input.horarios[index];
+
+      let value = "";
+      if (horario) value = `${horario.replace(":", ".")}`;
+      else value = `00.00`;
+
+      output = `${output}${value};`;
+    }
+
+    let horas = Math.floor(input.periodoDescanso / 60); // Calcula as horas inteiras
+    let restoMinutos = input.periodoDescanso % 60; // Calcula os minutos restantes
+
+    const periodoDescanso = `${horas.toString().padStart(2, "0")}.${restoMinutos.toString().padStart(2, "0")}`;
+
+    output = `${output}${periodoDescanso}`;
+
+    return output;
+  }
+
   private montarDiasDaSemana(input: {
     dia: string;
     cargaHoraria: number;
     cargaHorariaPrimeiroPeriodo: number;
     cargaHorariaSegundoPeriodo: number;
     periodoDescanso: number;
+    cargaHorariaNoturna: number;
+    cargaHorariaCompleta: string;
   }) {
     const dias: {
       diaSemana: number;
@@ -191,6 +326,8 @@ export class RecalcularTurnoController implements Controller {
       cargaHorariaPrimeiroPeriodo: number;
       cargaHorariaSegundoPeriodo: number;
       periodoDescanso: number;
+      cargaHorariaNoturna: number;
+      cargaHorariaCompleta: string;
     }[] = [];
 
     //Entra se houver somente um dia semana
