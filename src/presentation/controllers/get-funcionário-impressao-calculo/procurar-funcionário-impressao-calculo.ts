@@ -153,7 +153,8 @@ export class GetFuncionarioImpressaoCalculoController implements Controller {
     let minutosNoturnos = 0;
 
     input.dia.eventos.filter((evento) => {
-      if (evento.tipoId !== 8 && evento.tipoId !== 11 && evento.tipoId !== 4) minutosDiurnos += evento.minutos;
+      if (evento.tipoId !== 8 && evento.tipoId !== 11 && evento.tipoId !== 4 && evento.tipoId !== 2)
+        minutosDiurnos += evento.minutos;
     });
 
     input.dia.eventos.filter((evento) => {
