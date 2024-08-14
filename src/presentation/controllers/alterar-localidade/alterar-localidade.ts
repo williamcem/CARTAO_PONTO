@@ -9,11 +9,13 @@ export class AlterarLocalidadeController implements Controller {
 
   async handle(httpRequest: HttpRequest): Promise<HttpResponse> {
     try {
-      const { funcionarioId, localidadeId, turnoId, inicioVigencia, fimVigencia } = httpRequest?.body;
+      const { funcionarioId, localidadeId, turnoId, inicioVigencia, fimVigencia, userName } = httpRequest?.body;
 
       if (!funcionarioId) return badRequest(new FuncionarioParamError("Falta funcionário!"));
       if (!inicioVigencia) return badRequest(new FuncionarioParamError("Falta inicio vigência!"));
       if (!fimVigencia) return badRequest(new FuncionarioParamError("Falta fim vigência!"));
+      if (!turnoId) return badRequest(new FuncionarioParamError("Falta turno!"));
+      if (!userName) return badRequest(new FuncionarioParamError("Falta username!"));
 
       if (!moment(inicioVigencia).isValid()) return badRequest(new FuncionarioParamError("Início vigência não é válido!"));
       if (!moment(fimVigencia).isValid()) return badRequest(new FuncionarioParamError("Fim vigência não é válido!"));
@@ -30,13 +32,32 @@ export class AlterarLocalidadeController implements Controller {
         if (!localidade) return notFoundRequest(new FuncionarioParamError(`Localidade ${localidadeId} não existe!`));
       }
 
-      if (turnoId) {
-        const turno = await this.alterarLocalidadePostgresRepository.findFisrtTurno({
-          id: turnoId,
-        });
+      const update: {
+        dias: {
+          id: number;
+          statusId: number;
+          periodoDescanso: number;
+          cargaHor: number;
+          cargaHorPrimeiroPeriodo: number;
+          cargaHorSegundoPeriodo: number;
+          cargaHorariaCompleta: string;
+          cargaHorariaNoturna: number;
+          updateAt: Date;
+          userName: string;
+        }[];
+        localidadeId?: string;
+      } = { dias: [], localidadeId };
 
-        if (!turno) return notFoundRequest(new FuncionarioParamError(`Turno ${localidadeId} não existe!`));
-      }
+      const turno = await this.alterarLocalidadePostgresRepository.findFisrtTurno({
+        id: turnoId,
+      });
+
+      if (!turno) return notFoundRequest(new FuncionarioParamError(`Turno ${turnoId} não existe!`));
+
+      if (!turno.turno_dias.length)
+        return notFoundRequest(
+          new FuncionarioParamError(`Turno ${turno.nome} não está configurados os dias.\nFavor Entrar em contato com o suporte!`),
+        );
 
       const dias = await this.alterarLocalidadePostgresRepository.findManyDias({
         fim: new Date(fimVigencia),
@@ -44,10 +65,44 @@ export class AlterarLocalidadeController implements Controller {
         funcionarioId: funcionario.id,
       });
 
+      dias.map((dia) => {
+        const updateAt = moment.utc().toDate();
+        const diaSemana = moment(dia.data).weekday();
+
+        const existeTurnoDia = turno.turno_dias.find((turnoDia) => turnoDia.diaSemana === diaSemana);
+
+        if (!existeTurnoDia)
+          update.dias.push({
+            id: dia.id,
+            cargaHor: 0,
+            cargaHorariaCompleta: "00.00;00.00;00.00;00.00;00.00",
+            cargaHorariaNoturna: 0,
+            cargaHorPrimeiroPeriodo: 0,
+            cargaHorSegundoPeriodo: 0,
+            periodoDescanso: 0,
+            statusId: 6,
+            updateAt,
+            userName,
+          });
+        else
+          update.dias.push({
+            id: dia.id,
+            cargaHor: existeTurnoDia.cargaHoraria,
+            cargaHorariaCompleta: existeTurnoDia.cargaHorariaCompleta,
+            cargaHorariaNoturna: existeTurnoDia.cargaHorariaNoturna,
+            cargaHorPrimeiroPeriodo: existeTurnoDia.cargaHorariaPrimeiroPeriodo,
+            cargaHorSegundoPeriodo: existeTurnoDia.cargaHorariaSegundoPeriodo,
+            periodoDescanso: existeTurnoDia.periodoDescanso,
+            statusId: 1,
+            updateAt,
+            userName,
+          });
+      });
+
       const saved = await this.alterarLocalidadePostgresRepository.updateFuncionario({
         id: funcionario.id,
         localidadeId,
-        turnoId: turnoId ? Number(turnoId) : undefined,
+        dias: update.dias,
       });
 
       if (!saved) serverError();

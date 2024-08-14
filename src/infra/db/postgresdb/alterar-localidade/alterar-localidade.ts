@@ -1,6 +1,6 @@
 import { PrismaClient } from "@prisma/client";
 
-import { prisma } from "../../../database/Prisma";
+import { prisma, prismaPromise } from "../../../database/Prisma";
 
 export class AlterarLocalidadePostgresRepository {
   private prisma: PrismaClient;
@@ -45,30 +45,58 @@ export class AlterarLocalidadePostgresRepository {
     };
   }
 
-  public async findFisrtTurno(input: { id: number }): Promise<
-    | {
-        id: number;
-        nome: string;
-      }
-    | undefined
-  > {
-    const result = await this.prisma.turno.findFirst({ where: { id: input.id } });
+  public async findFisrtTurno(input: { id: number }) {
+    const result = await this.prisma.turno.findFirst({ where: { id: input.id }, include: { turno_dias: true } });
 
     if (!result) return undefined;
 
-    return {
-      id: result.id,
-      nome: result.nome,
-    };
+    return result;
   }
 
-  public async updateFuncionario(input: { id: number; turnoId?: number; localidadeId?: string }): Promise<boolean> {
-    const result = await this.prisma.funcionario.update({
-      where: { id: input.id },
-      data: { localidadeId: input.localidadeId, turnoId: input.turnoId },
+  public async updateFuncionario(input: {
+    id: number;
+    localidadeId?: string;
+    dias: {
+      id: number;
+      statusId: number;
+      periodoDescanso: number;
+      cargaHor: number;
+      cargaHorPrimeiroPeriodo: number;
+      cargaHorSegundoPeriodo: number;
+      cargaHorariaCompleta: string;
+      cargaHorariaNoturna: number;
+      updateAt: Date;
+      userName: string;
+    }[];
+  }): Promise<boolean> {
+    const queries: prismaPromise[] = [];
+    queries.push(
+      this.prisma.funcionario.update({
+        where: { id: input.id },
+        data: { localidadeId: input.localidadeId },
+      }),
+    );
+
+    input.dias.map((dia) => {
+      queries.push(
+        this.prisma.cartao_dia.update({
+          where: { id: dia.id },
+          data: {
+            cargaHor: dia.cargaHor,
+            cargaHorPrimeiroPeriodo: dia.cargaHorPrimeiroPeriodo,
+            cargaHorSegundoPeriodo: dia.cargaHorSegundoPeriodo,
+            cargaHorariaCompleta: dia.cargaHorariaCompleta,
+            cargaHorariaNoturna: dia.cargaHorariaNoturna,
+            periodoDescanso: dia.periodoDescanso,
+            statusId: dia.statusId,
+            updateAt: dia.updateAt,
+            userName: dia.userName,
+          },
+        }),
+      );
     });
 
-    return Boolean(result);
+    return Boolean((await this.prisma.$transaction(queries)).length);
   }
 
   public async findManyDias(input: { inicio: Date; fim: Date; funcionarioId: number }) {
