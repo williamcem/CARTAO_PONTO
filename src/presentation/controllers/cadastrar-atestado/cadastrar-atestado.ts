@@ -38,6 +38,7 @@ export class AtestadoController implements Controller {
         nome_acompanhante,
         exame,
         tipoGrauParentescoId,
+        crm,
       } = httpRequest.body;
 
       if (!userName) return badRequest(new FuncionarioParamError("Falta Usuário!"));
@@ -96,6 +97,7 @@ export class AtestadoController implements Controller {
         nome_acompanhante: nome_acompanhante ? nome_acompanhante.toUpperCase() : undefined,
         exame: exame ? exame.toUpperCase() : undefined,
         tipoGrauParentescoId,
+        crm
       });
 
       if (!atestadoSalvo) throw new Error("Erro ao salvar atestado!");
