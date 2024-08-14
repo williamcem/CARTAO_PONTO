@@ -45,13 +45,19 @@ export class AlterarLocalidadeController implements Controller {
           updateAt: Date;
           userName: string;
         }[];
-      } = { dias: [] };
+        localidadeId?: string;
+      } = { dias: [], localidadeId };
 
       const turno = await this.alterarLocalidadePostgresRepository.findFisrtTurno({
         id: turnoId,
       });
 
-      if (!turno) return notFoundRequest(new FuncionarioParamError(`Turno ${localidadeId} não existe!`));
+      if (!turno) return notFoundRequest(new FuncionarioParamError(`Turno ${turnoId} não existe!`));
+
+      if (!turno.turno_dias.length)
+        return notFoundRequest(
+          new FuncionarioParamError(`Turno ${turno.nome} não está configurados os dias.\nFavor Entrar em contato com o suporte!`),
+        );
 
       const dias = await this.alterarLocalidadePostgresRepository.findManyDias({
         fim: new Date(fimVigencia),
@@ -65,7 +71,7 @@ export class AlterarLocalidadeController implements Controller {
 
         const existeTurnoDia = turno.turno_dias.find((turnoDia) => turnoDia.diaSemana === diaSemana);
 
-        if (!existeTurnoDia) {
+        if (!existeTurnoDia)
           update.dias.push({
             id: dia.id,
             cargaHor: 0,
@@ -78,12 +84,12 @@ export class AlterarLocalidadeController implements Controller {
             updateAt,
             userName,
           });
-        } else {
+        else
           update.dias.push({
             id: dia.id,
             cargaHor: existeTurnoDia.cargaHoraria,
-            cargaHorariaCompleta: "00.00;00.00;00.00;00.00;00.00",
-            cargaHorariaNoturna: 0,
+            cargaHorariaCompleta: existeTurnoDia.cargaHorariaCompleta,
+            cargaHorariaNoturna: existeTurnoDia.cargaHorariaNoturna,
             cargaHorPrimeiroPeriodo: existeTurnoDia.cargaHorariaPrimeiroPeriodo,
             cargaHorSegundoPeriodo: existeTurnoDia.cargaHorariaSegundoPeriodo,
             periodoDescanso: existeTurnoDia.periodoDescanso,
@@ -91,15 +97,12 @@ export class AlterarLocalidadeController implements Controller {
             updateAt,
             userName,
           });
-        }
       });
-
-      console.log(update);
 
       const saved = await this.alterarLocalidadePostgresRepository.updateFuncionario({
         id: funcionario.id,
         localidadeId,
-        turnoId: turnoId ? Number(turnoId) : undefined,
+        dias: update.dias,
       });
 
       if (!saved) serverError();
