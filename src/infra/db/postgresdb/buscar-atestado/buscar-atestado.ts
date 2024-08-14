@@ -31,6 +31,7 @@ export class BuscarAtestadoPostgresRepository {
         tipo_status: true,
         tipos_documentos: true,
         tipo_eventos: true,
+        funcionario: { select: { localidadeId: true } },
       },
     });
 
