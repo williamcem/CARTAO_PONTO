@@ -255,7 +255,7 @@ export class CriarEventosPostgresRepository implements AdicionarEventos {
     } else if (periodoId === 2) {
       const resultado2 = this.criarEventoPeriodo2(lancamento, entrada, saida, horarioSaidaEsperado, eventos, eventosExcendentes);
       if (resultado2) excedeu = true;
-    }
+    } else if (periodoId === 3) this.criarEventoPeriodo3(lancamento, entrada, saida, eventos);
 
     if (isUltimoPeriodo) {
       const eventoAdicionalNoturno = criarEventoAdicionalNoturno(horarioSaidaEsperado, saida, lancamento);
@@ -436,6 +436,20 @@ export class CriarEventosPostgresRepository implements AdicionarEventos {
     }
 
     return excedeu;
+  }
+
+  private criarEventoPeriodo3(lancamento: any, entrada: moment.Moment, saida: moment.Moment, eventos: any[]) {
+    const minutos = saida.diff(entrada, "minutes");
+
+    const eventoTrabalhado = {
+      cartaoDiaId: lancamento.cartao_dia.id,
+      hora: `${entrada.format("HH:mm")} - ${saida.format("HH:mm")}`,
+      tipoId: 1,
+      funcionarioId: lancamento.cartao_dia.cartao.funcionario.id,
+      minutos: minutos,
+    };
+
+    eventos.push(eventoTrabalhado);
   }
 
   public extrairIntervalosEntrePeriodos(
