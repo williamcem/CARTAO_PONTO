@@ -99,7 +99,7 @@ export class AtestadoController implements Controller {
         nome_acompanhante: nome_acompanhante ? nome_acompanhante.toUpperCase() : undefined,
         exame: exame ? exame.toUpperCase() : undefined,
         tipoGrauParentescoId,
-        crm,
+        crm
       });
 
       if (!atestadoSalvo) throw new Error("Erro ao salvar atestado!");

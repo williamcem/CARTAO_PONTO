@@ -70,4 +70,10 @@ export class AlterarLocalidadePostgresRepository {
 
     return Boolean(result);
   }
+
+  public async findManyDias(input: { inicio: Date; fim: Date; funcionarioId: number }) {
+    return await this.prisma.cartao_dia.findMany({
+      where: { data: { gte: input.inicio, lte: input.fim }, cartao: { funcionarioId: input.funcionarioId } },
+    });
+  }
 }
