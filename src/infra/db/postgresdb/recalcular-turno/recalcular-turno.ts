@@ -21,6 +21,8 @@ export class RecalcularTurnoPostgresRepository {
       cargaHorariaPrimeiroPeriodo: number;
       cargaHorariaSegundoPeriodo: number;
       periodoDescanso: number;
+      cargaHorariaNoturna: number;
+      cargaHorariaCompleta: string;
     }[],
   ) {
     const queries: prismaPromise[] = [];
@@ -37,6 +39,8 @@ export class RecalcularTurnoPostgresRepository {
             diaSemana: dia.diaSemana,
             periodoDescanso: dia.periodoDescanso,
             turnoId: dia.turnoId,
+            cargaHorariaNoturna: dia.cargaHorariaNoturna,
+            cargaHorariaCompleta: dia.cargaHorariaCompleta,
           },
         }),
       );
