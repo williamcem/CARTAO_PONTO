@@ -64,6 +64,7 @@ export class ListarAtestadoRepsository implements ListarAtestado {
         entrada: valor.entrada,
         saida: valor.saida,
       })),
+      localidadeId: atestado.funcionario.localidadeId,
     }));
   }
 }
