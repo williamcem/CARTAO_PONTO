@@ -45,21 +45,12 @@ export class AlterarLocalidadePostgresRepository {
     };
   }
 
-  public async findFisrtTurno(input: { id: number }): Promise<
-    | {
-        id: number;
-        nome: string;
-      }
-    | undefined
-  > {
-    const result = await this.prisma.turno.findFirst({ where: { id: input.id } });
+  public async findFisrtTurno(input: { id: number }) {
+    const result = await this.prisma.turno.findFirst({ where: { id: input.id }, include: { turno_dias: true } });
 
     if (!result) return undefined;
 
-    return {
-      id: result.id,
-      nome: result.nome,
-    };
+    return result;
   }
 
   public async updateFuncionario(input: { id: number; turnoId?: number; localidadeId?: string }): Promise<boolean> {
