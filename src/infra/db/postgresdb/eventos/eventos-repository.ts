@@ -672,10 +672,6 @@ export class CriarEventosPostgresRepository implements AdicionarEventos {
 
         const diferencaComCargaHoraria = dia?.cargaHor - minutosTrabalhados;
 
-        /*         if (eventoAgrupado.cartaoDiaId === 105398) {
-          console.log("bateu");
-        } */
-
         if (diferencaComCargaHoraria >= -10 && diferencaComCargaHoraria <= 10) {
           const removerNegativoIndex: number[] = [];
           input.eventos.map((evento, index) => {
@@ -812,10 +808,6 @@ export class CriarEventosPostgresRepository implements AdicionarEventos {
         });
 
         const diferencaComCargaHoraria = dia?.cargaHor - minutosTrabalhados;
-
-        if (eventoAgrupado.cartaoDiaId === 105398) {
-          console.log(eventoAgrupado.cartaoDiaId);
-        }
 
         if (diferencaComCargaHoraria < -10) {
           const eventosNegativosIndex: number[] = [];
