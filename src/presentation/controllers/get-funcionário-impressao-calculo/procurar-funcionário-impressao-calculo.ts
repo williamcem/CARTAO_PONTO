@@ -19,6 +19,8 @@ interface ResumoDoDiaInput {
     eventos: { tipoId: number; minutos: number; tratado: boolean }[];
     abono: { minutos: number };
   };
+  atual: { diurno: { ext1: number; ext2: number; ext3: number }; noturno: { ext1: number; ext2: number; ext3: number } };
+  anterior: { diurno: { ext1: number; ext2: number; ext3: number }; noturno: { ext1: number; ext2: number; ext3: number } };
 }
 
 export class GetFuncionarioImpressaoCalculoController implements Controller {
@@ -71,7 +73,8 @@ export class GetFuncionarioImpressaoCalculoController implements Controller {
             dia.atestado_abonos.map((abono) => abono.minutos + abono.minutos);
 
             const resumo = this.calcularResumoPorDia({
-              dia: { id: cartao.id, eventos, abono, cargaHorariaTotal: dia.cargaHor },
+              ...{ dia: { id: cartao.id, eventos, abono, cargaHorariaTotal: dia.cargaHor } },
+              ...resumoCartao,
             });
 
             resumoCartao.atual.diurno.ext1 += resumo.diurno.ext1;
@@ -168,7 +171,20 @@ export class GetFuncionarioImpressaoCalculoController implements Controller {
     if (minutosDiurnos > 0) {
       const [ext1, ext2, ext3] = this.inserirRegraPorHoraExtra({ minutos: minutosDiurnos, parametros: [60, 60, 9999] });
       output.diurno = { ext1, ext2, ext3 };
-    } else if (minutosDiurnos < 0) output.diurno = { ext1: minutosDiurnos, ext2: 0, ext3: 0 };
+    } else if (minutosDiurnos < 0) {
+      let saldoPositivo = false;
+
+      if (
+        input.atual.diurno.ext1 > 0 ||
+        input.atual.diurno.ext2 > 0 ||
+        input.atual.diurno.ext3 > 0 ||
+        input.atual.noturno.ext1 > 0 ||
+        input.atual.noturno.ext2 > 0 ||
+        input.atual.noturno.ext3 > 0
+      )
+        saldoPositivo = true;
+      output.diurno = { ext1: saldoPositivo ? Number((minutosDiurnos / 1.6).toFixed()) : minutosDiurnos, ext2: 0, ext3: 0 };
+    }
 
     if (minutosNoturnos > 0) {
       const [ext1, ext2, ext3] = this.inserirRegraPorHoraExtra({ minutos: minutosNoturnos, parametros: [60, 60, 9999] });
