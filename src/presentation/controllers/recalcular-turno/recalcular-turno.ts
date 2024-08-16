@@ -215,7 +215,8 @@ export class RecalcularTurnoController implements Controller {
         h: Number(horaSaida),
         m: Number(minutoSaida),
       });
-    minutos = minutos + this.localizarMinutosNoturno({ fim: fim.toDate(), inicio: inicio.toDate(), data: inicio.toDate() });
+    minutos =
+      minutos + this.localizarMinutosNoturno({ fim: fim.toDate(), inicio: inicio.toDate(), data: inicio.toDate() }).minutos;
 
     //2º Periodo se houver
     if (input.horarios.length === 4) {
@@ -241,14 +242,20 @@ export class RecalcularTurnoController implements Controller {
 
       minutos =
         minutos +
-        this.localizarMinutosNoturno({ fim: fimSegundo.toDate(), inicio: inicioSegundo.toDate(), data: inicio.toDate() });
+        this.localizarMinutosNoturno({ fim: fimSegundo.toDate(), inicio: inicioSegundo.toDate(), data: inicio.toDate() }).minutos;
     }
 
     return minutos;
   }
 
   public localizarMinutosNoturno(input: { data: Date; inicio: Date; fim: Date }) {
-    let minutos = 0;
+    const output = {
+      minutos: 0,
+      inicio: undefined,
+      final: undefined,
+      tipo: 0, //0-Sem tratamento, 1-Todo periodo, 2-Antes
+    };
+
     const inicioHorarioNoturno = moment.utc(input.data).set({
       minute: this.inicioNoturno.minuto,
       hour: this.inicioNoturno.hora,
@@ -261,32 +268,98 @@ export class RecalcularTurnoController implements Controller {
       second: 1,
     });
 
+    const inicioHorarioNoturnoAnterior = moment.utc(input.data).set({
+      minute: this.inicioNoturno.minuto,
+      hour: this.inicioNoturno.hora,
+      second: -1,
+      days: -1,
+    });
+
+    const fimHorarioNoturnoAnterior = moment.utc(input.data).set({
+      minute: this.fimNoturno.minuto,
+      hour: this.fimNoturno.hora,
+      second: 1,
+    });
+
     fimHorarioNoturno.add(1, "day");
 
-    //Se o horario inicio e fim está completamente dentro do horario noturno
+    //Noturno dia atual
     {
-      const inicioEstaEntreNoturno = moment.utc(input.inicio).isBetween(inicioHorarioNoturno, fimHorarioNoturno);
-      const fimEstaEntreNoturno = moment.utc(input.fim).isBetween(inicioHorarioNoturno, fimHorarioNoturno);
+      //Se o horario inicio e fim está completamente dentro do horario noturno
+      {
+        const inicioEstaEntreNoturno = moment.utc(input.inicio).isBetween(inicioHorarioNoturno, fimHorarioNoturno);
+        const fimEstaEntreNoturno = moment.utc(input.fim).isBetween(inicioHorarioNoturno, fimHorarioNoturno);
 
-      if (inicioEstaEntreNoturno && fimEstaEntreNoturno) return moment(input.fim).diff(input.inicio, "minutes");
+        if (inicioEstaEntreNoturno && fimEstaEntreNoturno)
+          return { minutos: moment(input.fim).diff(input.inicio, "minutes"), inicio: input.inicio, final: input.fim };
+      }
+
+      //O fim termina com horario noturno
+      {
+        const estaNoFim = moment.utc(input.fim).isBetween(inicioHorarioNoturno, fimHorarioNoturno);
+
+        if (estaNoFim)
+          return {
+            minutos: moment.utc(input.fim).diff(inicioHorarioNoturno, "minutes"),
+            inicio: inicioHorarioNoturno.add(1, "second").toDate(),
+            final: input.fim,
+          };
+      }
+
+      //Inicia com horario noturno e termina após horario noturno
+      {
+        const inicioEntre = moment.utc(input.inicio).isBetween(inicioHorarioNoturno, fimHorarioNoturno);
+        const fimDepois = moment.utc(input.fim).isAfter(fimHorarioNoturno);
+
+        if (inicioEntre && fimDepois)
+          return {
+            minutos: moment.utc(fimHorarioNoturno).diff(input.inicio, "minutes"),
+            inicio: input.inicio,
+            final: fimHorarioNoturno.subtract(1, "second").toDate(),
+          };
+      }
     }
 
-    //O fim termina com horario noturno
+    //Noturno dia anterior
     {
-      const estaNoFim = moment.utc(input.fim).isBetween(inicioHorarioNoturno, fimHorarioNoturno);
+      //Se o horario inicio e fim está completamente dentro do horario noturno
+      {
+        const inicioEstaEntreNoturno = moment
+          .utc(input.inicio)
+          .isBetween(inicioHorarioNoturnoAnterior, fimHorarioNoturnoAnterior);
+        const fimEstaEntreNoturno = moment.utc(input.fim).isBetween(inicioHorarioNoturnoAnterior, fimHorarioNoturnoAnterior);
 
-      if (estaNoFim) return moment.utc(input.fim).diff(inicioHorarioNoturno, "minutes");
+        if (inicioEstaEntreNoturno && fimEstaEntreNoturno)
+          return { minutos: moment(input.fim).diff(input.inicio, "minutes"), inicio: input.inicio, final: input.fim };
+      }
+
+      //O fim termina com horario noturno
+      {
+        const estaNoFim = moment.utc(input.fim).isBetween(inicioHorarioNoturnoAnterior, fimHorarioNoturnoAnterior);
+
+        if (estaNoFim)
+          return {
+            minutos: moment.utc(input.fim).diff(inicioHorarioNoturnoAnterior, "minutes"),
+            inicio: inicioHorarioNoturnoAnterior.add(1, "second").toDate(),
+            final: input.fim,
+          };
+      }
+
+      //Inicia com horario noturno e termina após horario noturno
+      {
+        const inicioEntre = moment.utc(input.inicio).isBetween(inicioHorarioNoturnoAnterior, fimHorarioNoturnoAnterior);
+        const fimDepois = moment.utc(input.fim).isAfter(fimHorarioNoturnoAnterior);
+
+        if (inicioEntre && fimDepois)
+          return {
+            minutos: moment.utc(fimHorarioNoturnoAnterior).diff(input.inicio, "minutes"),
+            inicio: input.inicio,
+            final: fimHorarioNoturnoAnterior.subtract(1, "second").toDate(),
+          };
+      }
     }
 
-    //Inicia com horario noturno e termina após horario noturno
-    {
-      const inicioEntre = moment.utc(input.inicio).isBetween(inicioHorarioNoturno, fimHorarioNoturno);
-      const fimDepois = moment.utc(input.fim).isAfter(fimHorarioNoturno);
-
-      if (inicioEntre && fimDepois) return moment.utc(fimHorarioNoturno).diff(input.inicio, "minutes");
-    }
-
-    return minutos;
+    return output;
   }
 
   public gerarCargaHorariaCompleta(input: { horarios: string[]; periodoDescanso: number }) {
