@@ -1,10 +1,13 @@
-import { cartao } from "@prisma/client";
 import { describe, expect, test } from "vitest";
 
 import { CriarEventosPostgresRepository } from "./eventos-repository";
+import { RecalcularTurnoController } from "../../../../presentation/controllers/recalcular-turno/recalcular-turno";
+import { RecalcularTurnoPostgresRepository } from "../recalcular-turno/recalcular-turno";
 
 describe("Gerar Eventos", () => {
-  const criarEventosPostgresRepository = new CriarEventosPostgresRepository();
+  const recalcularTurnoPostgresRepository = new RecalcularTurnoPostgresRepository();
+  const recalcularTurnoController = new RecalcularTurnoController(recalcularTurnoPostgresRepository);
+  const criarEventosPostgresRepository = new CriarEventosPostgresRepository(recalcularTurnoController);
 
   test("Teste carga 18.00;23.30;00.30;01.54;01.09 -- Somente o segundo periodo, cargaHor 414", async () => {
     const lancamentos = [
@@ -870,7 +873,9 @@ describe("Gerar Eventos", () => {
 });
 
 describe("Achar Regra", () => {
-  const criarEventosPostgresRepository = new CriarEventosPostgresRepository();
+  const recalcularTurnoPostgresRepository = new RecalcularTurnoPostgresRepository();
+  const recalcularTurnoController = new RecalcularTurnoController(recalcularTurnoPostgresRepository);
+  const criarEventosPostgresRepository = new CriarEventosPostgresRepository(recalcularTurnoController);
 
   test("1ª", async () => {
     const regra = criarEventosPostgresRepository.acharRegraMinutosResiduais({
@@ -996,5 +1001,125 @@ describe("Achar Regra", () => {
     });
 
     expect(regra).toStrictEqual(1);
+  });
+});
+
+describe.only("Localizar horario fora do previsto", () => {
+  const recalcularTurnoPostgresRepository = new RecalcularTurnoPostgresRepository();
+  const recalcularTurnoController = new RecalcularTurnoController(recalcularTurnoPostgresRepository);
+  const criarEventosPostgresRepository = new CriarEventosPostgresRepository(recalcularTurnoController);
+
+  test("Entrada e saida não está na jornada", () => {
+    const result = criarEventosPostgresRepository.localizarHorarioForaDaJornadaPrevista({
+      dia: {
+        data: new Date("2024-07-31T00:00:00Z"),
+        cargaHor: 528,
+        cargaHorariaCompleta: "07.12;11.00;12.00;17.00;01.00",
+        cargaHorSegundoPeriodo: 300,
+      },
+      entrada: new Date("2024-07-31T19:20:00Z"),
+      saida: new Date("2024-07-31T22:18:00Z"),
+    });
+
+    expect(result).toStrictEqual([{ inicio: new Date("2024-07-31T19:20:00.000Z"), fim: new Date("2024-07-31T22:18:00.000Z") }]);
+  });
+
+  test("Entrada antes do inicio da jornada e saida dentro da jornada", () => {
+    const result = criarEventosPostgresRepository.localizarHorarioForaDaJornadaPrevista({
+      dia: {
+        data: new Date("2024-07-31T00:00:00Z"),
+        cargaHor: 528,
+        cargaHorariaCompleta: "07.12;11.00;12.00;17.00;01.00",
+        cargaHorSegundoPeriodo: 300,
+      },
+      entrada: new Date("2024-07-31T06:00:00Z"),
+      saida: new Date("2024-07-31T12:30:00Z"),
+    });
+
+    expect(result).toStrictEqual([{ inicio: new Date("2024-07-31T06:00:00Z"), fim: new Date("2024-07-31T07:12:00.000Z") }]);
+  });
+
+  test("Se o inicio está antes do inicio da jornada e o fim está depois do fim da jornada", () => {
+    const result = criarEventosPostgresRepository.localizarHorarioForaDaJornadaPrevista({
+      dia: {
+        data: new Date("2024-07-31T00:00:00Z"),
+        cargaHor: 528,
+        cargaHorariaCompleta: "07.12;11.00;12.00;17.00;01.00",
+        cargaHorSegundoPeriodo: 300,
+      },
+      entrada: new Date("2024-07-31T06:00:00Z"),
+      saida: new Date("2024-07-31T19:20:00Z"),
+    });
+
+    expect(result).toStrictEqual([
+      {
+        fim: new Date("2024-07-31T07:12:00.000Z"),
+        inicio: new Date("2024-07-31T06:00:00.000Z"),
+      },
+      {
+        fim: new Date("2024-07-31T19:20:00.000Z"),
+        inicio: new Date("2024-07-31T17:00:00.000Z"),
+      },
+    ]);
+  });
+
+  test("Se a entrada está entre a jornada e o saida está após o fim da jornada", () => {
+    const result = criarEventosPostgresRepository.localizarHorarioForaDaJornadaPrevista({
+      dia: {
+        data: new Date("2024-07-31T00:00:00Z"),
+        cargaHor: 528,
+        cargaHorariaCompleta: "07.12;11.00;12.00;17.00;01.00",
+        cargaHorSegundoPeriodo: 300,
+      },
+      entrada: new Date("2024-07-31T07:50:00Z"),
+      saida: new Date("2024-07-31T19:20:00Z"),
+    });
+
+    expect(result).toStrictEqual([
+      {
+        fim: new Date("2024-07-31T19:20:00.000Z"),
+        inicio: new Date("2024-07-31T17:00:00.000Z"),
+      },
+    ]);
+  });
+
+  test("Se a entrada está entre a jornada e o saida está após o fim da jornada", () => {
+    const result = criarEventosPostgresRepository.localizarHorarioForaDaJornadaPrevista({
+      dia: {
+        data: new Date("2024-07-31T00:00:00Z"),
+        cargaHor: 528,
+        cargaHorariaCompleta: "07.12;11.00;12.00;17.00;01.00",
+        cargaHorSegundoPeriodo: 300,
+      },
+      entrada: new Date("2024-07-31T07:50:00Z"),
+      saida: new Date("2024-07-31T19:20:00Z"),
+    });
+
+    expect(result).toStrictEqual([
+      {
+        fim: new Date("2024-07-31T19:20:00.000Z"),
+        inicio: new Date("2024-07-31T17:00:00.000Z"),
+      },
+    ]);
+  });
+
+  test("Se a entrada está entre a jornada e o saida está após o fim da jornada", () => {
+    const result = criarEventosPostgresRepository.localizarHorarioForaDaJornadaPrevista({
+      dia: {
+        data: new Date("2024-07-30T00:00:00Z"),
+        cargaHor: 460,
+        cargaHorariaCompleta: "03.30;09.30;10.30;12.10;01.00",
+        cargaHorSegundoPeriodo: 100,
+      },
+      entrada: new Date("2024-07-30T02:45:00Z"),
+      saida: new Date("2024-07-30T08:28:00Z"),
+    });
+
+    expect(result).toStrictEqual([
+      {
+        fim: new Date("2024-07-30T03:30:00.000Z"),
+        inicio: new Date("2024-07-30T02:45:00.000Z"),
+      },
+    ]);
   });
 });
