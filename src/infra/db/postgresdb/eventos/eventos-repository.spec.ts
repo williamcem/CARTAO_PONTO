@@ -1004,7 +1004,7 @@ describe("Achar Regra", () => {
   });
 });
 
-describe.only("Localizar horario fora do previsto", () => {
+describe("Localizar horario fora do previsto", () => {
   const recalcularTurnoPostgresRepository = new RecalcularTurnoPostgresRepository();
   const recalcularTurnoController = new RecalcularTurnoController(recalcularTurnoPostgresRepository);
   const criarEventosPostgresRepository = new CriarEventosPostgresRepository(recalcularTurnoController);
