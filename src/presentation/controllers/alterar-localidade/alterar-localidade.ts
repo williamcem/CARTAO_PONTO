@@ -106,6 +106,8 @@ export class AlterarLocalidadeController implements Controller {
         turnoId: turno.id,
         dias: update.dias,
         userName: userName,
+        fim: moment.utc(fimVigencia).toDate(),
+        inicio: moment.utc(inicioVigencia).toDate(),
       });
 
       if (!saved) serverError();
