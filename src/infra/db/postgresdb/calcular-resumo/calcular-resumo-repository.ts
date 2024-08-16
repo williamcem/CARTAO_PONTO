@@ -5,7 +5,6 @@ import { ResumoModel } from "@domain/models/calcular-resumo";
 
 import { CalcularResumoDia } from "../../../../domain/usecases/calcular-resumo";
 import { prisma } from "../../../database/Prisma";
-import { arredondarParteDecimal, arredondarParteDecimalHoras } from "./utils";
 
 export class CalcularResumoPostgresRepository implements CalcularResumoDia {
   private prisma: PrismaClient;
