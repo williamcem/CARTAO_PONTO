@@ -4,7 +4,6 @@ import moment from "moment";
 import { prisma } from "@infra/database/Prisma";
 
 import { AdicionarEventos } from "../../../../data/usecase/add-eventos/add-eventos";
-import { criarEventoAdicionalNoturno } from "./adicionalNoturno";
 import { criarEventoIntervaloEntrePeriodos } from "./intervaloEntrePeriodos";
 import { RecalcularTurnoController } from "../../../../presentation/controllers/recalcular-turno/recalcular-turno";
 import { arredondarParteDecimal } from "./utils";
@@ -263,16 +262,6 @@ export class CriarEventosPostgresRepository implements AdicionarEventos {
       const resultado2 = this.criarEventoPeriodo2(lancamento, entrada, saida, horarioSaidaEsperado, eventos, eventosExcendentes);
       if (resultado2) excedeu = true;
     } else if (periodoId === 3) this.criarEventoPeriodo3(lancamento, entrada, saida, eventos);
-
-    if (isUltimoPeriodo) {
-      const eventoAdicionalNoturno = criarEventoAdicionalNoturno(horarioSaidaEsperado, saida, lancamento);
-      if (eventoAdicionalNoturno) {
-        eventos.push({ ...eventoAdicionalNoturno, ...{ periodoId: lancamento.periodoId } });
-        console.log(
-          `Evento Adicional Noturno criado: ${eventoAdicionalNoturno.hora} - Tipo: ${eventoAdicionalNoturno.tipoId} - Minutos: ${eventoAdicionalNoturno.minutos}`,
-        );
-      }
-    }
 
     return excedeu;
   }
