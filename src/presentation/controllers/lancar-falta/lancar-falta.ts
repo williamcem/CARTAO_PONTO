@@ -84,6 +84,9 @@ export class LancarFaltaController implements Controller {
 
       if (evento.minutos === 0) return badRequest(new FuncionarioParamError(`Evento de ausência já criado!`));
 
+      //Não criar evento se os minutos forem positivo
+      if (evento.minutos > 0) return ok({ message: true });
+
       const saved = await this.salvarEvento(evento);
 
       if (typeof saved === "boolean") return ok({ message: saved });
