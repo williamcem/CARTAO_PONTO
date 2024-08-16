@@ -14,33 +14,6 @@ export function calcularTotalMinutos(entrada: string, saida: string, extra?: str
   return totalMinutosSaida - totalMinutosEntrada;
 }
 
-export function arredondarParteDecimalHoras(numero: number): number {
-  const inteiro = Math.floor(numero); // Obtém a parte inteira do número
-  const decimal = numero - inteiro; // Obtém a parte decimal do número
-  const terceiraCasa = Math.floor((decimal * 1000) % 10); // Obtém a terceira casa decimal
-
-  // Verifica se a terceira casa decimal é maior ou igual a 6
-  if (terceiraCasa >= 6) {
-    // Arredonda para cima a segunda casa decimal
-    return Math.round(numero * 100) / 100;
-  } else {
-    // Trunca para duas casas decimais
-    return Math.floor(numero * 100) / 100;
-  }
-}
-
-export function arredondarParteDecimal(numero: number): number {
-  const inteiro = Math.floor(numero); // Obtém a parte inteira do número
-  const decimal = numero - inteiro; // Obtém a parte decimal do número
-
-  // Se a parte decimal for maior ou igual a 0.6, arredonde para cima
-  if (decimal >= 0.6) {
-    return inteiro + 1; // Adiciona 1 para arredondar para cima
-  } else {
-    return inteiro; // Mantém o inteiro, arredondando para baixo
-  }
-}
-
 export const BuscarHorarioNortunoEmMinutos = (data: moment.Moment, inicial: moment.Moment, final: moment.Moment): number => {
   let difMinNotuno = 0;
   const inicioAdicional = moment(data).utc(false).minutes(0).seconds(0).hour(22);

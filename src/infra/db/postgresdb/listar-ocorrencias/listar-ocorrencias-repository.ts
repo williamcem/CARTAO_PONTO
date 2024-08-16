@@ -1,7 +1,6 @@
 import { PrismaClient } from "@prisma/client";
 import { ListarOcorrencias } from "../../../../data/usecase/listar-ocorrencias/add-listar-ocorrencias";
 import { prisma } from "../../../database/Prisma";
-import { arredondarParteDecimalHoras } from "../eventos/utils";
 import { OcorrenciasNull } from "../../../../presentation/errors/Funcionario-param-error";
 
 export class OcorrenciaPostgresRepository implements ListarOcorrencias {
@@ -43,10 +42,10 @@ export class OcorrenciaPostgresRepository implements ListarOcorrencias {
       }
     }
 
-    horasDiurno60 = arredondarParteDecimalHoras(somaMovimentacao60 / 60);
-    horasDiurno100 = arredondarParteDecimalHoras(somaMovimentacao100 / 60);
-    horasNoturno60 = arredondarParteDecimalHoras(somaMovimentacaoNoturna60 / 60);
-    horasNoturno100 = arredondarParteDecimalHoras(somaMovimentacaoNoturna100 / 60);
+    horasDiurno60 = Number((somaMovimentacao60 / 60).toFixed());
+    horasDiurno100 = Number((somaMovimentacao100 / 60).toFixed());
+    horasNoturno60 = Number((somaMovimentacaoNoturna60 / 60).toFixed());
+    horasNoturno100 = Number((somaMovimentacaoNoturna100 / 60).toFixed());
 
     return {
       movimentacao: {

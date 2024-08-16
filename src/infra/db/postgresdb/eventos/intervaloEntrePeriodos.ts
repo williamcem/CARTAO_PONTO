@@ -1,7 +1,5 @@
 import moment from "moment";
 
-import { arredondarParteDecimal } from "./utils";
-
 export function calcularIntervaloEntrePeriodos(
   horarioSaidaPrimeiroPeriodo: moment.Moment,
   horarioEntradaSegundoPeriodo: moment.Moment,
@@ -16,7 +14,6 @@ export function criarEventoIntervaloEntrePeriodos(
   lancamento: any,
   totalPeriodos: number,
 ): any {
-
   const minutosIntervalo = calcularIntervaloEntrePeriodos(horarioSaidaPrimeiroPeriodo, horarioEntradaSegundoPeriodo);
   if (minutosIntervalo !== 0) {
     const hora =
@@ -29,7 +26,7 @@ export function criarEventoIntervaloEntrePeriodos(
       hora,
       tipoId: 8, // Defina um tipoId apropriado para o intervalo entre períodos
       funcionarioId: lancamento.cartao_dia.cartao.funcionario.id,
-      minutos: arredondarParteDecimal(minutosIntervalo),
+      minutos: Number(minutosIntervalo.toFixed()),
     };
   }
   return null;

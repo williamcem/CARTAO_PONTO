@@ -6,7 +6,6 @@ import { prisma } from "@infra/database/Prisma";
 import { AdicionarEventos } from "../../../../data/usecase/add-eventos/add-eventos";
 import { criarEventoIntervaloEntrePeriodos } from "./intervaloEntrePeriodos";
 import { RecalcularTurnoController } from "../../../../presentation/controllers/recalcular-turno/recalcular-turno";
-import { arredondarParteDecimal } from "./utils";
 export class CriarEventosPostgresRepository implements AdicionarEventos {
   private prisma: PrismaClient;
 
@@ -921,7 +920,7 @@ export class CriarEventosPostgresRepository implements AdicionarEventos {
               minutos = noturno.minutos + diferencaComCargaHoraria;
               //Se a soma do resto da carga horaria com adicionar for positivo adiciona 1.14
               if (minutos > 0) {
-                minutos = arredondarParteDecimal(minutos * 1.14);
+                minutos = Number((minutos * 1.14).toFixed());
                 //Abona os minutos não trabalhados na jornada
                 input.eventos.push({
                   funcionarioId: eventoAgrupado.funcionarioId,
@@ -953,7 +952,7 @@ export class CriarEventosPostgresRepository implements AdicionarEventos {
                 });
               }
             } else {
-              minutos = arredondarParteDecimal(noturno.minutos * 1.14);
+              minutos = Number((noturno.minutos * 1.14).toFixed());
               //Gera evento adicional noturno
               input.eventos.push({
                 funcionarioId: eventoAgrupado.funcionarioId,
