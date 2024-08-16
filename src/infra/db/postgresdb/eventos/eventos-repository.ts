@@ -4,15 +4,16 @@ import moment from "moment";
 import { prisma } from "@infra/database/Prisma";
 
 import { AdicionarEventos } from "../../../../data/usecase/add-eventos/add-eventos";
-import { criarEventoAdicionalNoturno } from "./adicionalNoturno";
 import { criarEventoIntervaloEntrePeriodos } from "./intervaloEntrePeriodos";
-
+import { RecalcularTurnoController } from "../../../../presentation/controllers/recalcular-turno/recalcular-turno";
+import { arredondarParteDecimal } from "./utils";
 export class CriarEventosPostgresRepository implements AdicionarEventos {
   private prisma: PrismaClient;
 
-  constructor() {
+  constructor(private readonly recalcularTurnoController: RecalcularTurnoController) {
     this.prisma = prisma;
   }
+  public porcentagemAdicionalNoturno = 0.14;
 
   public async add(input: { identificacao?: string }): Promise<boolean> {
     const lancamentos = await this.prisma.cartao_dia_lancamento.findMany({
@@ -217,6 +218,11 @@ export class CriarEventosPostgresRepository implements AdicionarEventos {
       eventos = await this.removerEventosNegativoIncorreto({ eventos });
     }
 
+    //Cria eventos adicional nortuno
+    {
+      eventos = await this.criarAdicionalNoturno({ eventos });
+    }
+
     //APLICAR REGRA +10 -10
     {
       eventos = await this.aplicarTolerancia10Minutos({ eventos });
@@ -256,16 +262,6 @@ export class CriarEventosPostgresRepository implements AdicionarEventos {
       const resultado2 = this.criarEventoPeriodo2(lancamento, entrada, saida, horarioSaidaEsperado, eventos, eventosExcendentes);
       if (resultado2) excedeu = true;
     } else if (periodoId === 3) this.criarEventoPeriodo3(lancamento, entrada, saida, eventos);
-
-    if (isUltimoPeriodo) {
-      const eventoAdicionalNoturno = criarEventoAdicionalNoturno(horarioSaidaEsperado, saida, lancamento);
-      if (eventoAdicionalNoturno) {
-        eventos.push({ ...eventoAdicionalNoturno, ...{ periodoId: lancamento.periodoId } });
-        console.log(
-          `Evento Adicional Noturno criado: ${eventoAdicionalNoturno.hora} - Tipo: ${eventoAdicionalNoturno.tipoId} - Minutos: ${eventoAdicionalNoturno.minutos}`,
-        );
-      }
-    }
 
     return excedeu;
   }
@@ -663,19 +659,22 @@ export class CriarEventosPostgresRepository implements AdicionarEventos {
         let minutosTrabalhadosSegundoPeriodo = 0;
 
         eventoAgrupado.eventos.map((evento) => {
-          if (evento.tipoId === 1) {
+          if (evento.tipoId === 1 || evento.tipoId === 4 || evento.tipoId === 12) {
             minutosTrabalhados += evento.minutos;
             if (evento.periodoId === 1) minutosTrabalhadosPrimeiroPeriodo += evento.minutos;
             if (evento.periodoId === 2) minutosTrabalhadosSegundoPeriodo += evento.minutos;
           }
         });
 
-        const diferencaComCargaHoraria = dia?.cargaHor - minutosTrabalhados;
+        let diferencaComCargaHoraria = dia?.cargaHor - minutosTrabalhados;
 
         if (diferencaComCargaHoraria >= -10 && diferencaComCargaHoraria <= 10) {
           const removerNegativoIndex: number[] = [];
           input.eventos.map((evento, index) => {
-            if (evento.cartaoDiaId === eventoAgrupado.cartaoDiaId && evento.minutos < 0) {
+            if (evento.cartaoDiaId === eventoAgrupado.cartaoDiaId && (evento.minutos < 0 || evento.tipoId === 4)) {
+              if (evento.tipoId === 4) {
+                diferencaComCargaHoraria += evento.minutos;
+              }
               removerNegativoIndex.push(index);
             }
           });
@@ -823,5 +822,250 @@ export class CriarEventosPostgresRepository implements AdicionarEventos {
     }
 
     return input.eventos;
+  }
+
+  private async criarAdicionalNoturno(input: { eventos: any[] }) {
+    const eventosAgrupadosPorDia: {
+      cartaoDiaId: number;
+      funcionarioId: number;
+      eventos: { hora: string; tipoId: number; minutos: number; periodoId: number }[];
+    }[] = [];
+
+    input.eventos.map((evento) => {
+      const existIndex = eventosAgrupadosPorDia.findIndex((eventoAgrupado) => eventoAgrupado.cartaoDiaId === evento.cartaoDiaId);
+
+      if (existIndex === -1) {
+        eventosAgrupadosPorDia.push({
+          cartaoDiaId: evento.cartaoDiaId,
+          funcionarioId: evento.funcionarioId,
+          eventos: [{ hora: evento.hora, minutos: evento.minutos, tipoId: evento.tipoId, periodoId: evento.periodoId }],
+        });
+      } else {
+        eventosAgrupadosPorDia[existIndex].eventos.push({
+          hora: evento.hora,
+          minutos: evento.minutos,
+          tipoId: evento.tipoId,
+          periodoId: evento.periodoId,
+        });
+      }
+    });
+
+    for (const eventoAgrupado of eventosAgrupadosPorDia) {
+      const dia = await this.prisma.cartao_dia.findFirst({
+        where: { id: eventoAgrupado.cartaoDiaId },
+        include: { cartao_dia_lancamentos: true },
+      });
+      if (dia?.cargaHor) {
+        let minutosTrabalhados = 0;
+        let minutosTrabalhadosPrimeiroPeriodo = 0;
+        let minutosTrabalhadosSegundoPeriodo = 0;
+
+        eventoAgrupado.eventos.map((evento) => {
+          if (evento.tipoId === 1) {
+            minutosTrabalhados += evento.minutos;
+            if (evento.periodoId === 1) minutosTrabalhadosPrimeiroPeriodo += evento.minutos;
+            if (evento.periodoId === 2) minutosTrabalhadosSegundoPeriodo += evento.minutos;
+          }
+        });
+
+        dia.cartao_dia_lancamentos.map((lancamento) => {
+          if (!lancamento.entrada || !lancamento.saida) return undefined;
+
+          const horariosForaJornada = this.localizarHorarioForaDaJornadaPrevista({
+            entrada: lancamento.entrada,
+            saida: lancamento.saida,
+            dia: {
+              cargaHor: dia.cargaHor,
+              cargaHorariaCompleta: dia.cargaHorariaCompleta,
+              cargaHorSegundoPeriodo: dia.cargaHorSegundoPeriodo,
+              data: dia.data,
+            },
+          });
+
+          if (!horariosForaJornada.length) return undefined;
+
+          horariosForaJornada.map((horario) => {
+            const noturno = this.recalcularTurnoController.localizarMinutosNoturno({
+              inicio: horario.inicio,
+              fim: horario.fim,
+              data: dia.data,
+            });
+
+            if (!noturno.minutos) return undefined;
+
+            const hora = `${moment.utc(lancamento.entrada).format("HH:mm")} - ${moment.utc(lancamento.saida).format("HH:mm")}`;
+
+            const existeIndex = input.eventos.findIndex(
+              (evento) => evento.cartaoDiaId === dia.id && evento.tipoId === 1 && evento.hora === hora,
+            );
+
+            if (existeIndex !== -1) {
+              input.eventos[existeIndex].minutos -= noturno.minutos;
+              minutosTrabalhados -= noturno.minutos;
+            } else {
+              const existeIndex = input.eventos.findIndex(
+                (evento) => evento.cartaoDiaId === dia.id && evento.tipoId === 1 && evento.minutos === noturno.minutos,
+              );
+
+              if (existeIndex !== -1) {
+                minutosTrabalhados -= input.eventos[existeIndex].minutos;
+                input.eventos[existeIndex].minutos = 0;
+              }
+            }
+
+            const diferencaComCargaHoraria = minutosTrabalhados - dia?.cargaHor;
+            let minutos = 0;
+
+            //Se a diferença da carga horaria for negativa
+            if (diferencaComCargaHoraria < 0) {
+              minutos = noturno.minutos + diferencaComCargaHoraria;
+              //Se a soma do resto da carga horaria com adicionar for positivo adiciona 1.14
+              if (minutos > 0) {
+                minutos = arredondarParteDecimal(minutos * 1.14);
+                //Abona os minutos não trabalhados na jornada
+                input.eventos.push({
+                  funcionarioId: eventoAgrupado.funcionarioId,
+                  cartaoDiaId: eventoAgrupado.cartaoDiaId,
+                  minutos: Math.abs(diferencaComCargaHoraria),
+                  tipoId: 12,
+                  hora: `ABONO`,
+                  periodoId: lancamento.periodoId,
+                });
+
+                //Gera evento adicional noturno
+                input.eventos.push({
+                  funcionarioId: eventoAgrupado.funcionarioId,
+                  cartaoDiaId: eventoAgrupado.cartaoDiaId,
+                  minutos: minutos,
+                  tipoId: 4,
+                  hora: `${moment.utc(noturno.inicio).format("HH:mm")} - ${moment.utc(noturno.final).format("HH:mm")}`,
+                  periodoId: lancamento.periodoId,
+                });
+              } else {
+                //Cria evento de horas trabalhadas pois o noturno não supriu o total faltante da carga horaria
+                input.eventos.push({
+                  funcionarioId: eventoAgrupado.funcionarioId,
+                  cartaoDiaId: eventoAgrupado.cartaoDiaId,
+                  minutos: noturno.minutos,
+                  tipoId: 1,
+                  hora: `${moment.utc(noturno.inicio).format("HH:mm")} - ${moment.utc(noturno.final).format("HH:mm")}`,
+                  periodoId: lancamento.periodoId,
+                });
+              }
+            } else {
+              minutos = arredondarParteDecimal(noturno.minutos * 1.14);
+              //Gera evento adicional noturno
+              input.eventos.push({
+                funcionarioId: eventoAgrupado.funcionarioId,
+                cartaoDiaId: eventoAgrupado.cartaoDiaId,
+                minutos: minutos,
+                tipoId: 4,
+                hora: `${moment.utc(noturno.inicio).format("HH:mm")} - ${moment.utc(noturno.final).format("HH:mm")}`,
+                periodoId: lancamento.periodoId,
+              });
+            }
+          });
+        });
+      }
+    }
+
+    return input.eventos;
+  }
+
+  public localizarHorarioForaDaJornadaPrevista(input: {
+    entrada: Date;
+    saida: Date;
+    dia: { cargaHor: number; cargaHorariaCompleta: string; data: Date; cargaHorSegundoPeriodo: number };
+  }) {
+    const output: { inicio: Date; fim: Date }[] = [];
+
+    if ((input.dia.cargaHor = 0)) {
+      return output;
+    }
+
+    const horarios = this.pegarCargaHorarioCompleta(input.dia.cargaHorariaCompleta);
+
+    const entradaPrimeiroPeriodo = this.pegarHorarioCargaHoraria({
+      data: input.dia.data,
+      hora: horarios[0].hora,
+      minuto: horarios[0].minuto,
+      utc: false,
+    });
+
+    const saidaUltimoPeriodo = this.pegarHorarioCargaHoraria({
+      data: input.dia.data,
+      hora: input.dia.cargaHorSegundoPeriodo ? horarios[3].hora : horarios[1].hora,
+      minuto: input.dia.cargaHorSegundoPeriodo ? horarios[3].minuto : horarios[1].minuto,
+      utc: false,
+    });
+
+    entradaPrimeiroPeriodo.add(1, "second");
+    saidaUltimoPeriodo.subtract(1, "second");
+
+    if (saidaUltimoPeriodo.isBefore(entradaPrimeiroPeriodo)) saidaUltimoPeriodo.add(1, "d");
+
+    //Se o entrada está antes do inicio da jornada e o saida está depois do fim da jornada
+    {
+      const inicioAntesJornada = moment.utc(input.entrada).isBefore(entradaPrimeiroPeriodo);
+      const fimEstaDepoisJornada = moment.utc(input.saida).isAfter(saidaUltimoPeriodo);
+
+      if (inicioAntesJornada && fimEstaDepoisJornada) {
+        output.push({
+          inicio: input.entrada,
+          fim: entradaPrimeiroPeriodo.subtract(1, "seconds").toDate(),
+        });
+
+        output.push({
+          inicio: saidaUltimoPeriodo.add(1, "seconds").toDate(),
+          fim: input.saida,
+        });
+
+        return output;
+      }
+    }
+
+    //Se lancamento não está entre o horario da jornada
+    {
+      const entradaNaoEstaEntrePrevista = moment.utc(input.entrada).isBetween(entradaPrimeiroPeriodo, saidaUltimoPeriodo);
+      const saidaNaoEstaEntrePrevista = moment.utc(input.saida).isBetween(entradaPrimeiroPeriodo, saidaUltimoPeriodo);
+
+      if (!entradaNaoEstaEntrePrevista && !saidaNaoEstaEntrePrevista) {
+        output.push({
+          inicio: input.entrada,
+          fim: input.saida,
+        });
+        return output;
+      }
+    }
+
+    //Se a entrada está antes do inicio da jornada e a saida está entre a jornada
+    {
+      const inicioAntesJornada = moment.utc(input.entrada).isBefore(entradaPrimeiroPeriodo);
+      const fimEstaEntreJornada = moment.utc(input.saida).isBetween(entradaPrimeiroPeriodo, saidaUltimoPeriodo);
+
+      if (inicioAntesJornada && fimEstaEntreJornada) {
+        output.push({
+          fim: entradaPrimeiroPeriodo.subtract(1, "seconds").toDate(),
+          inicio: input.entrada,
+        });
+      }
+    }
+
+    //Se a entrada está entre a jornada e o saida está após o fim da jornada
+    {
+      const inicioEstaEntreJornada = moment(input.entrada).isBetween(entradaPrimeiroPeriodo, saidaUltimoPeriodo);
+      const fimEstaAposJornada = moment(input.saida).isAfter(saidaUltimoPeriodo);
+
+      if (inicioEstaEntreJornada && fimEstaAposJornada) {
+        output.push({
+          inicio: saidaUltimoPeriodo.add(1, "seconds").toDate(),
+          fim: input.saida,
+        });
+
+        return output;
+      }
+    }
+
+    return output;
   }
 }

@@ -307,7 +307,11 @@ describe("Extrair minutos noturno", () => {
       data: new Date("2024-07-01T00:00:00Z"),
     });
 
-    expect(minutos).toStrictEqual(420);
+    expect(minutos).toStrictEqual({
+      final: new Date("2024-07-02T05:00:00.000Z"),
+      inicio: new Date("2024-07-01T22:00:00.000Z"),
+      minutos: 420,
+    });
   });
 
   test(`Está dentro do horario noturno`, async () => {
@@ -317,7 +321,11 @@ describe("Extrair minutos noturno", () => {
       data: new Date("2024-07-01T00:00:00Z"),
     });
 
-    expect(minutos).toStrictEqual(312);
+    expect(minutos).toStrictEqual({
+      final: new Date("2024-07-02T04:02:00.000Z"),
+      inicio: new Date("2024-07-01T22:50:00.000Z"),
+      minutos: 312,
+    });
   });
 
   test(`Termina com horario noturno`, async () => {
@@ -327,7 +335,11 @@ describe("Extrair minutos noturno", () => {
       data: new Date("2024-07-01T00:00:00Z"),
     });
 
-    expect(minutos).toStrictEqual(60);
+    expect(minutos).toStrictEqual({
+      final: new Date("2024-07-01T23:00:00.000Z"),
+      inicio: new Date("2024-07-01T22:00:00.000Z"),
+      minutos: 60,
+    });
   });
 
   test(`Inicia com horario noturno e termina no final horario noturno`, async () => {
@@ -337,7 +349,11 @@ describe("Extrair minutos noturno", () => {
       data: new Date("2024-07-01T00:00:00Z"),
     });
 
-    expect(minutos).toStrictEqual(360);
+    expect(minutos).toStrictEqual({
+      final: new Date("2024-07-02T05:00:00.000Z"),
+      inicio: new Date("2024-07-01T23:00:00.000Z"),
+      minutos: 360,
+    });
   });
 
   test(`Inicia com horario noturno e termina após horario noturno`, async () => {
@@ -347,7 +363,11 @@ describe("Extrair minutos noturno", () => {
       data: new Date("2024-07-01T00:00:00Z"),
     });
 
-    expect(minutos).toStrictEqual(360);
+    expect(minutos).toStrictEqual({
+      final: new Date("2024-07-02T05:00:00.000Z"),
+      inicio: new Date("2024-07-01T23:00:00.000Z"),
+      minutos: 360,
+    });
   });
 
   test(`Termina com horário noturno`, async () => {
@@ -357,6 +377,24 @@ describe("Extrair minutos noturno", () => {
       data: new Date("2024-07-01T00:00:00Z"),
     });
 
-    expect(minutos).toStrictEqual(54);
+    expect(minutos).toStrictEqual({
+      final: new Date("2024-07-01T22:54:00.000Z"),
+      inicio: new Date("2024-07-01T22:00:00.000Z"),
+      minutos: 54,
+    });
+  });
+
+  test(`Inicia com horário noturno`, async () => {
+    const minutos = recalcularTurnoController.localizarMinutosNoturno({
+      fim: new Date("2024-07-30T03:30:00.000Z"),
+      inicio: new Date("2024-07-30T02:45:00.000Z"),
+      data: new Date("2024-07-30T00:00:00Z"),
+    });
+
+    expect(minutos).toStrictEqual({
+      final: new Date("2024-07-30T03:30:00.000Z"),
+      inicio: new Date("2024-07-30T02:45:00.000Z"),
+      minutos: 45,
+    });
   });
 });
