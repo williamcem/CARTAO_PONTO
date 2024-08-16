@@ -322,7 +322,7 @@ describe("Extrair minutos noturno", () => {
     });
 
     expect(minutos).toStrictEqual({
-      final: new Date("024-07-02T04:02:00.000Z"),
+      final: new Date("2024-07-02T04:02:00.000Z"),
       inicio: new Date("2024-07-01T22:50:00.000Z"),
       minutos: 312,
     });
