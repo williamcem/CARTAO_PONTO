@@ -918,7 +918,7 @@ export class CriarEventosPostgresRepository implements AdicionarEventos {
             //Se a diferença da carga horaria for negativa
             if (diferencaComCargaHoraria < 0) {
               minutos = noturno.minutos + diferencaComCargaHoraria;
-              //Se a soma do resto da carga horaria com adicionar for positivo adiciona 1.14
+              //Se a soma do resto da carga horaria com adicional for positivo adiciona 1.14
               if (minutos > 0) {
                 minutos = Number((minutos * 1.14).toFixed());
                 //Abona os minutos não trabalhados na jornada
