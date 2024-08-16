@@ -438,9 +438,11 @@ model usuario_perfil {
 }
 
 model funcionario_alteracao_turno {
-  id            Int    @id @default(autoincrement())
+  id            Int      @id @default(autoincrement())
   turnoId       Int
   funcionarioId Int
+  inicio        DateTime @default(now())
+  fim           DateTime @default(now())
   userName      String
 
   dias        cartao_dia[]
