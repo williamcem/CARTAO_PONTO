@@ -449,3 +449,9 @@ model funcionario_alteracao_turno {
   turno       turno        @relation(fields: [turnoId], references: [id])
   funcionario funcionario  @relation(fields: [funcionarioId], references: [id])
 }
+
+model cid {
+  id        Int    @id @default(autoincrement())
+  codigo    String @unique
+  descricao String
+}

@@ -48,6 +48,7 @@ import listarTurnos from "../routes/horarios/listar-turnos-routes";
 import lancarFalta from "../routes/horarios/lancar-falta-routes";
 import recalcularTurnos from "../routes/horarios/recalcular-turnos-routes";
 import buscarAlteracaoTurno from "../routes/horarios/buscar-alteracao-turno";
+import buscarCid from "../routes/horarios/buscar-cid";
 
 export const setupRoutes = (app: Express): void => {
   const router = Router();
@@ -100,4 +101,5 @@ export const setupRoutes = (app: Express): void => {
   lancarFalta(router);
   recalcularTurnos(router);
   buscarAlteracaoTurno(router);
+  buscarCid(router);
 };
