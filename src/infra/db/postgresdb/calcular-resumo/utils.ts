@@ -29,12 +29,12 @@ export function arredondarParteDecimalHoras(numero: number): number {
 }
 
 export function arredondarParteDecimal(numero: number): number {
-  const inteiro = Math.floor(numero); // Obtém a parte inteira do número
+  const inteiro = Math.trunc(numero); // Obtém a parte inteira do número
   const decimal = numero - inteiro; // Obtém a parte decimal do número
 
   // Se a parte decimal for maior ou igual a 0.6, arredonde para cima
-  if (decimal >= 0.6) {
-    return inteiro + 1; // Adiciona 1 para arredondar para cima
+  if (Math.abs(decimal) >= 0.6) {
+    return Math.sign(inteiro) === 1 ? inteiro + 1 : inteiro - 1; // Adiciona 1 para arredondar para cima
   } else {
     return inteiro; // Mantém o inteiro, arredondando para baixo
   }
