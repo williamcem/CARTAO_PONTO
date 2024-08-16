@@ -11,6 +11,10 @@ export const makeLancarFaltaController = (): Controller => {
   const recalcularTurnoPostgresRepository = new RecalcularTurnoPostgresRepository();
   const recalcularTurnoController = new RecalcularTurnoController(recalcularTurnoPostgresRepository);
   const criarEventosPostgresRepository = new CriarEventosPostgresRepository(recalcularTurnoController);
-  const lancarFaltaController = new LancarFaltaController(lancarFaltaPostgresRepository, criarEventosPostgresRepository);
+  const lancarFaltaController = new LancarFaltaController(
+    lancarFaltaPostgresRepository,
+    criarEventosPostgresRepository,
+    recalcularTurnoController,
+  );
   return new LogControllerDecorator(lancarFaltaController);
 };

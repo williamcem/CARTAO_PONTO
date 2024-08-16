@@ -3,11 +3,13 @@ import { badRequest, ok, serverError } from "../../helpers/http-helpers";
 import { Controller, HttpRequest, HttpResponse } from "./lancar-falta-protocols";
 import { FuncionarioParamError } from "../../errors/Funcionario-param-error";
 import { CriarEventosPostgresRepository } from "@infra/db/postgresdb/eventos/eventos-repository";
+import { RecalcularTurnoController } from "../recalcular-turno/recalcular-turno";
 
 export class LancarFaltaController implements Controller {
   constructor(
     private readonly lancarFaltaPostgresRepository: LancarFaltaPostgresRepository,
     private readonly criarEventosPostgresRepository: CriarEventosPostgresRepository,
+    private readonly recalcularTurnoController: RecalcularTurnoController,
   ) {}
 
   async handle(httpRequest: HttpRequest): Promise<HttpResponse> {
@@ -64,8 +66,14 @@ export class LancarFaltaController implements Controller {
 
       //Salva ausência primeiro período
       if (!evento.minutos && !existeLancamentoPeriodo1 && existeLancamentoPeriodo2) {
+        const existeMinutosNoturno = this.existeMinutosNoturno({
+          data: dia.data,
+          fim: { hora: horariosDia[0].hora, minutos: horariosDia[0].minuto },
+          inicio: { hora: horariosDia[1].hora, minutos: horariosDia[1].minuto },
+        });
+
         evento.hora = `${horariosDia[0].hora}:${horariosDia[0].minuto} - ${horariosDia[1].hora}:${horariosDia[1].minuto}`;
-        evento.minutos = saldoDia;
+        evento.minutos = existeMinutosNoturno ? saldoDia * 1.14 : saldoDia;
       }
 
       //Salva ausência segundo período
@@ -77,8 +85,13 @@ export class LancarFaltaController implements Controller {
             ),
           );
         }
+        const existeMinutosNoturno = this.existeMinutosNoturno({
+          data: dia.data,
+          fim: { hora: horariosDia[2].hora, minutos: horariosDia[2].minuto },
+          inicio: { hora: horariosDia[3].hora, minutos: horariosDia[3].minuto },
+        });
 
-        evento.minutos = saldoDia;
+        evento.minutos = existeMinutosNoturno ? saldoDia * 1.14 : saldoDia;
         evento.hora = `${horariosDia[2].hora}:${horariosDia[2].minuto} - ${horariosDia[3].hora}:${horariosDia[3].minuto}`;
       }
 
@@ -115,5 +128,37 @@ export class LancarFaltaController implements Controller {
     if (existeEvento) return "Ausência já aplicada!";
 
     return await this.lancarFaltaPostgresRepository.createEvento(input);
+  }
+
+  public existeMinutosNoturno(input: {
+    inicio: { hora: number; minutos: number };
+    fim: { hora: number; minutos: number };
+    data: Date;
+  }) {
+    const inicio = this.criarEventosPostgresRepository
+      .pegarHorarioCargaHoraria({
+        data: input.data,
+        utc: false,
+        hora: input.inicio.hora,
+        minuto: input.inicio.minutos,
+      })
+      .toDate();
+
+    const fim = this.criarEventosPostgresRepository
+      .pegarHorarioCargaHoraria({
+        data: input.data,
+        utc: false,
+        hora: input.fim.hora,
+        minuto: input.fim.minutos,
+      })
+      .toDate();
+
+    const minutos = this.recalcularTurnoController.localizarMinutosNoturno({
+      data: input.data,
+      inicio,
+      fim,
+    }).minutos;
+
+    return Boolean(minutos);
   }
 }
