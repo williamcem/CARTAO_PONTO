@@ -26,7 +26,7 @@ export class GetFuncionarioImpressaoCalculoController implements Controller {
 
   async handle(httpRequest: HttpRequest): Promise<HttpResponse> {
     try {
-      const { localidade, funcionariosId, onlyDay, referencia } = httpRequest?.query;
+      const { localidade, funcionariosId, onlyDay, referencia, showLegacy } = httpRequest?.query;
 
       const onlyDays = Number(onlyDay);
 
@@ -62,6 +62,11 @@ export class GetFuncionarioImpressaoCalculoController implements Controller {
           let data = moment.utc(dia.data).format("DD/MM/YYYY ddd").toUpperCase();
 
           if (!onlyDays) {
+            let resumoLegado = {
+              diurno: "",
+              noturno: "",
+            };
+
             const eventos = dia.eventos.map((evento) => {
               return { minutos: evento.minutos, tipoId: evento.tipoId || 0, tratado: evento.tratado };
             });
@@ -73,6 +78,11 @@ export class GetFuncionarioImpressaoCalculoController implements Controller {
             const resumo = this.calcularResumoPorDia({
               dia: { id: cartao.id, eventos, abono, cargaHorariaTotal: dia.cargaHor },
             });
+
+            if (showLegacy) {
+              resumoLegado.diurno = `${resumo.diurno.ext1 + resumo.diurno.ext2}/${resumo.diurno.ext3}`;
+              resumoLegado.noturno = `${resumo.noturno.ext1 + resumo.noturno.ext2}/${resumo.noturno.ext3}`;
+            }
 
             resumoCartao.atual.diurno.ext1 += resumo.diurno.ext1;
             resumoCartao.atual.diurno.ext2 += resumo.diurno.ext2;
@@ -91,6 +101,8 @@ export class GetFuncionarioImpressaoCalculoController implements Controller {
                 periodoId: lancamento.periodoId,
               });
             });
+
+            if (showLegacy) return { resumo, periodos, data, resumoLegado };
 
             return { resumo, periodos, data };
           }
