@@ -1,5 +1,3 @@
-import { CalcularResumoPostgresRepository } from "@infra/db/postgresdb/calcular-resumo/calcular-resumo-repository";
-import { CalcularResumoImpressaoPostgresRepository } from "../../../infra/db/postgresdb/calcular-resumo-impressao/calcular-resumo-impressao-repository";
 import { FuncionarioImpressaoCalculoPostgresRepository } from "../../../infra/db/postgresdb/get-funcionario-impressao-calculo/get-funcionario-impressao-calculo";
 import { FuncionarioParamError } from "../../errors/Funcionario-param-error";
 import { badRequest, notFoundRequest, ok, serverError } from "../../helpers/http-helpers";
