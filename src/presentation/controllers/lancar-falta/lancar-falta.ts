@@ -97,6 +97,9 @@ export class LancarFaltaController implements Controller {
 
       if (evento.minutos === 0) return badRequest(new FuncionarioParamError(`Evento de ausência já criado!`));
 
+      if (evento.minutos > 0)
+        return badRequest(new FuncionarioParamError(`Não é possível gerar evento de ausência para horário positivo!`));
+
       const saved = await this.salvarEvento(evento);
 
       if (typeof saved === "boolean") return ok({ message: saved });
