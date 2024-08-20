@@ -17,6 +17,20 @@ interface ResumoDoDiaInput {
     eventos: { tipoId: number; minutos: number; tratado: boolean }[];
     abono: { minutos: number };
   };
+  resumoCartao: {
+    atual: {
+      diurno: {
+        ext1: number;
+        ext2: number;
+        ext3: number;
+      };
+      noturno: {
+        ext1: number;
+        ext2: number;
+        ext3: number;
+      };
+    };
+  };
 }
 
 export class GetFuncionarioImpressaoCalculoController implements Controller {
@@ -74,7 +88,8 @@ export class GetFuncionarioImpressaoCalculoController implements Controller {
             dia.atestado_abonos.map((abono) => abono.minutos + abono.minutos);
 
             const resumo = this.calcularResumoPorDia({
-              dia: { id: cartao.id, eventos, abono, cargaHorariaTotal: dia.cargaHor },
+              dia: { id: dia.id, eventos, abono, cargaHorariaTotal: dia.cargaHor },
+              resumoCartao,
             });
 
             if (showLegacy) {
@@ -152,6 +167,14 @@ export class GetFuncionarioImpressaoCalculoController implements Controller {
   }
 
   calcularResumoPorDia(input: ResumoDoDiaInput): ResumoDoDiaOutput {
+    let saldoAtual =
+      input.resumoCartao.atual.diurno.ext1 +
+      input.resumoCartao.atual.diurno.ext2 +
+      input.resumoCartao.atual.diurno.ext3 +
+      input.resumoCartao.atual.noturno.ext1 +
+      input.resumoCartao.atual.noturno.ext2 +
+      input.resumoCartao.atual.noturno.ext3;
+
     const output: ResumoDoDiaOutput = {
       diurno: { ext1: 0, ext2: 0, ext3: 0 },
       noturno: { ext1: 0, ext2: 0, ext3: 0 },
@@ -161,9 +184,10 @@ export class GetFuncionarioImpressaoCalculoController implements Controller {
 
     let minutosDiurnos = 0;
     let minutosNoturnos = 0;
+    let existeFaltaNoturna = false;
 
     input.dia.eventos.filter((evento) => {
-      if (evento.tipoId !== 8 && evento.tipoId !== 11 && evento.tipoId !== 4 && evento.tipoId !== 2)
+      if (evento.tipoId !== 8 && evento.tipoId !== 11 && evento.tipoId !== 4 && evento.tipoId !== 2 && evento.tipoId !== 13)
         minutosDiurnos += evento.minutos;
     });
 
@@ -171,14 +195,28 @@ export class GetFuncionarioImpressaoCalculoController implements Controller {
       if (evento.tipoId === 4) minutosNoturnos += evento.minutos;
     });
 
+    existeFaltaNoturna = input.dia.eventos.some((evento) => evento.tipoId === 13);
+
     if (minutosDiurnos == 0 && minutosNoturnos == 0) return output;
 
     minutosDiurnos -= input.dia.cargaHorariaTotal;
 
-    if (minutosDiurnos > 0) {
-      const [ext1, ext2, ext3] = this.inserirRegraPorHoraExtra({ minutos: minutosDiurnos, parametros: [60, 60, 9999] });
+    if (input.dia.id === 115753) {
+      console.log("bateu");
+    }
+
+    const minutos = this.executarCalculo({
+      existeFaltaNoturna,
+      minutosDiurnos,
+      saldoAtual,
+    });
+
+    if (minutos > 0) {
+      const [ext1, ext2, ext3] = this.inserirRegraPorHoraExtra({ minutos: minutos, parametros: [60, 60, 9999] });
       output.diurno = { ext1, ext2, ext3 };
-    } else if (minutosDiurnos < 0) output.diurno = { ext1: minutosDiurnos, ext2: 0, ext3: 0 };
+    } else if (minutos < 0) {
+      output.diurno.ext1 = minutos;
+    }
 
     if (minutosNoturnos > 0) {
       const [ext1, ext2, ext3] = this.inserirRegraPorHoraExtra({ minutos: minutosNoturnos, parametros: [60, 60, 9999] });
@@ -201,5 +239,32 @@ export class GetFuncionarioImpressaoCalculoController implements Controller {
     });
 
     return output.map((value) => Number(value));
+  }
+
+  executarCalculo(input: { saldoAtual: number; minutosDiurnos: number; existeFaltaNoturna: boolean }): number {
+    let minutos = 0;
+    if (input.minutosDiurnos > 0)
+      //Se os minutos for positivo irá manter
+      minutos = input.minutosDiurnos;
+    else if (input.minutosDiurnos < 0) {
+      //Se o Saldo atual for negativo mantem o valor dos minutos
+      if (input.saldoAtual < 0) minutos = input.minutosDiurnos;
+      else {
+        const saldoAtualComPorcentagem = Number((input.saldoAtual * 1.6).toFixed());
+        if (saldoAtualComPorcentagem < Math.abs(input.minutosDiurnos)) {
+          const saldoDia = saldoAtualComPorcentagem + input.minutosDiurnos;
+          minutos = saldoDia + -input.saldoAtual;
+        } else {
+          //Se os minutos diurno forem negativos e o saldo suprir fazer 1.6
+          const saldoDia = saldoAtualComPorcentagem - Math.abs(input.minutosDiurnos);
+          if (saldoDia > 0) minutos = Number((input.minutosDiurnos / 1.6).toFixed());
+          else minutos = saldoDia;
+        }
+      }
+
+      if (input.existeFaltaNoturna) minutos = Number((minutos * 1.14).toFixed());
+    }
+
+    return minutos;
   }
 }
