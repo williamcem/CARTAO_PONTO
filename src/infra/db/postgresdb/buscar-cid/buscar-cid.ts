@@ -12,7 +12,7 @@ export class BuscarCidPostgresRepository {
   public async findMany(input: { codigo: string }) {
     return await this.prisma.cid.findMany({
       where: {
-        codigo: { contains: `%${input.codigo}%` },
+        OR: [{ codigo: { contains: `%${input.codigo}%` } }, { descricao: { contains: `%${input.codigo}%` } }],
       },
       select: {
         codigo: true,
