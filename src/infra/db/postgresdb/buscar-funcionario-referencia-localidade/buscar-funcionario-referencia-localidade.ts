@@ -28,6 +28,9 @@ export class BuscarFuncionarioReferenciaLocalidadePostgresRepository {
               },
             },
           },
+          where: {
+            referencia: input.data,
+          },
         },
       },
 
