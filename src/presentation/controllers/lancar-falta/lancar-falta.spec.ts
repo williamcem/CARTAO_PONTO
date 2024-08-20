@@ -24,7 +24,11 @@ describe("Existencia minutos noturno", () => {
       fim: { hora: 22, minutos: 50 },
     });
 
-    expect(result).toStrictEqual(true);
+    expect(result).toStrictEqual({
+      final: new Date("2024-07-30T22:50:00.000Z"),
+      inicio: new Date("2024-07-30T22:00:00.000Z"),
+      minutos: 50,
+    });
   });
 
   test("Inicio 21:00 fim 22:00", async () => {
@@ -34,7 +38,11 @@ describe("Existencia minutos noturno", () => {
       fim: { hora: 22, minutos: 0 },
     });
 
-    expect(result).toStrictEqual(false);
+    expect(result).toStrictEqual({
+      final: new Date("2024-07-30T22:00:00.000Z"),
+      inicio: new Date("2024-07-30T22:00:00.000Z"),
+      minutos: 0,
+    });
   });
 
   test("Inicio 04:00 fim 05:00", async () => {
@@ -44,7 +52,11 @@ describe("Existencia minutos noturno", () => {
       fim: { hora: 5, minutos: 0 },
     });
 
-    expect(result).toStrictEqual(true);
+    expect(result).toStrictEqual({
+      final: new Date("2024-07-30T05:00:00.000Z"),
+      inicio: new Date("2024-07-30T04:00:00.000Z"),
+      minutos: 60,
+    });
   });
 
   test("Inicio 05:00 fim 06:00", async () => {
@@ -54,7 +66,11 @@ describe("Existencia minutos noturno", () => {
       fim: { hora: 6, minutos: 0 },
     });
 
-    expect(result).toStrictEqual(false);
+    expect(result).toStrictEqual({
+      final: new Date("2024-07-30T05:00:00.000Z"),
+      inicio: new Date("2024-07-30T05:00:00.000Z"),
+      minutos: 0,
+    });
   });
 
   test("Inicio 22:00 fim 05:00", async () => {
@@ -64,7 +80,11 @@ describe("Existencia minutos noturno", () => {
       fim: { hora: 5, minutos: 0 },
     });
 
-    expect(result).toStrictEqual(true);
+    expect(result).toStrictEqual({
+      final: new Date("2024-07-31T05:00:00.000Z"),
+      inicio: new Date("2024-07-30T22:00:00.000Z"),
+      minutos: 420,
+    });
   });
 
   test("Inicio 17:00 fim 05:00", async () => {
@@ -74,6 +94,10 @@ describe("Existencia minutos noturno", () => {
       fim: { hora: 5, minutos: 0 },
     });
 
-    expect(result).toStrictEqual(true);
+    expect(result).toStrictEqual({
+      final: new Date("2024-07-31T05:00:00.000Z"),
+      inicio: new Date("2024-07-30T22:00:00.000Z"),
+      minutos: 420,
+    });
   });
 });
