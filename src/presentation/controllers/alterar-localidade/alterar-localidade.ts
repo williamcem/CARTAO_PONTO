@@ -70,7 +70,7 @@ export class AlterarLocalidadeController implements Controller {
 
       dias.map((dia) => {
         const updateAt = moment.utc().toDate();
-        const diaSemana = moment(dia.data).weekday();
+        const diaSemana = moment.utc(dia.data).weekday();
 
         const existeTurnoDia = turno.turno_dias.find((turnoDia) => turnoDia.diaSemana === diaSemana);
 
