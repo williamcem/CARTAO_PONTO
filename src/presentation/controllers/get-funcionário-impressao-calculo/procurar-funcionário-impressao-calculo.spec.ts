@@ -2,11 +2,11 @@ import { describe, expect, test } from "vitest";
 import { GetFuncionarioImpressaoCalculoController } from "./procurar-funcionário-impressao-calculo";
 import { FuncionarioImpressaoCalculoPostgresRepository } from "@infra/db/postgresdb/get-funcionario-impressao-calculo/get-funcionario-impressao-calculo";
 
-describe("Inserir Regra por Hora Extra Depósito", () => {
-  const getFuncionarioImpressaoCalculoController = new GetFuncionarioImpressaoCalculoController(
-    new FuncionarioImpressaoCalculoPostgresRepository(),
-  );
+const getFuncionarioImpressaoCalculoController = new GetFuncionarioImpressaoCalculoController(
+  new FuncionarioImpressaoCalculoPostgresRepository(),
+);
 
+describe("Inserir Regra por Hora Extra Depósito", () => {
   test("30 minutos", async () => {
     const regras = getFuncionarioImpressaoCalculoController.inserirRegraPorHoraExtra({
       minutos: 30,
@@ -82,5 +82,127 @@ describe("Inserir Regra por Hora Extra Depósito", () => {
     expect(regras[0]).toStrictEqual(60);
     expect(regras[1]).toStrictEqual(60);
     expect(regras[2]).toStrictEqual(380);
+  });
+});
+
+describe("Cálcula minutos do dia", () => {
+  test("Saldo atual 53 com -54 minutos do dia existe norturno -39", async () => {
+    const minutos = getFuncionarioImpressaoCalculoController.executarCalculo({
+      existeFaltaNoturna: true,
+      minutosDiurnos: -54,
+      saldoAtual: 53,
+    });
+
+    expect(minutos).toStrictEqual(-39);
+  });
+
+  test("Saldo atual 55 com -87 minutos do dia existe norturno -62", async () => {
+    const minutos = getFuncionarioImpressaoCalculoController.executarCalculo({
+      existeFaltaNoturna: true,
+      minutosDiurnos: -87,
+      saldoAtual: 55,
+    });
+
+    expect(minutos).toStrictEqual(-62);
+  });
+
+  test("Saldo atual 55 com 50 minutos do dia existe norturno 50", async () => {
+    const minutos = getFuncionarioImpressaoCalculoController.executarCalculo({
+      existeFaltaNoturna: true,
+      minutosDiurnos: 50,
+      saldoAtual: 55,
+    });
+
+    expect(minutos).toStrictEqual(50);
+  });
+
+  test("Saldo atual -55 com 50 minutos do dia existe norturno 50", async () => {
+    const minutos = getFuncionarioImpressaoCalculoController.executarCalculo({
+      existeFaltaNoturna: true,
+      minutosDiurnos: 50,
+      saldoAtual: -55,
+    });
+
+    expect(minutos).toStrictEqual(50);
+  });
+
+  test("Saldo atual 50 com -55 minutos do dia -34", async () => {
+    const minutos = getFuncionarioImpressaoCalculoController.executarCalculo({
+      existeFaltaNoturna: false,
+      minutosDiurnos: -55,
+      saldoAtual: 50,
+    });
+
+    expect(minutos).toStrictEqual(-34);
+  });
+
+  test("Saldo atual -50 com 55 minutos do dia 55", async () => {
+    const minutos = getFuncionarioImpressaoCalculoController.executarCalculo({
+      existeFaltaNoturna: false,
+      minutosDiurnos: 55,
+      saldoAtual: -50,
+    });
+
+    expect(minutos).toStrictEqual(55);
+  });
+
+  test("Saldo atual 50 com 55 minutos do dia 55", async () => {
+    const minutos = getFuncionarioImpressaoCalculoController.executarCalculo({
+      existeFaltaNoturna: false,
+      minutosDiurnos: 55,
+      saldoAtual: 50,
+    });
+
+    expect(minutos).toStrictEqual(55);
+  });
+
+  test("Saldo atual -50 com -55 minutos do dia -55", async () => {
+    const minutos = getFuncionarioImpressaoCalculoController.executarCalculo({
+      existeFaltaNoturna: false,
+      minutosDiurnos: -55,
+      saldoAtual: -50,
+    });
+
+    expect(minutos).toStrictEqual(-55);
+  });
+
+  test("Saldo atual 15 com -42 minutos do dia -33", async () => {
+    const minutos = getFuncionarioImpressaoCalculoController.executarCalculo({
+      existeFaltaNoturna: false,
+      minutosDiurnos: -42,
+      saldoAtual: 15,
+    });
+
+    expect(minutos).toStrictEqual(-33);
+  });
+
+  test("Saldo atual 120 com -528 minutos do dia -456", async () => {
+    const minutos = getFuncionarioImpressaoCalculoController.executarCalculo({
+      existeFaltaNoturna: false,
+      minutosDiurnos: -528,
+      saldoAtual: 120,
+    });
+
+    expect(minutos).toStrictEqual(-456);
+  });
+
+  test("Saldo atual 120 com -200 minutos do dia tem noturno -146", async () => {
+    const minutos = getFuncionarioImpressaoCalculoController.executarCalculo({
+      existeFaltaNoturna: true,
+      minutosDiurnos: -200,
+      saldoAtual: 120,
+    });
+
+    expect(minutos).toStrictEqual(-146);
+  });
+
+  test("Saldo atual 500 com -200 minutos do dia tem noturno -143", async () => {
+    const minutos = getFuncionarioImpressaoCalculoController.executarCalculo({
+      existeFaltaNoturna: true,
+      minutosDiurnos: -200,
+      saldoAtual: 500,
+    });
+
+    expect(minutos).toStrictEqual(-143);
   });
 });
