@@ -61,6 +61,8 @@ export class AlterarLocalidadePostgresRepository {
       updateAt: Date;
     }[];
     userName: string;
+    inicio: Date;
+    fim: Date;
   }): Promise<boolean> {
     const queries: prismaPromise[] = [];
     queries.push(
@@ -97,6 +99,8 @@ export class AlterarLocalidadePostgresRepository {
           funcionarioId: input.id,
           turnoId: input.turnoId,
           dias: { connect: input.dias.map((dia) => ({ id: dia.id })) },
+          fim: input.fim,
+          inicio: input.inicio,
         },
       }),
     );

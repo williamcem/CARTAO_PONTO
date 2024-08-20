@@ -1,5 +1,4 @@
 import moment from "moment";
-import { arredondarParteDecimal } from "./utils";
 
 export function calcularAdicionalNoturno(horarioEsperado: moment.Moment, horarioReal: moment.Moment, lancamento: any): number {
   const inicioAdicionalNoturno = moment.utc(lancamento.cartao_dia.data).set({ hour: 22, minute: 0, second: 0 });
@@ -35,5 +34,5 @@ export function calcularAdicionalNoturno(horarioEsperado: moment.Moment, horario
   }
 
   const adicionalNoturno = minutosAdicionalNoturno * 0.14;
-  return arredondarParteDecimal(adicionalNoturno);
+  return Number(adicionalNoturno.toFixed());
 }

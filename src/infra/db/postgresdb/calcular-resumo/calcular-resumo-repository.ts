@@ -5,7 +5,6 @@ import { ResumoModel } from "@domain/models/calcular-resumo";
 
 import { CalcularResumoDia } from "../../../../domain/usecases/calcular-resumo";
 import { prisma } from "../../../database/Prisma";
-import { arredondarParteDecimal, arredondarParteDecimalHoras } from "./utils";
 
 export class CalcularResumoPostgresRepository implements CalcularResumoDia {
   private prisma: PrismaClient;
@@ -59,10 +58,10 @@ export class CalcularResumoPostgresRepository implements CalcularResumoDia {
     }
 
     // Converter movimentacao60 e movimentacao100 em horas diurnas
-    horasDiurno60 = arredondarParteDecimalHoras(somaMovimentacao60 / 60);
-    horasDiurno100 = arredondarParteDecimalHoras(somaMovimentacao100 / 60);
-    horasNoturno60 = arredondarParteDecimalHoras(somaMovimentacaoNoturna60 / 60);
-    horasNoturno100 = arredondarParteDecimalHoras(somaMovimentacaoNoturna100 / 60);
+    horasDiurno60 = Number((somaMovimentacao60 / 60).toFixed());
+    horasDiurno100 = Number((somaMovimentacao100 / 60).toFixed());
+    horasNoturno60 = Number((somaMovimentacaoNoturna60 / 60).toFixed());
+    horasNoturno100 = Number((somaMovimentacaoNoturna100 / 60).toFixed());
 
     return {
       movimentacao: {
@@ -216,7 +215,7 @@ export class CalcularResumoPostgresRepository implements CalcularResumoDia {
         if (typeof cartao_dia.ResumoDia.movimentacao60 === "number" && cartao_dia.ResumoDia.movimentacao60 < 0) {
           if (saldoSessenta > 0 && !diasDivididos.has(dataFormatada)) {
             const diferenca = Math.abs(cartao_dia.ResumoDia.movimentacao60);
-            cartao_dia.ResumoDia.movimentacao60 = arredondarParteDecimal(cartao_dia.ResumoDia.movimentacao60 / 1.6);
+            cartao_dia.ResumoDia.movimentacao60 = Number((cartao_dia.ResumoDia.movimentacao60 / 1.6).toFixed());
             saldoSessenta -= diferenca;
             diasDivididos.add(dataFormatada); // Marca o dia como dividido
           }
@@ -235,7 +234,7 @@ export class CalcularResumoPostgresRepository implements CalcularResumoDia {
         const dataFormatada = moment.utc(cartao_dia.data).format("YYYY-MM-DD");
         if (diasDivididos.has(dataFormatada)) {
           // Aqui certificamos que não revertam a divisão
-          cartao_dia.ResumoDia.movimentacao60 = arredondarParteDecimal(Number(cartao_dia.ResumoDia.movimentacao60));
+          cartao_dia.ResumoDia.movimentacao60 = Number(Number(cartao_dia.ResumoDia.movimentacao60).toFixed());
         }
       });
     });

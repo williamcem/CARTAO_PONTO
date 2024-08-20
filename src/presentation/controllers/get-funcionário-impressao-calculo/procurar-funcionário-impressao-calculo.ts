@@ -201,10 +201,6 @@ export class GetFuncionarioImpressaoCalculoController implements Controller {
 
     minutosDiurnos -= input.dia.cargaHorariaTotal;
 
-    if (input.dia.id === 115753) {
-      console.log("bateu");
-    }
-
     const minutos = this.executarCalculo({
       existeFaltaNoturna,
       minutosDiurnos,
