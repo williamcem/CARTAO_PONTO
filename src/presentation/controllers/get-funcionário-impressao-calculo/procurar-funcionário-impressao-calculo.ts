@@ -38,17 +38,21 @@ export class GetFuncionarioImpressaoCalculoController implements Controller {
 
   async handle(httpRequest: HttpRequest): Promise<HttpResponse> {
     try {
-      const { localidade, funcionariosId, onlyDay, referencia, showLegacy } = httpRequest?.query;
+      const { cartaoId, localidade, funcionariosId, onlyDay, referencia, showLegacy } = httpRequest?.query;
 
       const onlyDays = Number(onlyDay);
 
-      if (!referencia) return badRequest(new FuncionarioParamError("Falta referência!"));
+      if (!cartaoId) {
+        if (!referencia) return badRequest(new FuncionarioParamError("Falta referência!"));
+
+        if (!moment(referencia).isValid()) return badRequest(new FuncionarioParamError("Referência inválida!"));
+      }
 
       if (!localidade) return badRequest(new FuncionarioParamError("Localidade não fornecido!"));
 
-      if (!moment(referencia).isValid()) return badRequest(new FuncionarioParamError("Referência inválida!"));
-
       let ids: number[] | undefined = undefined;
+      const idCartao = cartaoId ? Number(cartaoId) : undefined;
+      const referenciaFormatada = referencia ? new Date(referencia) : undefined;
 
       if (funcionariosId) {
         ids = JSON.parse(funcionariosId);
@@ -57,7 +61,8 @@ export class GetFuncionarioImpressaoCalculoController implements Controller {
 
       const cartoes = await this.funcionarioImpressaoCalculoPostgresRepository.findAllByLocalidade(
         localidade,
-        new Date(referencia),
+        referenciaFormatada,
+        idCartao,
         ids,
       );
 
