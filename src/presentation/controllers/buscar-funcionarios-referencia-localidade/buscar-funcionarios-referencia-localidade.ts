@@ -39,7 +39,8 @@ export class BuscarFuncionarioReferenciaLocalidadeAgrupadaController implements 
         localidadeId,
       });
 
-      const output: { id: number; nome: string; filial: string; identificacao: string; andamento: number }[] = [];
+      const output: { id: number; nome: string; filial: string; identificacao: string; andamento: number; cartaoId: number }[] =
+        [];
 
       for (const funcionario of funcionarios) {
         let andamento = 0;
@@ -73,6 +74,7 @@ export class BuscarFuncionarioReferenciaLocalidadeAgrupadaController implements 
           id: funcionario.id,
           identificacao: funcionario.identificacao,
           nome: funcionario.nome,
+          cartaoId: funcionario.cartao[0].id,
         });
       }
 
