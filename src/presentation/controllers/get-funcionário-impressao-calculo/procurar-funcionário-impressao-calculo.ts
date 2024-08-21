@@ -113,13 +113,14 @@ export class GetFuncionarioImpressaoCalculoController implements Controller {
             resumoCartao.atual.noturno.ext2 += resumo.noturno.ext2;
             resumoCartao.atual.noturno.ext3 += resumo.noturno.ext3;
 
-            const periodos: { entrada: string; saida: string; periodoId: number }[] = [];
+            const periodos: { entrada: string; saida: string; periodoId: number; validadoPeloOperador: boolean }[] = [];
 
             dia.cartao_dia_lancamentos.map((lancamento) => {
               periodos.push({
                 entrada: moment.utc(lancamento.entrada).format("HH:mm"),
                 saida: moment.utc(lancamento.saida).format("HH:mm"),
                 periodoId: lancamento.periodoId,
+                validadoPeloOperador: lancamento.validadoPeloOperador,
               });
             });
 
@@ -156,6 +157,7 @@ export class GetFuncionarioImpressaoCalculoController implements Controller {
                 turno: cartao.funcionario.turno.nome,
                 centroCusto: cartao.funcionario.centro_custo.nome,
                 filial: cartao.funcionario.filial,
+                cartaoId: cartao.id,
               },
             },
           };
@@ -172,6 +174,7 @@ export class GetFuncionarioImpressaoCalculoController implements Controller {
             turno: cartao.funcionario.turno.nome,
             centroCusto: cartao.funcionario.centro_custo.nome,
             filial: cartao.funcionario.filial,
+            cartaoId: cartao.id,
           },
         };
       });
