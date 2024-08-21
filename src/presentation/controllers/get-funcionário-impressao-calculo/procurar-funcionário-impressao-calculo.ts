@@ -16,6 +16,7 @@ interface ResumoDoDiaInput {
     cargaHorariaTotal: number;
     eventos: { tipoId: number; minutos: number; tratado: boolean }[];
     abono: { minutos: number };
+    contemAusencia: boolean;
   };
   resumoCartao: {
     atual: {
@@ -76,13 +77,15 @@ export class GetFuncionarioImpressaoCalculoController implements Controller {
         };
 
         const dias = cartao.cartao_dia.map((dia) => {
-          let data = moment.utc(dia.data).format("DD/MM/YYYY ddd").toUpperCase();
+          let dataFormatada = moment.utc(dia.data).format("DD/MM/YYYY ddd").toUpperCase();
 
           if (!onlyDays) {
             let resumoLegado = {
               diurno: "",
               noturno: "",
             };
+
+            const contemAusencia = dia.eventos.some((evento) => evento.tipoId === 2);
 
             const eventos = dia.eventos.map((evento) => {
               return { minutos: evento.minutos, tipoId: evento.tipoId || 0, tratado: evento.tratado };
@@ -93,7 +96,7 @@ export class GetFuncionarioImpressaoCalculoController implements Controller {
             dia.atestado_abonos.map((abono) => abono.minutos + abono.minutos);
 
             const resumo = this.calcularResumoPorDia({
-              dia: { id: dia.id, eventos, abono, cargaHorariaTotal: dia.cargaHor },
+              dia: { id: dia.id, eventos, abono, cargaHorariaTotal: dia.cargaHor, contemAusencia },
               resumoCartao,
             });
 
@@ -120,12 +123,22 @@ export class GetFuncionarioImpressaoCalculoController implements Controller {
               });
             });
 
-            if (showLegacy) return { resumo, periodos, data, resumoLegado };
+            if (showLegacy)
+              return {
+                data: dia.data,
+                dataFormatada,
+                resumo,
+                periodos,
+                resumoLegado,
+                contemAusencia,
+                status: dia.cartao_dia_status,
+                id: dia.id,
+              };
 
-            return { resumo, periodos, data };
+            return { data: dia.data, dataFormatada, resumo, periodos, contemAusencia, status: dia.cartao_dia_status, id: dia.id };
           }
 
-          return { data };
+          return { data: dia.data, dataFormatada, status: dia.cartao_dia_status, id: dia.id };
         });
 
         if (!onlyDays) {
@@ -202,9 +215,9 @@ export class GetFuncionarioImpressaoCalculoController implements Controller {
 
     existeFaltaNoturna = input.dia.eventos.some((evento) => evento.tipoId === 13);
 
-    if (minutosDiurnos == 0 && minutosNoturnos == 0) return output;
+    if (minutosDiurnos == 0 && minutosNoturnos == 0 && !input.dia.contemAusencia) return output;
 
-    minutosDiurnos -= input.dia.cargaHorariaTotal;
+    minutosDiurnos = minutosDiurnos - input.dia.cargaHorariaTotal;
 
     const minutos = this.executarCalculo({
       existeFaltaNoturna,
