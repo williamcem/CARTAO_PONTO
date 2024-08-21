@@ -13,7 +13,7 @@ export class BuscarAlteracaoTurnoPostgresRepository {
     return await this.prisma.funcionario_alteracao_turno.findMany({
       where: {
         dias: {
-          every: { cartao: { id: input.cartaoId } },
+          some: { cartao: { id: input.cartaoId } },
         },
       },
       select: {
