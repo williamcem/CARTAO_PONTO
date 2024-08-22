@@ -16,7 +16,11 @@ export class OcorrenciaGeralPostgresRepository {
         cartao: {
           some: {
             cartao_dia: {
-              some: { eventos: { some: { tratado: false } } },
+              some: {
+                eventos: {
+                  some: { tratado: false, cartao_dia: { cartao_dia_lancamentos: { some: { validadoPeloOperador: true } } } },
+                },
+              },
             },
           },
         },
