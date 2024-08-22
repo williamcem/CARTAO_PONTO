@@ -6,6 +6,11 @@ export const badRequest = (error: Error): HttpResponse => ({
   body: error,
 });
 
+export const badRequestNovo = (error: any): HttpResponse => ({
+  statusCode: 400,
+  body: error,
+});
+
 export const notFoundRequest = (error: Error): HttpResponse => ({
   statusCode: 404,
   body: error,
