@@ -6,10 +6,7 @@ import { badRequest, notFoundRequest, ok, serverError } from "../../helpers/http
 import { Controller, HttpRequest, HttpResponse } from "./listar-ocorrencia-protocols";
 
 export class OcorrenciaController implements Controller {
-  constructor(
-    private readonly ocorrenciaPostgresRepository: OcorrenciaPostgresRepository,
-    private readonly calcularResumoPostgresRepository: CalcularResumoPostgresRepository,
-  ) {}
+  constructor(private readonly ocorrenciaPostgresRepository: OcorrenciaPostgresRepository) {}
 
   async handle(httRequest: HttpRequest): Promise<HttpResponse> {
     try {
