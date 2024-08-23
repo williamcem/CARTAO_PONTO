@@ -39,8 +39,16 @@ export class FinalizarCartaoController implements Controller {
         statusId: 1,
       });
 
+      const atestadosEmAnalise = atestados.map((atestado) => ({
+        id: atestado.id,
+        data: atestado.data,
+        tipo: atestado.tipos_documentos.nome,
+      }));
+
       if (atestados.length || lancamentosNaoValidado.length || ocorrenciasNaoTratada.length || diasSemLancamento.length)
-        return badRequestNovo({ message: { lancamentosNaoValidado, ocorrenciasNaoTratada, diasSemLancamento, atestados } });
+        return badRequestNovo({
+          message: { lancamentosNaoValidado, ocorrenciasNaoTratada, diasSemLancamento, atestadosEmAnalise },
+        });
 
       const saved = await this.finalizarCartaoPostgresRepository.update({
         id: cartao.id,
