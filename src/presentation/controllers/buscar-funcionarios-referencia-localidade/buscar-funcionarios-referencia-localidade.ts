@@ -106,10 +106,16 @@ export class BuscarFuncionarioReferenciaLocalidadeAgrupadaController implements 
               },
             });
           }
-          const atestadosEmAnalise = await this.finalizarCartaoPostgresRepository.findManyAtestado({
+          const atestados = await this.finalizarCartaoPostgresRepository.findManyAtestado({
             funcionarioId: funcionario.id,
             statusId: 1,
           });
+
+          const atestadosEmAnalise = atestados.map((atestado) => ({
+            id: atestado.id,
+            data: atestado.data,
+            tipo: atestado.tipos_documentos.nome,
+          }));
 
           pendencias = { ...pendencias, ...{ atestadosEmAnalise } };
         }
