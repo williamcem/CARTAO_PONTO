@@ -109,8 +109,8 @@ export class GetFuncionarioImpressaoCalculoController implements Controller {
                 resumoLegado.diurno = `-`;
                 resumoLegado.noturno = `-`;
               } else {
-                resumoLegado.diurno = `${typeof resumo.diurno.ext1 === "number" ? resumo.diurno.ext1 : 0 + typeof resumo.diurno.ext2 === "number" ? resumo.diurno.ext2 : 0}/${resumo.diurno.ext3}`;
-                resumoLegado.noturno = `${typeof resumo.noturno.ext1 === "number" ? resumo.noturno.ext1 : 0 + typeof resumo.noturno.ext2 === "number" ? resumo.noturno.ext2 : 0}/${resumo.noturno.ext3}`;
+                resumoLegado.diurno = `${(typeof resumo.diurno.ext1 === "number" ? resumo.diurno.ext1 : 0) + (typeof resumo.diurno.ext2 === "number" ? resumo.diurno.ext2 : 0)}/${resumo.diurno.ext3}`;
+                resumoLegado.noturno = `${(typeof resumo.noturno.ext1 === "number" ? resumo.noturno.ext1 : 0) + (typeof resumo.noturno.ext2 === "number" ? resumo.noturno.ext2 : 0)}/${resumo.noturno.ext3}`;
               }
             }
 
