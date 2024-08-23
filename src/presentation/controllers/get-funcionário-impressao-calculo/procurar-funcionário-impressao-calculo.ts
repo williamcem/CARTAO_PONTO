@@ -6,8 +6,8 @@ import moment from "moment";
 import "moment/locale/pt-br";
 
 interface ResumoDoDiaOutput {
-  diurno: { ext1: number; ext2: number; ext3: number };
-  noturno: { ext1: number; ext2: number; ext3: number };
+  diurno: { ext1: number | string; ext2: number | string; ext3: number | string };
+  noturno: { ext1: number | string; ext2: number | string; ext3: number | string };
 }
 
 interface ResumoDoDiaInput {
@@ -95,24 +95,41 @@ export class GetFuncionarioImpressaoCalculoController implements Controller {
 
             dia.atestado_abonos.map((abono) => abono.minutos + abono.minutos);
 
-            const resumo = this.calcularResumoPorDia({
+            let resumo = this.calcularResumoPorDia({
               dia: { id: dia.id, eventos, abono, cargaHorariaTotal: dia.cargaHor, contemAusencia },
               resumoCartao,
             });
 
+            const existeEventoIndefinidoNaoTratado = dia.eventos.some((evento) => evento.tipoId === 2 && !evento.tratado);
+            const existeDoisIntervalosSemtratamento = dia.eventos.filter((evento) => evento.tipoId === 8).length > 1;
+
             if (showLegacy) {
-              resumoLegado.diurno = `${resumo.diurno.ext1 + resumo.diurno.ext2}/${resumo.diurno.ext3}`;
-              resumoLegado.noturno = `${resumo.noturno.ext1 + resumo.noturno.ext2}/${resumo.noturno.ext3}`;
+              if (existeEventoIndefinidoNaoTratado || existeDoisIntervalosSemtratamento) {
+                resumoLegado.diurno = `-`;
+                resumoLegado.noturno = `-`;
+              } else {
+                resumoLegado.diurno = `${typeof resumo.diurno.ext1 === "number" ? resumo.diurno.ext1 : 0 + typeof resumo.diurno.ext2 === "number" ? resumo.diurno.ext2 : 0}/${resumo.diurno.ext3}`;
+                resumoLegado.noturno = `${typeof resumo.noturno.ext1 === "number" ? resumo.noturno.ext1 : 0 + typeof resumo.noturno.ext2 === "number" ? resumo.noturno.ext2 : 0}/${resumo.noturno.ext3}`;
+              }
             }
 
-            resumoCartao.atual.diurno.ext1 += resumo.diurno.ext1;
-            resumoCartao.atual.diurno.ext2 += resumo.diurno.ext2;
-            resumoCartao.atual.diurno.ext3 += resumo.diurno.ext3;
+            if (existeEventoIndefinidoNaoTratado || existeDoisIntervalosSemtratamento) {
+              resumo.diurno.ext1 = "-";
+              resumo.diurno.ext2 = "-";
+              resumo.diurno.ext3 = "-";
 
-            resumoCartao.atual.noturno.ext1 += resumo.noturno.ext1;
-            resumoCartao.atual.noturno.ext2 += resumo.noturno.ext2;
-            resumoCartao.atual.noturno.ext3 += resumo.noturno.ext3;
+              resumo.noturno.ext1 = "-";
+              resumo.noturno.ext2 = "-";
+              resumo.noturno.ext3 = "-";
+            } else {
+              if (typeof resumo.diurno.ext1 === "number") resumoCartao.atual.diurno.ext1 += resumo.diurno.ext1;
+              if (typeof resumo.diurno.ext2 === "number") resumoCartao.atual.diurno.ext2 += resumo.diurno.ext2;
+              if (typeof resumo.diurno.ext3 === "number") resumoCartao.atual.diurno.ext3 += resumo.diurno.ext3;
 
+              if (typeof resumo.noturno.ext1 === "number") resumoCartao.atual.noturno.ext1 += resumo.noturno.ext1;
+              if (typeof resumo.noturno.ext2 === "number") resumoCartao.atual.noturno.ext2 += resumo.noturno.ext2;
+              if (typeof resumo.noturno.ext3 === "number") resumoCartao.atual.noturno.ext3 += resumo.noturno.ext3;
+            }
             const periodos: { entrada: string; saida: string; periodoId: number; validadoPeloOperador: boolean }[] = [];
 
             dia.cartao_dia_lancamentos.map((lancamento) => {
