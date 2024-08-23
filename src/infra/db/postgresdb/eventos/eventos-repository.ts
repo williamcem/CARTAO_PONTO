@@ -486,7 +486,7 @@ export class CriarEventosPostgresRepository implements AdicionarEventos {
         eventos.push({
           cartaoDiaId: lancamento.cartao_dia.id,
           hora: `${moment(horarioSaidaPeriodoAtual).format("HH:mm")} - ${moment(horarioEntradaProximoPeriodo).format("HH:mm")}`,
-          tipoId: 11,
+          tipoId: 2,
           funcionarioId: lancamento.cartao_dia.cartao.funcionario.id,
           minutos: execenteDescanso,
           periodoId: inicioDescanso.isAfter(lancamento.saida) ? 1 : 2,
