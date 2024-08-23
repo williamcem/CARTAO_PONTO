@@ -37,4 +37,14 @@ export class FinalizarCartaoPostgresRepository {
       },
     });
   }
+
+  public async findManyAtestado(input: { funcionarioId: number; statusId: number }) {
+    return await this.prisma.atestado_funcionario.findMany({
+      where: {
+        funcionarioId: input.funcionarioId,
+        statusId: input.statusId,
+      },
+      select: { id: true },
+    });
+  }
 }
