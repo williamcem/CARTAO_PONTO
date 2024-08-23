@@ -9,9 +9,9 @@ export class BuscarFuncionarioReferenciaLocalidadePostgresRepository {
     this.prisma = prisma;
   }
 
-  public async findManyFuncionarios(input: { data: Date; localidadeId: string }) {
+  public async findManyFuncionarios(input: { data: Date; localidadeId: string; statusId?: number }) {
     const result = await this.prisma.funcionario.findMany({
-      where: { cartao: { some: { referencia: input.data } }, localidadeId: input.localidadeId },
+      where: { cartao: { some: { referencia: input.data, statusId: input.statusId } }, localidadeId: input.localidadeId },
       select: {
         id: true,
         nome: true,
@@ -32,6 +32,7 @@ export class BuscarFuncionarioReferenciaLocalidadePostgresRepository {
             referencia: input.data,
           },
         },
+        turno: { select: { id: true, nome: true } },
       },
 
       orderBy: { identificacao: "asc" },
