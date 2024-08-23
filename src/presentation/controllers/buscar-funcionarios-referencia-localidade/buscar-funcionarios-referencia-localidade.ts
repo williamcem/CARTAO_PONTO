@@ -26,7 +26,7 @@ export class BuscarFuncionarioReferenciaLocalidadeAgrupadaController implements 
 
       if (!moment(referencia).isValid()) return badRequest(new FuncionarioParamError("Data da referência inválida!"));
 
-      if (!cartaoStatusId)
+      if (cartaoStatusId)
         if (!Number.isInteger(Number(cartaoStatusId))) return badRequest(new FuncionarioParamError("Status do cartão é número!"));
 
       const localidade = await this.buscarFuncionarioReferenciaLocalidadePostgresRepository.findFisrtLocalidade({ localidadeId });
