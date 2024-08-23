@@ -44,7 +44,7 @@ export class FinalizarCartaoPostgresRepository {
         funcionarioId: input.funcionarioId,
         statusId: input.statusId,
       },
-      select: { id: true },
+      select: { id: true, tipos_documentos: true, data: true },
     });
   }
 }
