@@ -5,22 +5,29 @@ import "moment/locale/pt-br";
 import { BuscarFuncionarioReferenciaLocalidadePostgresRepository } from "@infra/db/postgresdb/buscar-funcionario-referencia-localidade/buscar-funcionario-referencia-localidade";
 import { FuncionarioParamError } from "../../errors/Funcionario-param-error";
 import { BuscarTodosPostgresRepository } from "@infra/db/postgresdb/buscar-todos-funcionarios.ts/buscas-todos-repository";
+import { FinalizarCartaoPostgresRepository } from "@infra/db/postgresdb/finalizar-cartao/finalizar-cartao";
+import { FinalizarCartaoController } from "../finalizar-cartao/finalizar-cartao";
 
 export class BuscarFuncionarioReferenciaLocalidadeAgrupadaController implements Controller {
   constructor(
     private readonly buscarFuncionarioReferenciaLocalidadePostgresRepository: BuscarFuncionarioReferenciaLocalidadePostgresRepository,
     private readonly buscarTodosPostgresRepository: BuscarTodosPostgresRepository,
+    private readonly finalizarCartaoController: FinalizarCartaoController,
+    private readonly finalizarCartaoPostgresRepository: FinalizarCartaoPostgresRepository,
   ) {}
 
   async handle(httpRequest: HttpRequest): Promise<HttpResponse> {
     try {
-      const { localidadeId, referencia } = httpRequest?.query;
+      const { localidadeId, referencia, showProgress, mostrarPendencias, cartaoStatusId } = httpRequest?.query;
 
       if (!localidadeId) return badRequest(new FuncionarioParamError("Falta localidade!"));
 
       if (!referencia) return badRequest(new FuncionarioParamError("Falta referência!"));
 
-      if (!moment(referencia).isValid()) badRequest(new FuncionarioParamError("Data da referência inválida!"));
+      if (!moment(referencia).isValid()) return badRequest(new FuncionarioParamError("Data da referência inválida!"));
+
+      if (!cartaoStatusId)
+        if (!Number.isInteger(Number(cartaoStatusId))) return badRequest(new FuncionarioParamError("Status do cartão é número!"));
 
       const localidade = await this.buscarFuncionarioReferenciaLocalidadePostgresRepository.findFisrtLocalidade({ localidadeId });
       if (!localidade) return notFoundRequest(new FuncionarioParamError(`Localidade ${localidadeId} não encontrada!`));
@@ -37,36 +44,75 @@ export class BuscarFuncionarioReferenciaLocalidadeAgrupadaController implements 
       let funcionarios = await this.buscarFuncionarioReferenciaLocalidadePostgresRepository.findManyFuncionarios({
         data: new Date(referencia),
         localidadeId,
+        statusId: cartaoStatusId ? Number(cartaoStatusId) : undefined,
       });
 
-      const output: { id: number; nome: string; filial: string; identificacao: string; andamento: number; cartaoId: number }[] =
-        [];
+      const output: {
+        id: number;
+        nome: string;
+        filial: string;
+        identificacao: string;
+        andamento?: number;
+        cartaoId: number;
+        statusId: number;
+        turno: { id: number; nome: string };
+        diasSemLancamento?: [];
+        lancamentosNaoValidado?: [];
+        ocorrenciasNaoTratada?: [];
+      }[] = [];
 
       for (const funcionario of funcionarios) {
-        let andamento = 0;
+        let andamento = undefined;
         const dias = funcionario.cartao[0].cartao_dia.filter((dia) => moment(dia.data).isBefore(moment()) && dia.cargaHor != 0);
         let totalDiasParaTrabalhar = dias.length;
         let totalDiasTrabalhados = 0;
 
-        for await (const dia of funcionario.cartao[0].cartao_dia) {
-          if (dia.cargaHor === 0) continue;
-          if (dia.cartao_dia_lancamentos.some((lancamento) => lancamento.validadoPeloOperador)) {
-            totalDiasTrabalhados = totalDiasTrabalhados + 1;
-            continue;
+        if (showProgress) {
+          for await (const dia of funcionario.cartao[0].cartao_dia) {
+            if (dia.cargaHor === 0) continue;
+            if (dia.cartao_dia_lancamentos.some((lancamento) => lancamento.validadoPeloOperador)) {
+              totalDiasTrabalhados = totalDiasTrabalhados + 1;
+              continue;
+            }
+
+            const abono = await this.buscarTodosPostgresRepository.findFisrtAtestado({
+              funcionarioId: funcionario.id,
+              cartaoDiaId: dia.id,
+            });
+
+            if (abono) {
+              totalDiasTrabalhados = totalDiasTrabalhados + 1;
+              continue;
+            }
           }
 
-          const abono = await this.buscarTodosPostgresRepository.findFisrtAtestado({
-            funcionarioId: funcionario.id,
-            cartaoDiaId: dia.id,
-          });
-
-          if (abono) {
-            totalDiasTrabalhados = totalDiasTrabalhados + 1;
-            continue;
-          }
+          andamento = Number(((totalDiasTrabalhados * 100) / totalDiasParaTrabalhar).toFixed());
         }
 
-        andamento = Number(((totalDiasTrabalhados * 100) / totalDiasParaTrabalhar).toFixed());
+        let pendencias = {};
+
+        if (mostrarPendencias) {
+          const dias = await this.finalizarCartaoPostgresRepository.findFisrt({ id: funcionario.cartao[0].id });
+          if (dias) {
+            pendencias = this.finalizarCartaoController.buscarPendenciaCartao({
+              cartao: {
+                dias: dias.cartao_dia.map((dia) => ({
+                  cargaHor: dia.cargaHor,
+                  data: dia.data,
+                  id: dia.id,
+                  eventos: dia.eventos,
+                  lancamentos: dia.cartao_dia_lancamentos,
+                })),
+              },
+            });
+          }
+          const atestadosEmAnalise = await this.finalizarCartaoPostgresRepository.findManyAtestado({
+            funcionarioId: funcionario.id,
+            statusId: 1,
+          });
+
+          pendencias = { ...pendencias, ...{ atestadosEmAnalise } };
+        }
 
         output.push({
           andamento,
@@ -75,6 +121,9 @@ export class BuscarFuncionarioReferenciaLocalidadeAgrupadaController implements 
           identificacao: funcionario.identificacao,
           nome: funcionario.nome,
           cartaoId: funcionario.cartao[0].id,
+          statusId: funcionario.cartao[0].statusId,
+          turno: funcionario.turno,
+          ...pendencias,
         });
       }
 
