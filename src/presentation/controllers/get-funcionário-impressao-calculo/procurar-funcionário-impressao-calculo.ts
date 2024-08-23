@@ -101,7 +101,8 @@ export class GetFuncionarioImpressaoCalculoController implements Controller {
             });
 
             const existeEventoIndefinidoNaoTratado = dia.eventos.some((evento) => evento.tipoId === 2 && !evento.tratado);
-            const existeDoisIntervalosSemtratamento = dia.eventos.filter((evento) => evento.tipoId === 8).length > 1;
+            const existeDoisIntervalosSemtratamento =
+              dia.eventos.filter((evento) => evento.tipoId === 8 && !evento.tratado).length > 1;
 
             if (showLegacy) {
               if (existeEventoIndefinidoNaoTratado || existeDoisIntervalosSemtratamento) {
