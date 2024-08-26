@@ -63,13 +63,20 @@ export class BuscarFuncionarioReferenciaLocalidadeAgrupadaController implements 
 
       for (const funcionario of funcionarios) {
         let andamento = undefined;
-        const dias = funcionario.cartao[0].cartao_dia.filter((dia) => moment(dia.data).isBefore(moment()) && dia.cargaHor != 0);
+        const dias = funcionario.cartao[0].cartao_dia.filter((dia) => {
+          if (moment(dia.data).isBefore(moment()) && dia.cargaHor != 0 && dia.statusId !== 11) {
+            const existeOcorrencia = dia.eventos.some((evento) => evento.tipoId === 2);
+            if (!existeOcorrencia) return dia;
+          }
+        });
         let totalDiasParaTrabalhar = dias.length;
         let totalDiasTrabalhados = 0;
 
         if (showProgress) {
           for await (const dia of funcionario.cartao[0].cartao_dia) {
-            if (dia.cargaHor === 0) continue;
+            if (dia.cargaHor === 0 || dia.statusId === 11) continue;
+            const existeOcorrencia = dia.eventos.some((evento) => evento.tipoId === 2);
+            if (existeOcorrencia) continue;
             if (dia.cartao_dia_lancamentos.some((lancamento) => lancamento.validadoPeloOperador)) {
               totalDiasTrabalhados = totalDiasTrabalhados + 1;
               continue;
