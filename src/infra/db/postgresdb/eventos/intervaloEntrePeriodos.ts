@@ -17,7 +17,7 @@ export function criarEventoIntervaloEntrePeriodos(
   const minutosIntervalo = calcularIntervaloEntrePeriodos(horarioSaidaPrimeiroPeriodo, horarioEntradaSegundoPeriodo);
 
   if (minutosIntervalo !== 0) {
-    const hora = ordenarHorario({ inicio: horarioSaidaPrimeiroPeriodo, fim: horarioSaidaPrimeiroPeriodo });
+    const hora = ordenarHorario({ inicio: horarioSaidaPrimeiroPeriodo, fim: horarioEntradaSegundoPeriodo });
 
     return {
       cartaoDiaId: lancamento.cartao_dia.id,
