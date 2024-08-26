@@ -282,7 +282,10 @@ export class CriarEventosPostgresRepository implements AdicionarEventos {
     if (entrada.isBefore(horarioEntradaEsperado1)) {
       const eventoPeriodoReal = {
         cartaoDiaId: lancamento.cartao_dia.id,
-        hora: `${horarioEntradaEsperado1.format("HH:mm")} - ${saida.format("HH:mm")}`,
+        hora: this.ordenarHorario({
+          inicio: horarioEntradaEsperado1,
+          fim: saida,
+        }),
         tipoId: 1,
         funcionarioId: lancamento.cartao_dia.cartao.funcionario.id,
         minutos: saida.diff(horarioEntradaEsperado1, "minutes"),
@@ -294,7 +297,7 @@ export class CriarEventosPostgresRepository implements AdicionarEventos {
     } else {
       const eventoPeriodo1 = {
         cartaoDiaId: lancamento.cartao_dia.id,
-        hora: `${entrada.format("HH:mm")} - ${saida.format("HH:mm")}`,
+        hora: this.ordenarHorario({ inicio: entrada, fim: saida }),
         tipoId: 1,
         funcionarioId: lancamento.cartao_dia.cartao.funcionario.id,
         minutos: saida.diff(entrada, "minutes"),
@@ -306,7 +309,7 @@ export class CriarEventosPostgresRepository implements AdicionarEventos {
 
     const eventoExcedentePositivo = {
       cartaoDiaId: lancamento.cartao_dia.id,
-      hora: `${entrada.format("HH:mm")} - ${horarioEntradaEsperado1.format("HH:mm")}`,
+      hora: this.ordenarHorario({ inicio: entrada, fim: horarioEntradaEsperado1 }),
       tipoId: 1,
       funcionarioId: lancamento.cartao_dia.cartao.funcionario.id,
       minutos: horarioEntradaEsperado1.diff(entrada, "minutes"),
@@ -317,7 +320,7 @@ export class CriarEventosPostgresRepository implements AdicionarEventos {
     }
 
     if (eventoExcedentePositivo.minutos < 0) {
-      eventoExcedentePositivo.hora = `${horarioEntradaEsperado1.format("HH:mm")} - ${entrada.format("HH:mm")}`;
+      eventoExcedentePositivo.hora = this.ordenarHorario({ inicio: horarioEntradaEsperado1, fim: entrada });
     }
 
     if (Math.abs(eventoExcedentePositivo.minutos) > 5) {
@@ -355,7 +358,7 @@ export class CriarEventosPostgresRepository implements AdicionarEventos {
     if (saida.isBefore(horarioSaidaEsperado)) {
       const eventoPeriodoReal = {
         cartaoDiaId: lancamento.cartao_dia.id,
-        hora: `${entrada.format("HH:mm")} - ${saida.format("HH:mm")}`,
+        hora: this.ordenarHorario({ inicio: entrada, fim: saida }),
         tipoId: 1,
         funcionarioId: lancamento.cartao_dia.cartao.funcionario.id,
         minutos: saida.diff(entrada, "minutes"),
@@ -367,7 +370,7 @@ export class CriarEventosPostgresRepository implements AdicionarEventos {
 
       const eventoExcedentePositivo = {
         cartaoDiaId: lancamento.cartao_dia.id,
-        hora: `${horarioSaidaEsperado.format("HH:mm")} - ${saida.format("HH:mm")}`,
+        hora: this.ordenarHorario({ inicio: horarioSaidaEsperado, fim: saida }),
         tipoId: 2,
         funcionarioId: lancamento.cartao_dia.cartao.funcionario.id,
         minutos: saida.diff(horarioSaidaEsperado, "minutes"),
@@ -384,7 +387,7 @@ export class CriarEventosPostgresRepository implements AdicionarEventos {
       }
 
       if (eventoExcedentePositivo.minutos < 0) {
-        eventoExcedentePositivo.hora = `${saida.format("HH:mm")} - ${horarioSaidaEsperado.format("HH:mm")}`;
+        eventoExcedentePositivo.hora = this.ordenarHorario({ inicio: saida, fim: horarioSaidaEsperado });
       }
 
       if (excedeu) {
@@ -396,7 +399,7 @@ export class CriarEventosPostgresRepository implements AdicionarEventos {
     } else {
       const eventoPeriodoEsperado = {
         cartaoDiaId: lancamento.cartao_dia.id,
-        hora: `${entrada.format("HH:mm")} - ${horarioSaidaEsperado.format("HH:mm")}`,
+        hora: this.ordenarHorario({ inicio: entrada, fim: horarioSaidaEsperado }),
         tipoId: 1,
         funcionarioId: lancamento.cartao_dia.cartao.funcionario.id,
         minutos: horarioSaidaEsperado.diff(entrada, "minutes"),
@@ -408,7 +411,7 @@ export class CriarEventosPostgresRepository implements AdicionarEventos {
 
       const eventoExcedentePositivo = {
         cartaoDiaId: lancamento.cartao_dia.id,
-        hora: `${horarioSaidaEsperado.format("HH:mm")} - ${saida.format("HH:mm")}`,
+        hora: this.ordenarHorario({ inicio: horarioSaidaEsperado, fim: saida }),
         tipoId: 1,
         funcionarioId: lancamento.cartao_dia.cartao.funcionario.id,
         minutos: saida.diff(horarioSaidaEsperado, "minutes"),
@@ -438,7 +441,7 @@ export class CriarEventosPostgresRepository implements AdicionarEventos {
 
     const eventoTrabalhado = {
       cartaoDiaId: lancamento.cartao_dia.id,
-      hora: `${entrada.format("HH:mm")} - ${saida.format("HH:mm")}`,
+      hora: this.ordenarHorario({ inicio: entrada, fim: saida }),
       tipoId: 1,
       funcionarioId: lancamento.cartao_dia.cartao.funcionario.id,
       minutos: minutos,
@@ -485,7 +488,7 @@ export class CriarEventosPostgresRepository implements AdicionarEventos {
 
         eventos.push({
           cartaoDiaId: lancamento.cartao_dia.id,
-          hora: `${moment(horarioSaidaPeriodoAtual).format("HH:mm")} - ${moment(horarioEntradaProximoPeriodo).format("HH:mm")}`,
+          hora: this.ordenarHorario({ inicio: horarioSaidaPeriodoAtual, fim: horarioEntradaProximoPeriodo }),
           tipoId: 2,
           funcionarioId: lancamento.cartao_dia.cartao.funcionario.id,
           minutos: execenteDescanso,
@@ -937,7 +940,7 @@ export class CriarEventosPostgresRepository implements AdicionarEventos {
                   cartaoDiaId: eventoAgrupado.cartaoDiaId,
                   minutos: minutos,
                   tipoId: 4,
-                  hora: `${moment.utc(noturno.inicio).format("HH:mm")} - ${moment.utc(noturno.final).format("HH:mm")}`,
+                  hora: this.ordenarHorario({ inicio: moment.utc(noturno.inicio), fim: moment.utc(noturno.final) }),
                   periodoId: lancamento.periodoId,
                 });
               } else {
@@ -947,7 +950,7 @@ export class CriarEventosPostgresRepository implements AdicionarEventos {
                   cartaoDiaId: eventoAgrupado.cartaoDiaId,
                   minutos: noturno.minutos,
                   tipoId: 1,
-                  hora: `${moment.utc(noturno.inicio).format("HH:mm")} - ${moment.utc(noturno.final).format("HH:mm")}`,
+                  hora: this.ordenarHorario({ inicio: moment.utc(noturno.inicio), fim: moment.utc(noturno.final) }),
                   periodoId: lancamento.periodoId,
                 });
               }
@@ -959,7 +962,7 @@ export class CriarEventosPostgresRepository implements AdicionarEventos {
                 cartaoDiaId: eventoAgrupado.cartaoDiaId,
                 minutos: minutos,
                 tipoId: 4,
-                hora: `${moment.utc(noturno.inicio).format("HH:mm")} - ${moment.utc(noturno.final).format("HH:mm")}`,
+                hora: this.ordenarHorario({ inicio: moment.utc(noturno.inicio), fim: moment.utc(noturno.final) }),
                 periodoId: lancamento.periodoId,
               });
             }
@@ -1066,5 +1069,13 @@ export class CriarEventosPostgresRepository implements AdicionarEventos {
     }
 
     return output;
+  }
+
+  ordenarHorario(input: { inicio: moment.Moment; fim: moment.Moment }): string {
+    if (input.inicio.isBefore(input.fim)) {
+      return `${input.inicio.format("HH:mm")} - ${input.fim.format("HH:mm")}`;
+    } else {
+      return `${input.fim.format("HH:mm")} - ${input.inicio.format("HH:mm")}`;
+    }
   }
 }

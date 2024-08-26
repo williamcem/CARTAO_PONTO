@@ -15,11 +15,9 @@ export function criarEventoIntervaloEntrePeriodos(
   totalPeriodos: number,
 ): any {
   const minutosIntervalo = calcularIntervaloEntrePeriodos(horarioSaidaPrimeiroPeriodo, horarioEntradaSegundoPeriodo);
+
   if (minutosIntervalo !== 0) {
-    const hora =
-      minutosIntervalo > 0
-        ? `${horarioSaidaPrimeiroPeriodo.format("HH:mm")} - ${horarioEntradaSegundoPeriodo.format("HH:mm")}`
-        : `${horarioEntradaSegundoPeriodo.format("HH:mm")} - ${horarioSaidaPrimeiroPeriodo.format("HH:mm")}`;
+    const hora = ordenarHorario({ inicio: horarioSaidaPrimeiroPeriodo, fim: horarioSaidaPrimeiroPeriodo });
 
     return {
       cartaoDiaId: lancamento.cartao_dia.id,
@@ -31,3 +29,11 @@ export function criarEventoIntervaloEntrePeriodos(
   }
   return null;
 }
+
+const ordenarHorario = (input: { inicio: moment.Moment; fim: moment.Moment }): string => {
+  if (input.inicio.isBefore(input.fim)) {
+    return `${input.inicio.format("HH:mm")} - ${input.fim.format("HH:mm")}`;
+  } else {
+    return `${input.fim.format("HH:mm")} - ${input.inicio.format("HH:mm")}`;
+  }
+};
