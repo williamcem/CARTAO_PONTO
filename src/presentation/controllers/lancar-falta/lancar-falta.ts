@@ -44,7 +44,7 @@ export class LancarFaltaController implements Controller {
         eventos.push({
           cartaoDiaId,
           funcionarioId: dia.cartao.funcionarioId,
-          hora: `${jornada.inicio.hora}:${jornada.inicio.minuto} - ${jornada.fim.hora}:${jornada.fim.minuto}`,
+          hora: `${this.formatoHoraMinuto(jornada.inicio)} - ${this.formatoHoraMinuto(jornada.fim)}`,
           minutos: -dia.cargaHor,
           tipoId: 2,
         });
@@ -76,7 +76,7 @@ export class LancarFaltaController implements Controller {
           eventos.push({
             cartaoDiaId,
             funcionarioId: dia.cartao.funcionarioId,
-            hora: `${horariosDia[0].hora}:${horariosDia[0].minuto} - ${horariosDia[1].hora}:${horariosDia[1].minuto}`,
+            hora: `${this.formatoHoraMinuto(horariosDia[0])} - ${this.formatoHoraMinuto(horariosDia[1])}`,
             minutos: 0,
             tipoId: 13,
           });
@@ -84,7 +84,7 @@ export class LancarFaltaController implements Controller {
         eventos.push({
           cartaoDiaId,
           funcionarioId: dia.cartao.funcionarioId,
-          hora: `${horariosDia[0].hora}:${horariosDia[0].minuto} - ${horariosDia[1].hora}:${horariosDia[1].minuto}`,
+          hora: `${this.formatoHoraMinuto(horariosDia[0])} - ${this.formatoHoraMinuto(horariosDia[1])}`,
           minutos: saldoDia,
           tipoId: 2,
         });
@@ -110,7 +110,7 @@ export class LancarFaltaController implements Controller {
           eventos.push({
             cartaoDiaId,
             funcionarioId: dia.cartao.funcionarioId,
-            hora: `${horariosDia[2].hora}:${horariosDia[2].minuto} - ${horariosDia[3].hora}:${horariosDia[3].minuto}`,
+            hora: `${this.formatoHoraMinuto(horariosDia[2])} - ${this.formatoHoraMinuto(horariosDia[3])}`,
             minutos: 0,
             tipoId: 13,
           });
@@ -119,7 +119,7 @@ export class LancarFaltaController implements Controller {
         eventos.push({
           cartaoDiaId,
           funcionarioId: dia.cartao.funcionarioId,
-          hora: `${horariosDia[2].hora}:${horariosDia[2].minuto} - ${horariosDia[3].hora}:${horariosDia[3].minuto}`,
+          hora: `${this.formatoHoraMinuto(horariosDia[2])} - ${this.formatoHoraMinuto(horariosDia[3])}`,
           minutos: saldoDia,
           tipoId: 2,
         });
@@ -198,5 +198,9 @@ export class LancarFaltaController implements Controller {
     });
 
     return minutosNoturno;
+  }
+
+  formatoHoraMinuto(input: { hora: number; minuto: number }) {
+    return `${String(input.hora).padStart(2, "0")}:${String(input.minuto).padStart(2, "0")}`;
   }
 }
