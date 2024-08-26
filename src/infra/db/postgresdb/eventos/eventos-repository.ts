@@ -956,12 +956,26 @@ export class CriarEventosPostgresRepository implements AdicionarEventos {
               }
             } else {
               minutos = Number((noturno.minutos * 1.14).toFixed());
-              //Gera evento adicional noturno
+
+              const horarios = this.pegarCargaHorarioCompleta(dia.cargaHorariaCompleta);
+
+              const dataInicioJornada = this.pegarHorarioCargaHoraria({
+                data: dia.data,
+                hora: horarios[0].hora,
+                minuto: horarios[0].minuto,
+                utc: false,
+              });
+
+              let noturnoEAntesDoFimDaJornada =
+                dataInicioJornada.isSameOrAfter(moment.utc(noturno.inicio)) &&
+                dataInicioJornada.isSameOrAfter(moment.utc(noturno.final));
+
+              //Gera evento adicional noturno após fim da jornada
               input.eventos.push({
                 funcionarioId: eventoAgrupado.funcionarioId,
                 cartaoDiaId: eventoAgrupado.cartaoDiaId,
                 minutos: minutos,
-                tipoId: 4,
+                tipoId: noturnoEAntesDoFimDaJornada ? 14 : 4,
                 hora: this.ordenarHorario({ inicio: moment.utc(noturno.inicio), fim: moment.utc(noturno.final) }),
                 periodoId: lancamento.periodoId,
               });
