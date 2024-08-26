@@ -69,7 +69,7 @@ export class BuscarFuncionarioReferenciaLocalidadeAgrupadaController implements 
 
         if (showProgress) {
           for await (const dia of funcionario.cartao[0].cartao_dia) {
-            if (dia.cargaHor === 0) continue;
+            if (dia.cargaHor === 0 || dia.statusId === 11) continue;
             if (dia.cartao_dia_lancamentos.some((lancamento) => lancamento.validadoPeloOperador)) {
               totalDiasTrabalhados = totalDiasTrabalhados + 1;
               continue;
