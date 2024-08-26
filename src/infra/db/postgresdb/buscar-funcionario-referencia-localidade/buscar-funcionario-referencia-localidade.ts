@@ -25,6 +25,13 @@ export class BuscarFuncionarioReferenciaLocalidadePostgresRepository {
                 data: true,
                 cargaHor: true,
                 cartao_dia_lancamentos: { select: { id: true, validadoPeloOperador: true } },
+                statusId: true,
+                eventos: {
+                  select: {
+                    tipoId: true,
+                    tratado: true,
+                  },
+                },
               },
             },
           },
