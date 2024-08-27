@@ -224,14 +224,26 @@ export class GetFuncionarioImpressaoCalculoController implements Controller {
     let minutosDiurnos = 0;
     let minutosNoturnos = 0;
     let existeFaltaNoturna = false;
+    let minutosNoturnosAntesJornada = 0;
 
     input.dia.eventos.filter((evento) => {
-      if (evento.tipoId !== 8 && evento.tipoId !== 11 && evento.tipoId !== 4 && evento.tipoId !== 2 && evento.tipoId !== 13)
+      if (
+        evento.tipoId !== 8 &&
+        evento.tipoId !== 11 &&
+        evento.tipoId !== 4 &&
+        evento.tipoId !== 2 &&
+        evento.tipoId !== 13 &&
+        evento.tipoId !== 14
+      )
         minutosDiurnos += evento.minutos;
     });
 
     input.dia.eventos.filter((evento) => {
       if (evento.tipoId === 4) minutosNoturnos += evento.minutos;
+    });
+
+    input.dia.eventos.filter((evento) => {
+      if (evento.tipoId === 14) minutosNoturnosAntesJornada += evento.minutos;
     });
 
     existeFaltaNoturna = input.dia.eventos.some((evento) => evento.tipoId === 13);
@@ -247,14 +259,54 @@ export class GetFuncionarioImpressaoCalculoController implements Controller {
     });
 
     if (minutos > 0) {
-      const [ext1, ext2, ext3] = this.inserirRegraPorHoraExtra({ minutos: minutos, parametros: [60, 60, 9999] });
+      let acrescimoNoturnoAntesJornada = 0;
+      if (minutosNoturnosAntesJornada > 0) {
+        acrescimoNoturnoAntesJornada = minutosNoturnosAntesJornada - Number((minutosNoturnosAntesJornada / 1.14).toFixed());
+      }
+
+      const [ext1, ext2, ext3] = this.inserirRegraPorHoraExtra({
+        minutos: minutos + acrescimoNoturnoAntesJornada,
+        parametros: [60, 60, 9999],
+      });
       output.diurno = { ext1, ext2, ext3 };
+
+      if (minutosNoturnosAntesJornada > 0) {
+        let saldoMinutosNoturnoAntesJornada = minutosNoturnosAntesJornada;
+
+        for (const key in output.diurno) {
+          if (output.diurno.hasOwnProperty(key)) {
+            if (saldoMinutosNoturnoAntesJornada <= 0) continue;
+
+            if (
+              saldoMinutosNoturnoAntesJornada >
+              Number(output.diurno[key as keyof { ext1: string | number; ext2: string | number; ext3: string | number }])
+            ) {
+              saldoMinutosNoturnoAntesJornada =
+                saldoMinutosNoturnoAntesJornada -
+                Number(output.diurno[key as keyof { ext1: string | number; ext2: string | number; ext3: string | number }]);
+              output.diurno[key as keyof { ext1: string | number; ext2: string | number; ext3: string | number }] = 0;
+            } else {
+              output.diurno[key as keyof { ext1: string | number; ext2: string | number; ext3: string | number }] =
+                Number(output.diurno[key as keyof { ext1: string | number; ext2: string | number; ext3: string | number }]) -
+                saldoMinutosNoturnoAntesJornada;
+              saldoMinutosNoturnoAntesJornada = 0;
+            }
+          }
+        }
+
+        if (minutosNoturnosAntesJornada < Number(output.diurno.ext1)) {
+          output.diurno.ext1 = Number(output.diurno.ext1) - minutosNoturnosAntesJornada;
+        }
+      }
     } else if (minutos < 0) {
       output.diurno.ext1 = minutos;
     }
 
-    if (minutosNoturnos > 0) {
-      const [ext1, ext2, ext3] = this.inserirRegraPorHoraExtra({ minutos: minutosNoturnos, parametros: [60, 60, 9999] });
+    if (minutosNoturnos > 0 || minutosNoturnosAntesJornada > 0) {
+      const [ext1, ext2, ext3] = this.inserirRegraPorHoraExtra({
+        minutos: minutosNoturnos + minutosNoturnosAntesJornada,
+        parametros: [60, 60, 9999],
+      });
       output.noturno = { ext1, ext2, ext3 };
     } else if (minutosNoturnos < 0) output.noturno = { ext1: minutosNoturnos, ext2: 0, ext3: 0 };
 
