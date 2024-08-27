@@ -265,7 +265,7 @@ export class GetFuncionarioImpressaoCalculoController implements Controller {
       }
 
       const [ext1, ext2, ext3] = this.inserirRegraPorHoraExtra({
-        minutos: minutos+acrescimoNoturnoAntesJornada,
+        minutos: minutos + acrescimoNoturnoAntesJornada,
         parametros: [60, 60, 9999],
       });
       output.diurno = { ext1, ext2, ext3 };
