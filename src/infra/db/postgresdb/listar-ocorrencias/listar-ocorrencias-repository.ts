@@ -69,6 +69,7 @@ export class OcorrenciaPostgresRepository implements ListarOcorrencias {
     localidade: string,
   ): Promise<{
     funcionarios: {
+      id: number;
       identificacao: string;
       nome: string;
       turno: { nome: string };
@@ -152,6 +153,7 @@ export class OcorrenciaPostgresRepository implements ListarOcorrencias {
         const resumo = this.calcularResumo(diasComEventos);
 
         return {
+          id: funcionario.id,
           identificacao: funcionario.identificacao,
           nome: funcionario.nome,
           turno: funcionario.turno,
@@ -162,5 +164,11 @@ export class OcorrenciaPostgresRepository implements ListarOcorrencias {
         };
       }),
     };
+  }
+
+  public async findFirstAtestado(input: { data: { gte: Date; lte: Date }; funcionarioId: number; statusId: number }) {
+    return await this.prisma.atestado_funcionario.findFirst({
+      where: { data: input.data, funcionarioId: input.funcionarioId, statusId: input.statusId },
+    });
   }
 }
