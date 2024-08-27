@@ -37,6 +37,7 @@ export class FuncionarioImpressaoCalculoPostgresRepository {
             centro_custo: true,
           },
         },
+        cartao_horario_anterior: { orderBy: { periodoId: "asc" } },
       },
       orderBy: { id: "asc" },
     });
