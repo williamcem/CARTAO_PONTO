@@ -3,6 +3,7 @@ import { PrismaClient } from "@prisma/client";
 import { AddAtestado, AddAtestadoModel } from "../../../../domain/usecases/add-atestado";
 import { ComprimentoDeArray, DataAtestadoInvalida, FormatoArray } from "../../../../presentation/errors/Funcionario-param-error";
 import { prisma } from "../../../database/Prisma";
+import moment from "moment";
 
 export class AtestadoRepository implements AddAtestado {
   private prisma: PrismaClient;
@@ -56,7 +57,7 @@ export class AtestadoRepository implements AddAtestado {
         // Cria o atestado
         const savedAtestado = await transaction.atestado_funcionario.create({
           data: {
-            data: input.data,
+            data: moment.utc(input.data).toDate(),
             inicio: input.inicio,
             fim: input.fim,
             descricao: input.descricao,
