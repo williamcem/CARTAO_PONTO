@@ -661,7 +661,7 @@ export class CriarEventosPostgresRepository implements AdicionarEventos {
         let minutosTrabalhadosSegundoPeriodo = 0;
 
         eventoAgrupado.eventos.map((evento) => {
-          if (evento.tipoId === 1 || evento.tipoId === 4 || evento.tipoId === 12) {
+          if (evento.tipoId === 1 || evento.tipoId === 4 || evento.tipoId === 12 || evento.tipoId === 14) {
             minutosTrabalhados += evento.minutos;
             if (evento.periodoId === 1) minutosTrabalhadosPrimeiroPeriodo += evento.minutos;
             if (evento.periodoId === 2) minutosTrabalhadosSegundoPeriodo += evento.minutos;
