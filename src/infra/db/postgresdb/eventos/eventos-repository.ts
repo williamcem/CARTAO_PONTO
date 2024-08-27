@@ -901,7 +901,8 @@ export class CriarEventosPostgresRepository implements AdicionarEventos {
               (evento) => evento.cartaoDiaId === dia.id && evento.tipoId === 1 && evento.hora === hora,
             );
 
-            if (existeIndex !== -1) {
+            //Removia a duplicidade de minutos onde foi adicional noturno
+            /*             if (existeIndex !== -1) {
               input.eventos[existeIndex].minutos -= noturno.minutos;
               minutosTrabalhados -= noturno.minutos;
             } else {
@@ -913,7 +914,7 @@ export class CriarEventosPostgresRepository implements AdicionarEventos {
                 minutosTrabalhados -= input.eventos[existeIndex].minutos;
                 input.eventos[existeIndex].minutos = 0;
               }
-            }
+            } */
 
             const diferencaComCargaHoraria = minutosTrabalhados - dia?.cargaHor;
             let minutos = 0;
