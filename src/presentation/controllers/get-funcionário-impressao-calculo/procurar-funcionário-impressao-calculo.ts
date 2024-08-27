@@ -293,10 +293,6 @@ export class GetFuncionarioImpressaoCalculoController implements Controller {
             }
           }
         }
-
-        if (minutosNoturnosAntesJornada < Number(output.diurno.ext1)) {
-          output.diurno.ext1 = Number(output.diurno.ext1) - minutosNoturnosAntesJornada;
-        }
       }
     } else if (minutos < 0) {
       output.diurno.ext1 = minutos;
