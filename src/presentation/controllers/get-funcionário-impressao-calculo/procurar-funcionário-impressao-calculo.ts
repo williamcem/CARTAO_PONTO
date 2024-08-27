@@ -39,7 +39,7 @@ export class GetFuncionarioImpressaoCalculoController implements Controller {
 
   async handle(httpRequest: HttpRequest): Promise<HttpResponse> {
     try {
-      const { cartaoId, localidade, funcionariosId, onlyDay, referencia, showLegacy } = httpRequest?.query;
+      const { cartaoId, localidade, funcionariosId, onlyDay, referencia, showLegacy, showBalance } = httpRequest?.query;
 
       const onlyDays = Number(onlyDay);
 
@@ -79,85 +79,110 @@ export class GetFuncionarioImpressaoCalculoController implements Controller {
         const dias = cartao.cartao_dia.map((dia) => {
           let dataFormatada = moment.utc(dia.data).format("DD/MM/YYYY ddd").toUpperCase();
 
-          if (!onlyDays) {
-            let resumoLegado = {
-              diurno: "",
-              noturno: "",
-            };
+          if (onlyDays) return { data: dia.data, dataFormatada, status: dia.cartao_dia_status, id: dia.id };
 
-            const contemAusencia = dia.eventos.some((evento) => evento.tipoId === 2);
+          let resumoLegado = {
+            diurno: "",
+            noturno: "",
+          };
 
-            const eventos = dia.eventos.map((evento) => {
-              return { minutos: evento.minutos, tipoId: evento.tipoId || 0, tratado: evento.tratado };
-            });
+          const contemAusencia = dia.eventos.some((evento) => evento.tipoId === 2);
 
-            const abono = { minutos: 0 };
+          const eventos = dia.eventos.map((evento) => {
+            return { minutos: evento.minutos, tipoId: evento.tipoId || 0, tratado: evento.tratado };
+          });
 
-            dia.atestado_abonos.map((abono) => abono.minutos + abono.minutos);
+          const abono = { minutos: 0 };
 
-            let resumo = this.calcularResumoPorDia({
-              dia: { id: dia.id, eventos, abono, cargaHorariaTotal: dia.cargaHor, contemAusencia },
-              resumoCartao,
-            });
+          dia.atestado_abonos.map((abono) => abono.minutos + abono.minutos);
 
-            const existeEventoIndefinidoNaoTratado = dia.eventos.some((evento) => evento.tipoId === 2 && !evento.tratado);
-            const existeDoisIntervalosSemtratamento =
-              dia.eventos.filter((evento) => evento.tipoId === 8 && !evento.tratado).length > 1;
+          let resumo = this.calcularResumoPorDia({
+            dia: { id: dia.id, eventos, abono, cargaHorariaTotal: dia.cargaHor, contemAusencia },
+            resumoCartao,
+          });
 
-            if (showLegacy) {
-              if (existeEventoIndefinidoNaoTratado || existeDoisIntervalosSemtratamento) {
-                resumoLegado.diurno = `-`;
-                resumoLegado.noturno = `-`;
-              } else {
-                resumoLegado.diurno = `${(typeof resumo.diurno.ext1 === "number" ? resumo.diurno.ext1 : 0) + (typeof resumo.diurno.ext2 === "number" ? resumo.diurno.ext2 : 0)}/${resumo.diurno.ext3}`;
-                resumoLegado.noturno = `${(typeof resumo.noturno.ext1 === "number" ? resumo.noturno.ext1 : 0) + (typeof resumo.noturno.ext2 === "number" ? resumo.noturno.ext2 : 0)}/${resumo.noturno.ext3}`;
-              }
-            }
+          const existeEventoIndefinidoNaoTratado = dia.eventos.some((evento) => evento.tipoId === 2 && !evento.tratado);
+          const existeDoisIntervalosSemtratamento =
+            dia.eventos.filter((evento) => evento.tipoId === 8 && !evento.tratado).length > 1;
 
+          if (showLegacy) {
             if (existeEventoIndefinidoNaoTratado || existeDoisIntervalosSemtratamento) {
-              resumo.diurno.ext1 = "-";
-              resumo.diurno.ext2 = "-";
-              resumo.diurno.ext3 = "-";
-
-              resumo.noturno.ext1 = "-";
-              resumo.noturno.ext2 = "-";
-              resumo.noturno.ext3 = "-";
+              resumoLegado.diurno = `-`;
+              resumoLegado.noturno = `-`;
             } else {
-              if (typeof resumo.diurno.ext1 === "number") resumoCartao.atual.diurno.ext1 += resumo.diurno.ext1;
-              if (typeof resumo.diurno.ext2 === "number") resumoCartao.atual.diurno.ext2 += resumo.diurno.ext2;
-              if (typeof resumo.diurno.ext3 === "number") resumoCartao.atual.diurno.ext3 += resumo.diurno.ext3;
-
-              if (typeof resumo.noturno.ext1 === "number") resumoCartao.atual.noturno.ext1 += resumo.noturno.ext1;
-              if (typeof resumo.noturno.ext2 === "number") resumoCartao.atual.noturno.ext2 += resumo.noturno.ext2;
-              if (typeof resumo.noturno.ext3 === "number") resumoCartao.atual.noturno.ext3 += resumo.noturno.ext3;
+              resumoLegado.diurno = `${(typeof resumo.diurno.ext1 === "number" ? resumo.diurno.ext1 : 0) + (typeof resumo.diurno.ext2 === "number" ? resumo.diurno.ext2 : 0)}/${resumo.diurno.ext3}`;
+              resumoLegado.noturno = `${(typeof resumo.noturno.ext1 === "number" ? resumo.noturno.ext1 : 0) + (typeof resumo.noturno.ext2 === "number" ? resumo.noturno.ext2 : 0)}/${resumo.noturno.ext3}`;
             }
-            const periodos: { entrada: string; saida: string; periodoId: number; validadoPeloOperador: boolean }[] = [];
-
-            dia.cartao_dia_lancamentos.map((lancamento) => {
-              periodos.push({
-                entrada: moment.utc(lancamento.entrada).format("HH:mm"),
-                saida: moment.utc(lancamento.saida).format("HH:mm"),
-                periodoId: lancamento.periodoId,
-                validadoPeloOperador: lancamento.validadoPeloOperador,
-              });
-            });
-
-            if (showLegacy)
-              return {
-                data: dia.data,
-                dataFormatada,
-                resumo,
-                periodos,
-                resumoLegado,
-                contemAusencia,
-                status: dia.cartao_dia_status,
-                id: dia.id,
-              };
-
-            return { data: dia.data, dataFormatada, resumo, periodos, contemAusencia, status: dia.cartao_dia_status, id: dia.id };
           }
 
-          return { data: dia.data, dataFormatada, status: dia.cartao_dia_status, id: dia.id };
+          if (existeEventoIndefinidoNaoTratado || existeDoisIntervalosSemtratamento) {
+            resumo.diurno.ext1 = "-";
+            resumo.diurno.ext2 = "-";
+            resumo.diurno.ext3 = "-";
+
+            resumo.noturno.ext1 = "-";
+            resumo.noturno.ext2 = "-";
+            resumo.noturno.ext3 = "-";
+          } else {
+            if (typeof resumo.diurno.ext1 === "number") resumoCartao.atual.diurno.ext1 += resumo.diurno.ext1;
+            if (typeof resumo.diurno.ext2 === "number") resumoCartao.atual.diurno.ext2 += resumo.diurno.ext2;
+            if (typeof resumo.diurno.ext3 === "number") resumoCartao.atual.diurno.ext3 += resumo.diurno.ext3;
+
+            if (typeof resumo.noturno.ext1 === "number") resumoCartao.atual.noturno.ext1 += resumo.noturno.ext1;
+            if (typeof resumo.noturno.ext2 === "number") resumoCartao.atual.noturno.ext2 += resumo.noturno.ext2;
+            if (typeof resumo.noturno.ext3 === "number") resumoCartao.atual.noturno.ext3 += resumo.noturno.ext3;
+          }
+          const periodos: { entrada: string; saida: string; periodoId: number; validadoPeloOperador: boolean }[] = [];
+
+          dia.cartao_dia_lancamentos.map((lancamento) => {
+            periodos.push({
+              entrada: moment.utc(lancamento.entrada).format("HH:mm"),
+              saida: moment.utc(lancamento.saida).format("HH:mm"),
+              periodoId: lancamento.periodoId,
+              validadoPeloOperador: lancamento.validadoPeloOperador,
+            });
+          });
+
+          var saldoAtual:
+            | undefined
+            | {
+                diurno: {
+                  ext1: number;
+                  ext2: number;
+                  ext3: number;
+                };
+                noturno: {
+                  ext1: number;
+                  ext2: number;
+                  ext3: number;
+                };
+              } = undefined;
+
+          if (showBalance)
+            saldoAtual = {
+              diurno: {
+                ext1: resumoCartao.atual.diurno.ext1,
+                ext2: resumoCartao.atual.diurno.ext2,
+                ext3: resumoCartao.atual.diurno.ext3,
+              },
+              noturno: {
+                ext1: resumoCartao.atual.noturno.ext1,
+                ext2: resumoCartao.atual.noturno.ext2,
+                ext3: resumoCartao.atual.noturno.ext3,
+              },
+            };
+
+          return {
+            data: dia.data,
+            dataFormatada,
+            resumo,
+            periodos,
+            resumoLegado,
+            contemAusencia,
+            status: dia.cartao_dia_status,
+            id: dia.id,
+            saldoAtual,
+          };
         });
 
         if (!onlyDays) {
