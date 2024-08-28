@@ -286,12 +286,18 @@ export class GetFuncionarioImpressaoCalculoController implements Controller {
 
     minutosDiurnos = minutosDiurnos - input.dia.cargaHorariaTotal + input.dia.abono.minutos;
 
-    const minutos = this.executarCalculo({
+    let minutos = this.executarCalculo({
       existeFaltaNoturna,
       minutosDiurnos,
       saldoAtual,
     });
 
+    const somaTodosMinutos = minutos + minutosNoturnos + minutosNoturnosAntesJornada;
+    if (somaTodosMinutos > -10 && somaTodosMinutos < 10) {
+      minutos = 0;
+      minutosNoturnos = 0;
+      minutosNoturnosAntesJornada = 0;
+    }
     if (minutos > 0) {
       let acrescimoNoturnoAntesJornada = 0;
       if (minutosNoturnosAntesJornada > 0) {
