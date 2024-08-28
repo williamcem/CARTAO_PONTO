@@ -103,7 +103,7 @@ export class GetFuncionarioImpressaoCalculoController implements Controller {
 
           const abono = { minutos: 0 };
 
-          dia.atestado_abonos.map((abono) => abono.minutos + abono.minutos);
+          dia.atestado_abonos.map((abonoLocal) => (abono.minutos += abonoLocal.minutos));
 
           let resumo = this.calcularResumoPorDia({
             dia: { id: dia.id, eventos, abono, cargaHorariaTotal: dia.cargaHor, contemAusencia },
@@ -284,7 +284,7 @@ export class GetFuncionarioImpressaoCalculoController implements Controller {
 
     if (minutosDiurnos == 0 && minutosNoturnos == 0 && !input.dia.contemAusencia) return output;
 
-    minutosDiurnos = minutosDiurnos - input.dia.cargaHorariaTotal;
+    minutosDiurnos = minutosDiurnos - input.dia.cargaHorariaTotal + input.dia.abono.minutos;
 
     const minutos = this.executarCalculo({
       existeFaltaNoturna,
