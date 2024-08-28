@@ -12,6 +12,16 @@ export class SolucaoEventoRepository {
 
   public async add(input: { id: number; tipoId: number }[]): Promise<boolean> {
     const queries: prismaPromise[] = [];
+
+    const create: {
+      cartaoDiaId: number;
+      hora: string;
+      tipoId: number;
+      funcionarioId: number;
+      minutos: number;
+      tratado: boolean;
+    }[] = [];
+
     for (const { id, tipoId } of input) {
       const eventoOriginal = await this.prisma.eventos.findUnique({
         where: { id: id },
@@ -32,19 +42,26 @@ export class SolucaoEventoRepository {
         }),
       );
 
-      // Cria o novo evento com os valores apropriados
-      queries.push(
-        this.prisma.eventos.create({
-          data: {
-            cartaoDiaId: eventoOriginal.cartaoDiaId,
-            hora: eventoOriginal.hora,
-            tipoId: tipoId,
-            funcionarioId: eventoOriginal.funcionarioId,
-            minutos: minutos,
-            tratado: true, // Define tratado como true no novo evento
-          },
-        }),
+      const existDuplicateCreate = create.some(
+        (e) =>
+          e.cartaoDiaId === eventoOriginal.cartaoDiaId &&
+          e.hora === eventoOriginal.hora &&
+          e.tipoId === tipoId &&
+          e.funcionarioId === eventoOriginal.funcionarioId &&
+          e.minutos === minutos &&
+          e.tratado === true,
       );
+
+      if (!existDuplicateCreate)
+        // Cria o novo evento com os valores apropriados
+        create.push({
+          cartaoDiaId: eventoOriginal.cartaoDiaId,
+          hora: eventoOriginal.hora,
+          tipoId: tipoId,
+          funcionarioId: eventoOriginal.funcionarioId,
+          minutos: minutos,
+          tratado: true, // Define tratado como true no novo evento
+        });
 
       // Verifica se é necessário criar eventos adicionais para tipoId 3 ou 6
       if (tipoId === 3 || tipoId === 6 || tipoId === 5) {
@@ -52,6 +69,7 @@ export class SolucaoEventoRepository {
         const eventosEntreMenos1EMenos5 = await this.prisma.eventos.findMany({
           where: {
             cartaoDiaId: eventoOriginal.cartaoDiaId,
+            id: { not: id },
             tipoId: {
               in: [2],
             },
@@ -70,21 +88,38 @@ export class SolucaoEventoRepository {
 
           console.log(`Hora do evento com minutos entre -1 e -5: ${evento.hora}`);
 
-          queries.push(
-            this.prisma.eventos.create({
-              data: {
-                cartaoDiaId: evento.cartaoDiaId,
-                hora: evento.hora,
-                tipoId: tipoId,
-                funcionarioId: evento.funcionarioId,
-                minutos: tipoId === 3 ? 0 : Math.abs(evento.minutos), // Define minutos como 0 para tipoId 3 e positivo para tipoId 6 ou 5
-                tratado: true,
-              },
-            }),
+          const minutos = tipoId === 3 ? 0 : Math.abs(evento.minutos); // Define minutos como 0 para tipoId 3 e positivo para tipoId 6 ou 5
+
+          const existDuplicateCreate = create.some(
+            (e) =>
+              e.cartaoDiaId === evento.cartaoDiaId &&
+              e.hora === evento.hora &&
+              e.tipoId === tipoId &&
+              e.funcionarioId === evento.funcionarioId &&
+              e.minutos === minutos &&
+              e.tratado === true,
           );
+
+          if (!existDuplicateCreate)
+            create.push({
+              cartaoDiaId: evento.cartaoDiaId,
+              hora: evento.hora,
+              tipoId: tipoId,
+              funcionarioId: evento.funcionarioId,
+              minutos,
+              tratado: true,
+            });
         }
       }
     }
+
+    create.map((evento) => {
+      queries.push(
+        this.prisma.eventos.create({
+          data: evento,
+        }),
+      );
+    });
 
     return Boolean((await this.prisma.$transaction(queries)).length);
   }
