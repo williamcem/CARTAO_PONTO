@@ -6,7 +6,7 @@ import { setupRoutes } from "./routes";
 
 const app = Express();
 app.use((req: Request, resp: Response, next: NextFunction) => {
-  console.log(req.ip, req.url, req.body);
+  console.log(req.method, req.ip, req.url, req.body);
   next();
 });
 app.use(cors());
