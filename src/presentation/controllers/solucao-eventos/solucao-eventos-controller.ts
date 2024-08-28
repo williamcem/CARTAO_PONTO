@@ -10,6 +10,7 @@ export class CriarEventoController implements Controller {
     const { eventos }: { eventos: { id: number; tipoId: number }[] } = httpRequest?.body;
 
     try {
+      if (eventos?.length !== 0) return badRequest(new FuncionarioParamError("Falta evento!"));
       for (const { id, tipoId } of eventos) {
         if (!id) return badRequest(new FuncionarioParamError("Falta id do evento!"));
         if (!tipoId) return badRequest(new FuncionarioParamError("Falta o tipo de solução!"));
