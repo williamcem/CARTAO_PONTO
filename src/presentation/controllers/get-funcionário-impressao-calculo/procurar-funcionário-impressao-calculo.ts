@@ -71,9 +71,18 @@ export class GetFuncionarioImpressaoCalculoController implements Controller {
       if (!cartoes || cartoes.length === 0) return notFoundRequest({ message: "Nenhum cartão encontrado!", name: "Error" });
 
       const output = cartoes.map((cartao) => {
+        const minutosDiurnos = cartao.cartao_horario_anterior.find((anterior) => anterior.periodoId === 1);
+        const minutosNoturnos = cartao.cartao_horario_anterior.find((anterior) => anterior.periodoId === 2);
+
         const resumoCartao = {
-          atual: { diurno: { ext1: 0, ext2: 0, ext3: 0 }, noturno: { ext1: 0, ext2: 0, ext3: 0 } },
-          anterior: { diurno: { ext1: 0, ext2: 0, ext3: 0 }, noturno: { ext1: 0, ext2: 0, ext3: 0 } },
+          atual: {
+            diurno: { ext1: minutosDiurnos?.ext1 || 0, ext2: minutosDiurnos?.ext2 || 0, ext3: minutosDiurnos?.ext3 || 0 },
+            noturno: { ext1: minutosNoturnos?.ext1 || 0, ext2: minutosNoturnos?.ext2 || 0, ext3: minutosNoturnos?.ext3 || 0 },
+          },
+          anterior: {
+            diurno: { ext1: minutosDiurnos?.ext1 || 0, ext2: minutosDiurnos?.ext2 || 0, ext3: minutosDiurnos?.ext3 || 0 },
+            noturno: { ext1: minutosNoturnos?.ext1 || 0, ext2: minutosNoturnos?.ext2 || 0, ext3: minutosNoturnos?.ext3 || 0 },
+          },
         };
 
         const dias = cartao.cartao_dia.map((dia) => {
