@@ -7,12 +7,16 @@ export class CriarEventoController implements Controller {
   constructor(private readonly solucaoEventoRepository: SolucaoEventoRepository) {}
 
   async handle(httpRequest: HttpRequest): Promise<HttpResponse> {
-    const { id, tipoId } = httpRequest?.body;
+    const { eventos }: { eventos: { id: number; tipoId: number }[] } = httpRequest?.body;
 
     try {
-      if (!id) return badRequest(new FuncionarioParamError("Falta id do evento!"));
-      if (!tipoId) return badRequest(new FuncionarioParamError("Falta o tipo de solução!"));
-      const eventoCriado = await this.solucaoEventoRepository.add({ id, tipoId });
+      if (eventos?.length === 0) return badRequest(new FuncionarioParamError("Falta evento!"));
+      for (const { id, tipoId } of eventos) {
+        if (!id) return badRequest(new FuncionarioParamError("Falta id do evento!"));
+        if (!tipoId) return badRequest(new FuncionarioParamError("Falta o tipo de solução!"));
+      }
+
+      const eventoCriado = await this.solucaoEventoRepository.add(eventos);
 
       if (!eventoCriado) throw "Não foi possivel aplicar a solução!";
 
