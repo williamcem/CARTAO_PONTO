@@ -134,7 +134,7 @@ export class GetFuncionarioImpressaoCalculoController implements Controller {
             resumo.noturno.ext3 = "-";
           } else {
             if (resumoCartao.atual.diurno.ext1 < 0) {
-              const result = this.executarRegraCompensacaoExtra({
+              const result = this.formatarSaldoDoDia({
                 minutos: resumoCartao.atual.diurno.ext1,
                 saldo: {
                   diurno: {
@@ -149,7 +149,7 @@ export class GetFuncionarioImpressaoCalculoController implements Controller {
                   },
                 },
               });
-              resumoCartao.atual = result;
+              resumoCartao.atual = result.saldo;
             } else {
               if (typeof resumo.diurno.ext1 === "number") resumoCartao.atual.diurno.ext1 += resumo.diurno.ext1;
               if (typeof resumo.diurno.ext2 === "number") resumoCartao.atual.diurno.ext2 += resumo.diurno.ext2;
@@ -267,7 +267,7 @@ export class GetFuncionarioImpressaoCalculoController implements Controller {
       input.resumoCartao.atual.noturno.ext2 +
       input.resumoCartao.atual.noturno.ext3;
 
-    const output: ResumoDoDiaOutput = {
+    let output: ResumoDoDiaOutput = {
       diurno: { ext1: 0, ext2: 0, ext3: 0 },
       noturno: { ext1: 0, ext2: 0, ext3: 0 },
     };
@@ -354,7 +354,13 @@ export class GetFuncionarioImpressaoCalculoController implements Controller {
         }
       }
     } else if (minutos < 0) {
-      output.diurno.ext1 = minutos;
+      let novoMinutos = this.localizarMovimentacaoESaldoDoDia({
+        existeFaltaNoturna,
+        minutosDiurnos,
+        saldoAtual: input.resumoCartao.atual,
+      });
+
+      output = novoMinutos;
     }
 
     if (minutosNoturnos > 0 || minutosNoturnosAntesJornada > 0) {
@@ -410,7 +416,298 @@ export class GetFuncionarioImpressaoCalculoController implements Controller {
     return minutos;
   }
 
-  executarRegraCompensacaoExtra(input: {
+  localizarMovimentacaoESaldoDoDia(input: {
+    saldoAtual: { diurno: { ext1: number; ext2: number; ext3: number }; noturno: { ext1: number; ext2: number; ext3: number } };
+    minutosDiurnos: number;
+    existeFaltaNoturna: boolean;
+  }) {
+    let minutosTotaisSaldo = 0;
+    let saldoMinutos = input.minutosDiurnos;
+
+    let output = { diurno: { ext1: 0, ext2: 0, ext3: 0 }, noturno: { ext1: 0, ext2: 0, ext3: 0 } };
+    for (const periodo in input.saldoAtual) {
+      if (input.saldoAtual.hasOwnProperty(periodo)) {
+        console.log(`\nProcessando ${periodo}:`);
+
+        for (const key in input.saldoAtual[periodo]) {
+          if (input.saldoAtual[periodo].hasOwnProperty(key)) {
+            minutosTotaisSaldo += input.saldoAtual[periodo][key];
+          }
+        }
+      }
+    }
+
+    if (input.minutosDiurnos > 0)
+      //Se os minutos for positivo irá manter
+      output.diurno.ext1 = input.minutosDiurnos;
+    else if (input.minutosDiurnos < 0) {
+      //Se o Saldo atual for negativo mantem o valor dos minutos
+      if (minutosTotaisSaldo < 0) output.diurno.ext1 = input.minutosDiurnos;
+      else {
+        output = this.executarRegraCompensacaoSaldoDiaComExtra({
+          minutos: saldoMinutos,
+          saldo: input.saldoAtual,
+        }).movimentacao;
+      }
+
+      if (input.existeFaltaNoturna) output.diurno.ext1 = Number((output.diurno.ext1 * 1.14).toFixed());
+    }
+
+    return output;
+  }
+
+  executarRegraCompensacaoSaldoDiaComExtra(input: {
+    saldo: {
+      diurno: { ext1: number; ext2: number; ext3: number };
+      noturno: { ext1: number; ext2: number; ext3: number };
+    };
+    minutos: number;
+  }) {
+    const saldo: typeof input.saldo = {
+      diurno: { ext1: input.saldo.diurno.ext1, ext2: input.saldo.diurno.ext2, ext3: input.saldo.diurno.ext3 },
+      noturno: { ext1: input.saldo.noturno.ext1, ext2: input.saldo.noturno.ext2, ext3: input.saldo.noturno.ext3 },
+    };
+    let saldoMinutos = input.minutos;
+
+    let movimentacao = { diurno: { ext1: 0, ext2: 0, ext3: 0 }, noturno: { ext1: 0, ext2: 0, ext3: 0 } };
+    let saldoTotal = 0;
+
+    if (saldoMinutos == 0) return { saldo, movimentacao };
+
+    for (const periodo in input.saldo) {
+      if (movimentacao.hasOwnProperty(periodo)) {
+        for (const key in input.saldo[periodo]) {
+          if (input.saldo[periodo].hasOwnProperty(key)) {
+            saldoTotal += Number(input.saldo[periodo][key].toFixed());
+          }
+        }
+      }
+    }
+
+    let saldoTotalComPorcentagem = saldoTotal * 1.6;
+    const saldoTotalComPorcetagemEMaiorQueMinutosNegativo = Math.abs(saldoTotalComPorcentagem) > Math.abs(saldoMinutos);
+
+    if (saldoTotalComPorcetagemEMaiorQueMinutosNegativo) {
+      if (saldoMinutos < 0 && saldoTotal > 0) saldoMinutos = Number((saldoMinutos / 1.6).toFixed());
+      while (saldoMinutos !== 0) {
+        if (saldo.diurno.ext1) {
+          let movimentacaoAtual = saldoMinutos + saldo.diurno.ext1;
+
+          if (movimentacaoAtual < 0) {
+            movimentacao.diurno.ext1 = -saldo.diurno.ext1;
+          } else movimentacao.diurno.ext1 = saldoMinutos;
+
+          const resultado = this.acharSaldo({ extra: saldo.diurno.ext1, minutos: saldoMinutos });
+          saldo.diurno.ext1 = resultado.extra;
+          saldoMinutos = resultado.minutos;
+          continue;
+        }
+
+        if (saldo.diurno.ext2) {
+          let movimentacaoAtual = saldoMinutos + saldo.diurno.ext2;
+
+          if (movimentacaoAtual < 0) {
+            movimentacao.diurno.ext2 = -saldo.diurno.ext2;
+          } else movimentacao.diurno.ext2 = saldoMinutos;
+
+          const resultado = this.acharSaldo({ extra: saldo.diurno.ext2, minutos: saldoMinutos });
+          saldo.diurno.ext2 = resultado.extra;
+          saldoMinutos = resultado.minutos;
+          continue;
+        }
+
+        if (saldo.noturno.ext1) {
+          let movimentacaoAtual = saldoMinutos + saldo.noturno.ext1;
+
+          if (movimentacaoAtual < 0) {
+            movimentacao.noturno.ext1 = -saldo.noturno.ext1;
+          } else movimentacao.noturno.ext1 = saldoMinutos;
+
+          const resultado = this.acharSaldo({ extra: saldo.noturno.ext1, minutos: saldoMinutos });
+          saldo.noturno.ext1 = resultado.extra;
+          saldoMinutos = resultado.minutos;
+          continue;
+        }
+
+        if (saldo.noturno.ext2) {
+          let movimentacaoAtual = saldoMinutos + saldo.diurno.ext2;
+
+          if (movimentacaoAtual < 0) {
+            movimentacao.noturno.ext2 = -saldo.noturno.ext2;
+          } else movimentacao.noturno.ext2 = saldoMinutos;
+
+          const resultado = this.acharSaldo({ extra: saldo.noturno.ext2, minutos: saldoMinutos });
+          saldo.noturno.ext2 = resultado.extra;
+          saldoMinutos = resultado.minutos;
+          continue;
+        }
+
+        if (saldo.diurno.ext3) {
+          let movimentacaoAtual = saldoMinutos + saldo.diurno.ext3;
+
+          if (movimentacaoAtual < 0) {
+            movimentacao.diurno.ext3 = -saldo.diurno.ext3;
+          } else movimentacao.diurno.ext3 = saldoMinutos;
+
+          const resultado = this.acharSaldo({ extra: saldo.diurno.ext3, minutos: saldoMinutos });
+          saldo.diurno.ext3 = resultado.extra;
+          saldoMinutos = resultado.minutos;
+          continue;
+        }
+
+        if (saldo.noturno.ext3) {
+          let movimentacaoAtual = saldoMinutos + saldo.noturno.ext3;
+
+          if (movimentacaoAtual < 0) {
+            movimentacao.noturno.ext3 = -saldo.noturno.ext3;
+          } else movimentacao.noturno.ext3 = saldoMinutos;
+          const resultado = this.acharSaldo({ extra: saldo.noturno.ext3, minutos: saldoMinutos });
+
+          saldo.noturno.ext3 = resultado.extra;
+          saldoMinutos = resultado.minutos;
+          continue;
+        }
+
+        //O que não suprir voltar fazer por 1.6
+        movimentacao.diurno.ext1 = Number((saldoMinutos * 1.6).toFixed());
+        saldo.diurno.ext1 = saldoMinutos;
+        saldoMinutos = 0;
+      }
+    } else {
+      //Se o saldo total for positivo
+      if (saldoTotal > 0) {
+        const restoSaldoTotal = saldoTotalComPorcentagem - saldoTotal;
+        movimentacao.diurno.ext1 = Number((saldoMinutos + restoSaldoTotal).toFixed());
+        saldo.diurno.ext1 = movimentacao.diurno.ext1;
+        saldoMinutos = 0;
+      } else {
+        movimentacao.diurno.ext1 = saldoMinutos;
+        saldo.diurno.ext1 = saldoMinutos + saldoTotal;
+        saldoMinutos = 0;
+      }
+    }
+
+    for (const periodo in movimentacao) {
+      if (movimentacao.hasOwnProperty(periodo)) {
+        console.log(`\nProcessando ${periodo}:`);
+
+        for (const key in movimentacao[periodo]) {
+          if (movimentacao[periodo].hasOwnProperty(key)) {
+            movimentacao[periodo][key] = Number(movimentacao[periodo][key].toFixed());
+          }
+        }
+      }
+    }
+
+    return { saldo, movimentacao };
+  }
+
+  formatarSaldoDoDia(input: {
+    saldo: {
+      diurno: { ext1: number; ext2: number; ext3: number };
+      noturno: { ext1: number; ext2: number; ext3: number };
+    };
+    minutos: number;
+  }) {
+    const saldo: typeof input.saldo = {
+      diurno: { ext1: input.saldo.diurno.ext1, ext2: input.saldo.diurno.ext2, ext3: input.saldo.diurno.ext3 },
+      noturno: { ext1: input.saldo.noturno.ext1, ext2: input.saldo.noturno.ext2, ext3: input.saldo.noturno.ext3 },
+    };
+    let saldoMinutos = input.minutos;
+
+    let movimentacao = { diurno: { ext1: 0, ext2: 0, ext3: 0 }, noturno: { ext1: 0, ext2: 0, ext3: 0 } };
+
+    if (saldoMinutos == 0) return { saldo, movimentacao };
+
+    while (saldoMinutos !== 0) {
+      if (saldo.diurno.ext1) {
+        let movimentacaoAtual = saldoMinutos + saldo.diurno.ext1;
+
+        if (movimentacaoAtual < 0) {
+          movimentacao.diurno.ext1 = -saldo.diurno.ext1;
+        } else movimentacao.diurno.ext1 = saldoMinutos;
+
+        const resultado = this.acharSaldo({ extra: saldo.diurno.ext1, minutos: saldoMinutos });
+        saldo.diurno.ext1 = resultado.extra;
+        saldoMinutos = resultado.minutos;
+        continue;
+      }
+
+      if (saldo.diurno.ext2) {
+        let movimentacaoAtual = saldoMinutos + saldo.diurno.ext2;
+
+        if (movimentacaoAtual < 0) {
+          movimentacao.diurno.ext2 = -saldo.diurno.ext2;
+        } else movimentacao.diurno.ext2 = saldoMinutos;
+
+        const resultado = this.acharSaldo({ extra: saldo.diurno.ext2, minutos: saldoMinutos });
+        saldo.diurno.ext2 = resultado.extra;
+        saldoMinutos = resultado.minutos;
+        continue;
+      }
+
+      if (saldo.noturno.ext1) {
+        let movimentacaoAtual = saldoMinutos + saldo.noturno.ext1;
+
+        if (movimentacaoAtual < 0) {
+          movimentacao.noturno.ext1 = -saldo.noturno.ext1;
+        } else movimentacao.noturno.ext1 = saldoMinutos;
+
+        const resultado = this.acharSaldo({ extra: saldo.noturno.ext1, minutos: saldoMinutos });
+        saldo.noturno.ext1 = resultado.extra;
+        saldoMinutos = resultado.minutos;
+        continue;
+      }
+
+      if (saldo.noturno.ext2) {
+        let movimentacaoAtual = saldoMinutos + saldo.diurno.ext2;
+
+        if (movimentacaoAtual < 0) {
+          movimentacao.noturno.ext2 = -saldo.noturno.ext2;
+        } else movimentacao.noturno.ext2 = saldoMinutos;
+
+        const resultado = this.acharSaldo({ extra: saldo.noturno.ext2, minutos: saldoMinutos });
+        saldo.noturno.ext2 = resultado.extra;
+        saldoMinutos = resultado.minutos;
+        continue;
+      }
+
+      if (saldo.diurno.ext3) {
+        let movimentacaoAtual = saldoMinutos + saldo.diurno.ext3;
+
+        if (movimentacaoAtual < 0) {
+          movimentacao.diurno.ext3 = -saldo.diurno.ext3;
+        } else movimentacao.diurno.ext3 = saldoMinutos;
+
+        const resultado = this.acharSaldo({ extra: saldo.diurno.ext3, minutos: saldoMinutos });
+        saldo.diurno.ext3 = resultado.extra;
+        saldoMinutos = resultado.minutos;
+        continue;
+      }
+
+      if (saldo.noturno.ext3) {
+        let movimentacaoAtual = saldoMinutos + saldo.noturno.ext3;
+
+        if (movimentacaoAtual < 0) {
+          movimentacao.noturno.ext3 = -saldo.noturno.ext3;
+        } else movimentacao.noturno.ext3 = saldoMinutos;
+        const resultado = this.acharSaldo({ extra: saldo.noturno.ext3, minutos: saldoMinutos });
+
+        saldo.noturno.ext3 = resultado.extra;
+        saldoMinutos = resultado.minutos;
+        continue;
+      }
+
+      //O que não suprir voltar fazer por 1.6
+      movimentacao.diurno.ext1 = Number((saldoMinutos * 1.6).toFixed());
+      saldo.diurno.ext1 = saldoMinutos;
+      saldoMinutos = 0;
+    }
+
+    return { saldo, movimentacao };
+  }
+
+  executarRegraCompensacaoComExtra(input: {
     saldo: {
       diurno: { ext1: number; ext2: number; ext3: number };
       noturno: { ext1: number; ext2: number; ext3: number };
@@ -440,9 +737,30 @@ export class GetFuncionarioImpressaoCalculoController implements Controller {
         continue;
       }
 
+      if (saldo.noturno.ext1) {
+        const resultado = this.acharSaldo({ extra: saldo.noturno.ext1, minutos: saldoMinutos });
+        saldo.noturno.ext1 = resultado.extra;
+        saldoMinutos = resultado.minutos;
+        continue;
+      }
+
+      if (saldo.noturno.ext2) {
+        const resultado = this.acharSaldo({ extra: saldo.noturno.ext2, minutos: saldoMinutos });
+        saldo.noturno.ext2 = resultado.extra;
+        saldoMinutos = resultado.minutos;
+        continue;
+      }
+
       if (saldo.diurno.ext3) {
         const resultado = this.acharSaldo({ extra: saldo.diurno.ext3, minutos: saldoMinutos });
         saldo.diurno.ext3 = resultado.extra;
+        saldoMinutos = resultado.minutos;
+        continue;
+      }
+
+      if (saldo.noturno.ext3) {
+        const resultado = this.acharSaldo({ extra: saldo.noturno.ext3, minutos: saldoMinutos });
+        saldo.noturno.ext3 = resultado.extra;
         saldoMinutos = resultado.minutos;
         continue;
       }
