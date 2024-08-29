@@ -133,13 +133,32 @@ export class GetFuncionarioImpressaoCalculoController implements Controller {
             resumo.noturno.ext2 = "-";
             resumo.noturno.ext3 = "-";
           } else {
-            if (typeof resumo.diurno.ext1 === "number") resumoCartao.atual.diurno.ext1 += resumo.diurno.ext1;
-            if (typeof resumo.diurno.ext2 === "number") resumoCartao.atual.diurno.ext2 += resumo.diurno.ext2;
-            if (typeof resumo.diurno.ext3 === "number") resumoCartao.atual.diurno.ext3 += resumo.diurno.ext3;
+            if (resumoCartao.atual.diurno.ext1 < 0) {
+              const result = this.executarRegraCompensacaoExtra({
+                minutos: resumoCartao.atual.diurno.ext1,
+                saldo: {
+                  diurno: {
+                    ext1: Number(resumo.diurno.ext1),
+                    ext2: Number(resumo.diurno.ext2),
+                    ext3: Number(resumo.diurno.ext3),
+                  },
+                  noturno: {
+                    ext1: Number(resumo.noturno.ext1),
+                    ext2: Number(resumo.noturno.ext2),
+                    ext3: Number(resumo.noturno.ext3),
+                  },
+                },
+              });
+              resumoCartao.atual = result;
+            } else {
+              if (typeof resumo.diurno.ext1 === "number") resumoCartao.atual.diurno.ext1 += resumo.diurno.ext1;
+              if (typeof resumo.diurno.ext2 === "number") resumoCartao.atual.diurno.ext2 += resumo.diurno.ext2;
+              if (typeof resumo.diurno.ext3 === "number") resumoCartao.atual.diurno.ext3 += resumo.diurno.ext3;
 
-            if (typeof resumo.noturno.ext1 === "number") resumoCartao.atual.noturno.ext1 += resumo.noturno.ext1;
-            if (typeof resumo.noturno.ext2 === "number") resumoCartao.atual.noturno.ext2 += resumo.noturno.ext2;
-            if (typeof resumo.noturno.ext3 === "number") resumoCartao.atual.noturno.ext3 += resumo.noturno.ext3;
+              if (typeof resumo.noturno.ext1 === "number") resumoCartao.atual.noturno.ext1 += resumo.noturno.ext1;
+              if (typeof resumo.noturno.ext2 === "number") resumoCartao.atual.noturno.ext2 += resumo.noturno.ext2;
+              if (typeof resumo.noturno.ext3 === "number") resumoCartao.atual.noturno.ext3 += resumo.noturno.ext3;
+            }
           }
           const periodos: { entrada: string; saida: string; periodoId: number; validadoPeloOperador: boolean }[] = [];
 
@@ -389,5 +408,67 @@ export class GetFuncionarioImpressaoCalculoController implements Controller {
     }
 
     return minutos;
+  }
+
+  executarRegraCompensacaoExtra(input: {
+    saldo: {
+      diurno: { ext1: number; ext2: number; ext3: number };
+      noturno: { ext1: number; ext2: number; ext3: number };
+    };
+    minutos: number;
+  }) {
+    const saldo: typeof input.saldo = {
+      diurno: { ext1: input.saldo.diurno.ext1, ext2: input.saldo.diurno.ext2, ext3: input.saldo.diurno.ext3 },
+      noturno: { ext1: input.saldo.noturno.ext1, ext2: input.saldo.noturno.ext2, ext3: input.saldo.noturno.ext3 },
+    };
+    let saldoMinutos = input.minutos;
+
+    if (saldoMinutos == 0) return saldo;
+
+    while (saldoMinutos !== 0) {
+      if (saldo.diurno.ext1) {
+        const resultado = this.acharSaldo({ extra: saldo.diurno.ext1, minutos: saldoMinutos });
+        saldo.diurno.ext1 = resultado.extra;
+        saldoMinutos = resultado.minutos;
+        continue;
+      }
+
+      if (saldo.diurno.ext2) {
+        const resultado = this.acharSaldo({ extra: saldo.diurno.ext2, minutos: saldoMinutos });
+        saldo.diurno.ext2 = resultado.extra;
+        saldoMinutos = resultado.minutos;
+        continue;
+      }
+
+      if (saldo.diurno.ext3) {
+        const resultado = this.acharSaldo({ extra: saldo.diurno.ext3, minutos: saldoMinutos });
+        saldo.diurno.ext3 = resultado.extra;
+        saldoMinutos = resultado.minutos;
+        continue;
+      }
+
+      saldo.diurno.ext1 = saldoMinutos;
+      saldoMinutos = 0;
+    }
+
+    return saldo;
+  }
+
+  protected acharSaldo(input: { minutos: number; extra: number }) {
+    console.log("antigo saldo.diurno.ext1", input.extra);
+    let saldoSupri = input.minutos + input.extra;
+    console.log("saldoSupri", saldoSupri);
+    if (saldoSupri > 0) {
+      input.minutos = 0;
+      input.extra = saldoSupri;
+    } else {
+      input.minutos = saldoSupri;
+      input.extra = 0;
+    }
+
+    console.log("antigo saldo.diurno.ext1", input.extra);
+    console.log("novo saldoMinutos", input.minutos);
+
+    return input;
   }
 }
