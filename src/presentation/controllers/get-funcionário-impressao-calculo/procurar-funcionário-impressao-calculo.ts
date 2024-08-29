@@ -311,7 +311,7 @@ export class GetFuncionarioImpressaoCalculoController implements Controller {
       saldoAtual,
     });
 
-    const somaTodosMinutos = minutos + minutosNoturnos + minutosNoturnosAntesJornada;
+    const somaTodosMinutos = minutos + minutosNoturnos;
     if (somaTodosMinutos > -10 && somaTodosMinutos < 10) {
       minutos = 0;
       minutosNoturnos = 0;
@@ -364,11 +364,23 @@ export class GetFuncionarioImpressaoCalculoController implements Controller {
     }
 
     if (minutosNoturnos > 0 || minutosNoturnosAntesJornada > 0) {
-      const [ext1, ext2, ext3] = this.inserirRegraPorHoraExtra({
-        minutos: minutosNoturnos + minutosNoturnosAntesJornada,
-        parametros: [60, 60, 9999],
-      });
-      output.noturno = { ext1, ext2, ext3 };
+      const minutosNoturnosAntesJornadaSemAcrescimo = minutosNoturnosAntesJornada / 1.14;
+      const minutosTotalExtraDiruno = this.somarMinutosExt({ diurno: output.diurno, noturno: { ext1: 0, ext2: 0, ext3: 0 } });
+
+      //houve minutos após carga horaria e houver noturno antes da jornada
+      if (minutos > 0 && minutosNoturnosAntesJornadaSemAcrescimo && !minutosTotalExtraDiruno) {
+        const [ext1, ext2, ext3] = this.inserirRegraPorHoraExtra({
+          minutos: Number((minutos * 1.14).toFixed()),
+          parametros: [60, 60, 9999],
+        });
+        output.noturno = { ext1, ext2, ext3 };
+      } else {
+        const [ext1, ext2, ext3] = this.inserirRegraPorHoraExtra({
+          minutos: minutosNoturnos + minutosNoturnosAntesJornada,
+          parametros: [60, 60, 9999],
+        });
+        output.noturno = { ext1, ext2, ext3 };
+      }
     } else if (minutosNoturnos < 0) output.noturno = { ext1: minutosNoturnos, ext2: 0, ext3: 0 };
 
     return output;
@@ -387,6 +399,22 @@ export class GetFuncionarioImpressaoCalculoController implements Controller {
     });
 
     return output.map((value) => Number(value));
+  }
+
+  protected somarMinutosExt(input: {
+    diurno: { ext1: number | string; ext2: number | string; ext3: number | string };
+    noturno: { ext1: number | string; ext2: number | string; ext3: number | string };
+  }) {
+    let minutos = 0;
+    for (const periodo in input) {
+      if (input.hasOwnProperty(periodo)) {
+        for (const key in input[periodo]) {
+          if (input[periodo].hasOwnProperty(key) && typeof input[periodo][key] === "number") minutos += input[periodo][key];
+        }
+      }
+    }
+
+    return minutos;
   }
 
   executarCalculo(input: { saldoAtual: number; minutosDiurnos: number; existeFaltaNoturna: boolean }): number {
@@ -589,8 +617,6 @@ export class GetFuncionarioImpressaoCalculoController implements Controller {
 
     for (const periodo in movimentacao) {
       if (movimentacao.hasOwnProperty(periodo)) {
-        console.log(`\nProcessando ${periodo}:`);
-
         for (const key in movimentacao[periodo]) {
           if (movimentacao[periodo].hasOwnProperty(key)) {
             movimentacao[periodo][key] = Number(movimentacao[periodo][key].toFixed());
