@@ -312,7 +312,7 @@ export class GetFuncionarioImpressaoCalculoController implements Controller {
     });
 
     const somaTodosMinutos = minutos + minutosNoturnos;
-    if (somaTodosMinutos > -10 && somaTodosMinutos < 10) {
+    if (somaTodosMinutos > -10 && somaTodosMinutos < 10 && minutosDiurnos > -10 && minutosDiurnos < 10) {
       minutos = 0;
       minutosNoturnos = 0;
       minutosNoturnosAntesJornada = 0;
@@ -364,22 +364,26 @@ export class GetFuncionarioImpressaoCalculoController implements Controller {
     }
 
     if (minutosNoturnos > 0 || minutosNoturnosAntesJornada > 0) {
-      const minutosNoturnosAntesJornadaSemAcrescimo = minutosNoturnosAntesJornada / 1.14;
-      const minutosTotalExtraDiruno = this.somarMinutosExt({ diurno: output.diurno, noturno: { ext1: 0, ext2: 0, ext3: 0 } });
-
-      //houve minutos após carga horaria e houver noturno antes da jornada
-      if (minutos > 0 && minutosNoturnosAntesJornadaSemAcrescimo && !minutosTotalExtraDiruno) {
-        const [ext1, ext2, ext3] = this.inserirRegraPorHoraExtra({
-          minutos: Number((minutos * 1.14).toFixed()),
-          parametros: [60, 60, 9999],
-        });
-        output.noturno = { ext1, ext2, ext3 };
+      //Esquece os minutos noturno seja antes ou depois da jornada
+      if (minutos < 0 && (Math.abs(minutos) > minutosNoturnos || Math.abs(minutos) > minutosNoturnosAntesJornada)) {
       } else {
-        const [ext1, ext2, ext3] = this.inserirRegraPorHoraExtra({
-          minutos: minutosNoturnos + minutosNoturnosAntesJornada,
-          parametros: [60, 60, 9999],
-        });
-        output.noturno = { ext1, ext2, ext3 };
+        const minutosNoturnosAntesJornadaSemAcrescimo = minutosNoturnosAntesJornada / 1.14;
+        const minutosTotalExtraDiruno = this.somarMinutosExt({ diurno: output.diurno, noturno: { ext1: 0, ext2: 0, ext3: 0 } });
+
+        //houve minutos após carga horaria e houver noturno antes da jornada
+        if (minutos > 0 && minutosNoturnosAntesJornadaSemAcrescimo && !minutosTotalExtraDiruno) {
+          const [ext1, ext2, ext3] = this.inserirRegraPorHoraExtra({
+            minutos: Number((minutos * 1.14).toFixed()),
+            parametros: [60, 60, 9999],
+          });
+          output.noturno = { ext1, ext2, ext3 };
+        } else {
+          const [ext1, ext2, ext3] = this.inserirRegraPorHoraExtra({
+            minutos: minutosNoturnos + minutosNoturnosAntesJornada,
+            parametros: [60, 60, 9999],
+          });
+          output.noturno = { ext1, ext2, ext3 };
+        }
       }
     } else if (minutosNoturnos < 0) output.noturno = { ext1: minutosNoturnos, ext2: 0, ext3: 0 };
 
