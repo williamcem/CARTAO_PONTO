@@ -662,6 +662,7 @@ export class CriarEventosPostgresRepository implements AdicionarEventos {
 
         eventoAgrupado.eventos.map((evento) => {
           if (evento.tipoId === 1 || evento.tipoId === 4 || evento.tipoId === 12 || evento.tipoId === 14) {
+            if (evento.tipoId === 14) evento.minutos = evento.minutos * 0.14;
             minutosTrabalhados += evento.minutos;
             if (evento.periodoId === 1) minutosTrabalhadosPrimeiroPeriodo += evento.minutos;
             if (evento.periodoId === 2) minutosTrabalhadosSegundoPeriodo += evento.minutos;
@@ -922,6 +923,19 @@ export class CriarEventosPostgresRepository implements AdicionarEventos {
             //Se a diferença da carga horaria for negativa
             if (diferencaComCargaHoraria < 0) {
               minutos = noturno.minutos + diferencaComCargaHoraria;
+              const horarios = this.pegarCargaHorarioCompleta(dia.cargaHorariaCompleta);
+
+              const dataInicioJornada = this.pegarHorarioCargaHoraria({
+                data: dia.data,
+                hora: horarios[0].hora,
+                minuto: horarios[0].minuto,
+                utc: false,
+              });
+
+              let noturnoEAntesDoFimDaJornada =
+                dataInicioJornada.isSameOrAfter(moment.utc(noturno.inicio)) &&
+                dataInicioJornada.isSameOrAfter(moment.utc(noturno.final));
+
               //Se a soma do resto da carga horaria com adicional for positivo adiciona 1.14
               if (minutos > 0) {
                 minutos = Number((minutos * 1.14).toFixed());
@@ -940,7 +954,7 @@ export class CriarEventosPostgresRepository implements AdicionarEventos {
                   funcionarioId: eventoAgrupado.funcionarioId,
                   cartaoDiaId: eventoAgrupado.cartaoDiaId,
                   minutos: minutos,
-                  tipoId: 4,
+                  tipoId: noturnoEAntesDoFimDaJornada ? 14 : 4,
                   hora: this.ordenarHorario({ inicio: moment.utc(noturno.inicio), fim: moment.utc(noturno.final) }),
                   periodoId: lancamento.periodoId,
                 });
@@ -950,7 +964,7 @@ export class CriarEventosPostgresRepository implements AdicionarEventos {
                   funcionarioId: eventoAgrupado.funcionarioId,
                   cartaoDiaId: eventoAgrupado.cartaoDiaId,
                   minutos: noturno.minutos,
-                  tipoId: 1,
+                  tipoId: noturnoEAntesDoFimDaJornada ? 14 : 4,
                   hora: this.ordenarHorario({ inicio: moment.utc(noturno.inicio), fim: moment.utc(noturno.final) }),
                   periodoId: lancamento.periodoId,
                 });
