@@ -58,8 +58,8 @@ export class AtestadoRepository implements AddAtestado {
         const savedAtestado = await transaction.atestado_funcionario.create({
           data: {
             data: moment.utc(input.data).toDate(),
-            inicio: input.inicio,
-            fim: input.fim,
+            inicio: moment.utc(input.inicio).toDate(),
+            fim: moment.utc(input.fim).toDate(),
             descricao: input.descricao,
             userName: input.userName,
             acidente_trabalho: input.acidente_trabalho,
