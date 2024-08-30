@@ -1122,4 +1122,24 @@ describe("Localizar horario fora do previsto", () => {
       },
     ]);
   });
+
+  test("Se a entrada é antes da jornada e a saida eestá após o fim da jornada", () => {
+    const result = criarEventosPostgresRepository.localizarHorarioForaDaJornadaPrevista({
+      entrada: new Date("2024-08-02T03:16:00.000Z"),
+      saida: new Date("2024-08-02T09:00:00.000Z"),
+      dia: {
+        cargaHor: 0,
+        cargaHorariaCompleta: "03.30;09.30;10.30;12.10;01.00",
+        cargaHorSegundoPeriodo: 100,
+        data: new Date("2024-08-02T00:00:00.000Z"),
+      },
+    });
+
+    expect(result).toStrictEqual([
+      {
+        fim: new Date("2024-08-02T03:30:00.000Z"),
+        inicio: new Date("2024-08-02T03:16:00.000Z"),
+      },
+    ]);
+  });
 });
