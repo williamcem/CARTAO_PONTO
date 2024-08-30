@@ -81,8 +81,8 @@ export class AtestadoRepository implements AddAtestado {
             funcionarioFuncaoId: input.funcionarioFuncaoId,
             nomeFuncionario: input.nomeFuncionario,
             crm: input.crm,
-            createAt: moment.utc().toDate(),
-            updateAt: moment.utc().toDate(),
+            createAt: moment().utc(true).toDate(),
+            updateAt: moment().utc(true).toDate(),
           },
         });
 

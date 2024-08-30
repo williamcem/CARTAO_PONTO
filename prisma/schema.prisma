@@ -274,8 +274,8 @@ model atestado_funcionario {
   nomeFuncionario           String    @default("")
   ocupacaoId                Int?
   crm                       String?
-  createAt                  DateTime  @default(now())
-  updateAt                  DateTime  @default(now()) @updatedAt
+  createAt                  DateTime
+  updateAt                  DateTime
 
   tipos_documentos          tipos_documentos           @relation(fields: [tipoId], references: [id])
   funcionario               funcionario                @relation(fields: [funcionarioId], references: [id])

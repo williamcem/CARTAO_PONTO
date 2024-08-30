@@ -1,6 +1,7 @@
 import { PrismaClient } from "@prisma/client";
 import { prisma, prismaPromise } from "../../../database/Prisma";
 import { RespaldarAtestado } from "../../../../data/usecase/respaldar-atestado/respaldar-atestado";
+import moment from "moment";
 
 export class RespaldarAtestadoPostgresRepository implements RespaldarAtestado {
   private prisma: PrismaClient;
@@ -117,6 +118,7 @@ export class RespaldarAtestadoPostgresRepository implements RespaldarAtestado {
           tipoAcompanhanteId: input.tipoAcompanhanteId,
           tipoGrauParentescoId: input.tipoGrauParentescoId,
           tipoId: input.tipoId,
+          updateAt: moment().utc(true).toDate(),
         },
       }),
     );
