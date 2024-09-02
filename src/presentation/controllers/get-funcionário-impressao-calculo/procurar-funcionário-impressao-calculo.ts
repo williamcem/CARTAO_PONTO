@@ -105,6 +105,10 @@ export class GetFuncionarioImpressaoCalculoController implements Controller {
 
           dia.atestado_abonos.map((abonoLocal) => (abono.minutos += abonoLocal.minutos));
 
+          if (dia.id === 138457) {
+            console.log("entrou");
+          }
+
           let resumo = this.calcularResumoPorDia({
             dia: { id: dia.id, eventos, abono, cargaHorariaTotal: dia.cargaHor, contemAusencia },
             resumoCartao,
@@ -311,6 +315,9 @@ export class GetFuncionarioImpressaoCalculoController implements Controller {
       saldoAtual,
     });
 
+    if (input.dia.id === 138457) {
+      console.log("entrou");
+    }
     const somaTodosMinutos = minutos + minutosNoturnos;
     if (somaTodosMinutos > -10 && somaTodosMinutos < 10 && minutosDiurnos > -10 && minutosDiurnos < 10) {
       minutos = 0;
@@ -329,8 +336,8 @@ export class GetFuncionarioImpressaoCalculoController implements Controller {
       });
       output.diurno = { ext1, ext2, ext3 };
 
-      if (minutosNoturnosAntesJornada > 0) {
-        let saldoMinutosNoturnoAntesJornada = minutosNoturnosAntesJornada;
+      if (minutosNoturnos > 0 || minutosNoturnosAntesJornada > 0) {
+        let saldoMinutosNoturnoAntesJornada = minutosNoturnosAntesJornada + Number((minutosNoturnos / 1.14).toFixed());
 
         for (const key in output.diurno) {
           if (output.diurno.hasOwnProperty(key)) {
