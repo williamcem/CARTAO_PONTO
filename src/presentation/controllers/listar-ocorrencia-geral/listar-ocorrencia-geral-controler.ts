@@ -8,13 +8,13 @@ export class OcorrenciaGeralController implements Controller {
 
   async handle(httRequest: HttpRequest): Promise<HttpResponse> {
     try {
-      const { localidade } = httRequest?.query;
+      const { localidade, referencia } = httRequest?.query;
 
-      if (!localidade) {
-        return badRequest(new Error("Localidade não informada"));
-      }
+      if (!localidade) return badRequest(new Error("Localidade não informada"));
 
-      const data = await this.ocorrenciaGeralPostgresRepository.findOcorrencia(localidade);
+      if (!referencia) return badRequest(new Error("Referência não informada"));
+
+      const data = await this.ocorrenciaGeralPostgresRepository.findOcorrencia(localidade,referencia);
 
       const funcionarios: { id: number; identificacao: string; nome: string }[] = [];
 

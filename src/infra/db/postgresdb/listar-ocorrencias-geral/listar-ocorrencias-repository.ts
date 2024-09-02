@@ -9,7 +9,7 @@ export class OcorrenciaGeralPostgresRepository {
     this.prisma = prisma;
   }
 
-  public async findOcorrencia(localidade: string) {
+  public async findOcorrencia(localidade: string, referencia: Date) {
     const funcionarios = await this.prisma.funcionario.findMany({
       where: {
         localidadeId: localidade,
@@ -38,6 +38,7 @@ export class OcorrenciaGeralPostgresRepository {
               orderBy: { id: "asc" },
             },
           },
+          where: { referencia },
           orderBy: { id: "asc" },
         },
       },
