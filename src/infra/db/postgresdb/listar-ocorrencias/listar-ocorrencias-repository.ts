@@ -78,7 +78,9 @@ export class OcorrenciaPostgresRepository {
             referencia: true,
             cartao_dia: {
               include: {
-                eventos: true, // Aqui incluímos todos os eventos
+                eventos: {
+                  where: { cartao_dia: { cartao_dia_lancamentos: { some: { validadoPeloOperador: true } } } },
+                }, // Aqui incluímos todos os eventos
                 cartao_dia_lancamentos: {
                   select: {
                     periodoId: true,
