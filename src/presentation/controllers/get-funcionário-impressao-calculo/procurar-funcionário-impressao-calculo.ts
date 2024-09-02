@@ -105,10 +105,6 @@ export class GetFuncionarioImpressaoCalculoController implements Controller {
 
           dia.atestado_abonos.map((abonoLocal) => (abono.minutos += abonoLocal.minutos));
 
-          if (dia.id === 138457) {
-            console.log("entrou");
-          }
-
           let resumo = this.calcularResumoPorDia({
             dia: { id: dia.id, eventos, abono, cargaHorariaTotal: dia.cargaHor, contemAusencia },
             resumoCartao,
@@ -315,9 +311,6 @@ export class GetFuncionarioImpressaoCalculoController implements Controller {
       saldoAtual,
     });
 
-    if (input.dia.id === 138457) {
-      console.log("entrou");
-    }
     const somaTodosMinutos = minutos + minutosNoturnos;
     if (somaTodosMinutos > -10 && somaTodosMinutos < 10 && minutosDiurnos > -10 && minutosDiurnos < 10) {
       minutos = 0;
