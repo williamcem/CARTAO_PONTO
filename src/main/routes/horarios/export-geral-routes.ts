@@ -4,7 +4,7 @@ import { ExportarController } from "../../../presentation/controllers/exportar-a
 import { adaptRoute } from "../../adapters/express-route-adapter";
 
 const route = (router: Router): void => {
-  router.post("/exportar-lancamentos", adaptRoute(new ExportarController()));
+  router.get("/exportar-lancamentos.txt", adaptRoute(new ExportarController()));
 };
 
 export default route;

@@ -4,7 +4,7 @@ import moment from "moment";
 
 const prisma = new PrismaClient();
 
-export const exportarDadosParaArquivo = async (callback: (err: Error | null, filename?: string) => void) => {
+export const exportarDadosParaArquivo = async () => {
   try {
     // Buscar os dados das tabelas
     const funcionarios = await prisma.funcionario.findMany({
@@ -88,14 +88,9 @@ export const exportarDadosParaArquivo = async (callback: (err: Error | null, fil
     const data = linhas.join("\n");
 
     // Escrever os dados em um arquivo de texto
-    fs.writeFile(filename, data, "utf8", (err) => {
-      if (err) {
-        console.error("Erro ao escrever arquivo:", err);
-        return callback(err);
-      }
-      console.log(`Os dados foram exportados para ${filename}.`);
-      return callback(null, filename);
-    });
+    fs.writeFileSync(filename, data);
+
+    return Buffer.from(data, "utf-8");
   } catch (err) {
     console.error("Erro ao exportar dados:", err);
     const error = err instanceof Error ? err : new Error("Erro desconhecido");
