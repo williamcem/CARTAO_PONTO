@@ -1,9 +1,8 @@
 import { PrismaClient } from "@prisma/client";
-import { ListarOcorrencias } from "../../../../data/usecase/listar-ocorrencias/add-listar-ocorrencias";
 import { prisma } from "../../../database/Prisma";
 import { OcorrenciasNull } from "../../../../presentation/errors/Funcionario-param-error";
 
-export class OcorrenciaPostgresRepository implements ListarOcorrencias {
+export class OcorrenciaPostgresRepository {
   private prisma: PrismaClient;
 
   constructor() {
@@ -64,30 +63,14 @@ export class OcorrenciaPostgresRepository implements ListarOcorrencias {
     };
   }
 
-  public async find(
-    identificacao: string,
-    localidade: string,
-  ): Promise<{
-    funcionarios: {
-      id: number;
-      identificacao: string;
-      nome: string;
-      turno: { nome: string };
-      localidade: { codigo: string };
-      referencia: Date | null;
-      dias: {
-        data: Date;
-        eventos: any[];
-        lancamentos: { periodoId: number; entrada: Date | null; saida: Date | null }[];
-      }[];
-      Resumo: any;
-    }[];
-  }> {
+  public async find(identificacao: string, localidade: string, referencia: Date) {
     const funcionarios = await this.prisma.funcionario.findMany({
       where: {
         identificacao: identificacao,
         localidadeId: localidade,
-        cartao: { some: { cartao_dia: { some: { cartao_dia_lancamentos: { some: { validadoPeloOperador: true } } } } } },
+        cartao: {
+          some: { cartao_dia: { some: { cartao_dia_lancamentos: { some: { validadoPeloOperador: true } } } } },
+        },
       },
       include: {
         cartao: {
@@ -108,6 +91,7 @@ export class OcorrenciaPostgresRepository implements ListarOcorrencias {
             },
           },
           orderBy: { id: "asc" },
+          where: { referencia },
         },
         turno: true,
         localidade: true,
