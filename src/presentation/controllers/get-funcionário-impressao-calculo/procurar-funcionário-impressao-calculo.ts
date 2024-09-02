@@ -375,12 +375,14 @@ export class GetFuncionarioImpressaoCalculoController implements Controller {
           const [ext1, ext2, ext3] = this.inserirRegraPorHoraExtra({
             minutos: Number((minutos * 1.14).toFixed()),
             parametros: [60, 60, 9999],
+            minutosIniciado: [Number(output.diurno.ext1), Number(output.diurno.ext2), Number(output.diurno.ext3)],
           });
           output.noturno = { ext1, ext2, ext3 };
         } else {
           const [ext1, ext2, ext3] = this.inserirRegraPorHoraExtra({
             minutos: minutosNoturnos + minutosNoturnosAntesJornada,
             parametros: [60, 60, 9999],
+            minutosIniciado: [Number(output.diurno.ext1), Number(output.diurno.ext2), Number(output.diurno.ext3)],
           });
           output.noturno = { ext1, ext2, ext3 };
         }
@@ -390,8 +392,11 @@ export class GetFuncionarioImpressaoCalculoController implements Controller {
     return output;
   }
 
-  inserirRegraPorHoraExtra(input: { minutos: number; parametros: number[] }): number[] {
-    const output = input.parametros.map((parametro) => {
+  inserirRegraPorHoraExtra(input: { minutos: number; parametros: number[]; minutosIniciado?: number[] }): number[] {
+    const output = input.parametros.map((parametro, index) => {
+      const existeMinutosIniciado = input?.minutosIniciado?.find((_, indexIniciado) => index === indexIniciado) || 0;
+      parametro = parametro - existeMinutosIniciado;
+
       let minutos = 0;
 
       if (input.minutos <= parametro) minutos = input.minutos;
