@@ -2,6 +2,7 @@ import { LancarDiaPostgresRepository } from "@infra/db/postgresdb/lancar-dia/lan
 import { FuncionarioParamError } from "../../errors/Funcionario-param-error";
 import { badRequest, ok, serverError } from "../../helpers/http-helpers";
 import { Controller, HttpRequest, HttpResponse } from "./lancar-dia-protocols";
+import moment from "moment";
 
 export class LancarDiaController implements Controller {
   constructor(private readonly lancarDiaPostgresRepository: LancarDiaPostgresRepository) {}
@@ -31,11 +32,13 @@ export class LancarDiaController implements Controller {
         }
       }
 
+      const saidaAntesDaEntrada = moment(entrada).isAfter(saida);
+
+      if (saidaAntesDaEntrada) return badRequest(new FuncionarioParamError("A saída não pode ser antes da entrada!"));
+
       // Verificar a data do cartao_dia e cartao_dia_lancamentos
       const cartaoDia = await this.lancarDiaPostgresRepository.findCartaoDiaById(cartao_dia_id);
-      if (!cartaoDia) {
-        return badRequest(new FuncionarioParamError("Cartão do dia não encontrado!"));
-      }
+      if (!cartaoDia) return badRequest(new FuncionarioParamError("Cartão do dia não encontrado!"));
 
       const cartaoDiaDate = new Date(cartaoDia.data);
 
