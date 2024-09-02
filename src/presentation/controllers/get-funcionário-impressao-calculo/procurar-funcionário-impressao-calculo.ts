@@ -464,8 +464,6 @@ export class GetFuncionarioImpressaoCalculoController implements Controller {
     let output = { diurno: { ext1: 0, ext2: 0, ext3: 0 }, noturno: { ext1: 0, ext2: 0, ext3: 0 } };
     for (const periodo in input.saldoAtual) {
       if (input.saldoAtual.hasOwnProperty(periodo)) {
-        console.log(`\nProcessando ${periodo}:`);
-
         for (const key in input.saldoAtual[periodo]) {
           if (input.saldoAtual[periodo].hasOwnProperty(key)) {
             minutosTotaisSaldo += input.saldoAtual[periodo][key];
@@ -486,8 +484,6 @@ export class GetFuncionarioImpressaoCalculoController implements Controller {
           saldo: input.saldoAtual,
         }).movimentacao;
       }
-
-      if (input.existeFaltaNoturna) output.diurno.ext1 = Number((output.diurno.ext1 * 1.14).toFixed());
     }
 
     return output;
@@ -567,7 +563,7 @@ export class GetFuncionarioImpressaoCalculoController implements Controller {
         }
 
         if (saldo.noturno.ext2) {
-          let movimentacaoAtual = saldoMinutos + saldo.diurno.ext2;
+          let movimentacaoAtual = saldoMinutos + saldo.noturno.ext2;
 
           if (movimentacaoAtual < 0) {
             movimentacao.noturno.ext2 = -saldo.noturno.ext2;
