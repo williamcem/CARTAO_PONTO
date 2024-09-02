@@ -232,7 +232,7 @@ model funcionarios_afastados {
   funcionarioId Int
   statusId      Int
   userName      String?
-  diaId         Int
+  diaId         Int?
 
   funcionario                   funcionario?                  @relation(fields: [funcionarioId], references: [id])
   funcionarios_afastados_status funcionarios_afastados_status @relation(fields: [statusId], references: [id], onDelete: Cascade)
