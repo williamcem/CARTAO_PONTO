@@ -6,7 +6,7 @@ import { ListarOcorrencias } from "../../../../data/usecase/listar-ocorrencias/a
 import { OcorrenciasNull } from "../../../../presentation/errors/Funcionario-param-error";
 import { prisma } from "../../../database/Prisma";
 
-export class OcorrenciaSolucionadasPostgresRepository implements ListarOcorrencias {
+export class OcorrenciaSolucionadasPostgresRepository {
   private prisma: PrismaClient;
   private calcularResumoPostgresRepository: CalcularResumoPostgresRepository;
 

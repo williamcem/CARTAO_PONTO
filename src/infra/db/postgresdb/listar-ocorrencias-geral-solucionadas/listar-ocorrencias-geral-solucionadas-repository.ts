@@ -1,17 +1,19 @@
 import { PrismaClient } from "@prisma/client";
 
-import { ListarOcorrenciasGeral } from "../../../../data/usecase/listar-ocorrencias/add-listar-ocorrencias";
 import { OcorrenciasNull } from "../../../../presentation/errors/Funcionario-param-error";
 import { prisma } from "../../../database/Prisma";
 
-export class OcorrenciaGeralSolucionadaPostgresRepository implements ListarOcorrenciasGeral {
+export class OcorrenciaGeralSolucionadaPostgresRepository {
   private prisma: PrismaClient;
 
   constructor() {
     this.prisma = prisma;
   }
 
-  public async findOcorrencia(localidade: string): Promise<{
+  public async findOcorrencia(
+    localidade: string,
+    referencia: string,
+  ): Promise<{
     funcionarios: {
       identificacao: string;
       nome: string;
@@ -34,15 +36,16 @@ export class OcorrenciaGeralSolucionadaPostgresRepository implements ListarOcorr
               orderBy: { id: "asc" },
             },
           },
+          where: { referencia },
           orderBy: { id: "asc" },
         },
       },
       orderBy: { id: "asc" },
     });
 
-    if (!funcionarios || funcionarios.length === 0) {
+    if (!funcionarios || funcionarios.length === 0)
       throw new OcorrenciasNull("Nenhuma funcionario da localidade apresenta ocorrencias solucionadas");
-    }
+
     return {
       funcionarios: funcionarios
         .map((funcionario) => {

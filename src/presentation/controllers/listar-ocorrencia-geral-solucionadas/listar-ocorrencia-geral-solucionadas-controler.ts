@@ -8,17 +8,15 @@ export class OcorrenciaGeralSolucionadaController implements Controller {
 
   async handle(httRequest: HttpRequest): Promise<HttpResponse> {
     try {
-      const { localidade } = httRequest?.query;
+      const { localidade, referencia } = httRequest?.query;
 
-      if (!localidade) {
-        return badRequest(new Error("Localidade não informada"));
-      }
+      if (!localidade) return badRequest(new Error("Localidade não informada"));
 
-      const data = await this.ocorrenciaGeralSolucionadaPostgresRepository.findOcorrencia(localidade);
+      if (!referencia) return badRequest(new Error("Referencia não informada"));
 
-      if (data.funcionarios.length === 0) {
-        return notFoundRequest(new Error("Nenhum funcionário encontrado"));
-      }
+      const data = await this.ocorrenciaGeralSolucionadaPostgresRepository.findOcorrencia(localidade, referencia);
+
+      if (data.funcionarios.length === 0) return notFoundRequest(new Error("Nenhum funcionário encontrado"));
 
       const output = data.funcionarios.map((funcionario) => ({
         nome: funcionario.nome,
