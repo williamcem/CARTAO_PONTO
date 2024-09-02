@@ -30,6 +30,7 @@ export class OcorrenciaSolucionadasPostgresRepository implements ListarOcorrenci
   public async find(
     identificacao: string,
     localidade: string,
+    referencia: Date,
   ): Promise<{
     funcionarios: {
       identificacao: string;
@@ -78,6 +79,7 @@ export class OcorrenciaSolucionadasPostgresRepository implements ListarOcorrenci
               orderBy: { id: "asc" },
             },
           },
+          where: { referencia },
           orderBy: { id: "asc" },
         },
         turno: true,
