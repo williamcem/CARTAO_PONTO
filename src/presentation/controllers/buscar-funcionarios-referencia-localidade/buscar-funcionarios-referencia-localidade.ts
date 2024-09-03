@@ -7,6 +7,7 @@ import { FuncionarioParamError } from "../../errors/Funcionario-param-error";
 import { BuscarTodosPostgresRepository } from "@infra/db/postgresdb/buscar-todos-funcionarios.ts/buscas-todos-repository";
 import { FinalizarCartaoPostgresRepository } from "@infra/db/postgresdb/finalizar-cartao/finalizar-cartao";
 import { FinalizarCartaoController } from "../finalizar-cartao/finalizar-cartao";
+import { GetFuncionarioImpressaoCalculoController } from "../get-funcionário-impressao-calculo/procurar-funcionário-impressao-calculo";
 
 export class BuscarFuncionarioReferenciaLocalidadeAgrupadaController implements Controller {
   constructor(
@@ -14,11 +15,12 @@ export class BuscarFuncionarioReferenciaLocalidadeAgrupadaController implements 
     private readonly buscarTodosPostgresRepository: BuscarTodosPostgresRepository,
     private readonly finalizarCartaoController: FinalizarCartaoController,
     private readonly finalizarCartaoPostgresRepository: FinalizarCartaoPostgresRepository,
+    private readonly getFuncionarioImpressaoCalculoController: GetFuncionarioImpressaoCalculoController,
   ) {}
 
   async handle(httpRequest: HttpRequest): Promise<HttpResponse> {
     try {
-      const { localidadeId, referencia, showProgress, mostrarPendencias, cartaoStatusId } = httpRequest?.query;
+      const { localidadeId, referencia, showProgress, mostrarPendencias, cartaoStatusId, showSummary } = httpRequest?.query;
 
       if (!localidadeId) return badRequest(new FuncionarioParamError("Falta localidade!"));
 
@@ -59,6 +61,8 @@ export class BuscarFuncionarioReferenciaLocalidadeAgrupadaController implements 
         diasSemLancamento?: [];
         lancamentosNaoValidado?: [];
         ocorrenciasNaoTratada?: [];
+        resumo?: { diurno: { ext1: number; ext2: number; ext3: number }; noturno: { ext1: number; ext2: number; ext3: number } };
+        pendencias?: any;
       }[] = [];
 
       for (const funcionario of funcionarios) {
@@ -71,6 +75,12 @@ export class BuscarFuncionarioReferenciaLocalidadeAgrupadaController implements 
         });
         let totalDiasParaTrabalhar = dias.length;
         let totalDiasTrabalhados = 0;
+        let resumo:
+          | {
+              diurno: { ext1: number; ext2: number; ext3: number };
+              noturno: { ext1: number; ext2: number; ext3: number };
+            }
+          | undefined = undefined;
 
         if (showProgress) {
           for await (const dia of funcionario.cartao[0].cartao_dia) {
@@ -94,6 +104,24 @@ export class BuscarFuncionarioReferenciaLocalidadeAgrupadaController implements 
           }
 
           andamento = Number(((totalDiasTrabalhados * 100) / totalDiasParaTrabalhar).toFixed());
+        }
+
+        if (showSummary) {
+          const result: {
+            statusCode: number;
+            body: {
+              data: {
+                resumo: {
+                  diurno: { ext1: number; ext2: number; ext3: number };
+                  noturno: { ext1: number; ext2: number; ext3: number };
+                };
+              }[];
+            };
+          } = await this.getFuncionarioImpressaoCalculoController.handle({
+            query: { cartaoId: funcionario.cartao[0].id, localidade: localidadeId, referencia },
+          });
+
+          if (result.statusCode === 200 && result.body.data[0].resumo) resumo = result.body.data[0].resumo;
         }
 
         let pendencias = {};
@@ -136,7 +164,8 @@ export class BuscarFuncionarioReferenciaLocalidadeAgrupadaController implements 
           cartaoId: funcionario.cartao[0].id,
           statusId: funcionario.cartao[0].statusId,
           turno: funcionario.turno,
-          ...pendencias,
+          resumo,
+          pendencias,
         });
       }
 
