@@ -31,6 +31,11 @@ export const notAuthorized = (error: Error): HttpResponse => ({
   body: error,
 });
 
+export const serverErrorNovo = (error: any): HttpResponse => ({
+  statusCode: 400,
+  body: error,
+});
+
 /* const sendError = (message: string, error: "Bad Request" | "Not Found" | "Server Error"): HttpResponse => {
   const output: HttpResponse;
 };
