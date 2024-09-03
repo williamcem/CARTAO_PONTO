@@ -54,12 +54,12 @@ export const exportarDadosParaArquivo = async () => {
             if (minutosInjustificados === dia.cargaHor) {
               const tipoFalta = "FALTA INJUSTIFICADA TOTAL";
               linhasDia.push(
-                `${funcionario.identificacao};${formatarData(dia.data)};${tipoFalta} ${minutosInjustificados};${faltasMap[tipoFalta]}`,
+                `${funcionario.identificacao};${formatarData(dia.data)};${tipoFalta};${faltasMap[tipoFalta]};${minutosInjustificados}`,
               );
             } else if (minutosInjustificados < dia.cargaHor) {
               const tipoFalta = "FALTA INJUSTIFICADA PARCIAL";
               linhasDia.push(
-                `${funcionario.identificacao};${formatarData(dia.data)};${tipoFalta} ${minutosInjustificados};${faltasMap[tipoFalta]}`,
+                `${funcionario.identificacao};${formatarData(dia.data)};${tipoFalta};${faltasMap[tipoFalta]};${minutosInjustificados}`,
               );
             }
           }
@@ -69,12 +69,12 @@ export const exportarDadosParaArquivo = async () => {
             if (minutosJustificados === dia.cargaHor) {
               const tipoFalta = "FALTA JUSTIFICADA TOTAL";
               linhasDia.push(
-                `${funcionario.identificacao};${formatarData(dia.data)};${tipoFalta} ${minutosJustificados};${faltasMap[tipoFalta]}`,
+                `${funcionario.identificacao};${formatarData(dia.data)};${tipoFalta};${faltasMap[tipoFalta]};${minutosJustificados}`,
               );
             } else if (minutosJustificados < dia.cargaHor) {
               const tipoFalta = "FALTA JUSTIFICADA PARCIAL";
               linhasDia.push(
-                `${funcionario.identificacao};${formatarData(dia.data)};${tipoFalta} ${minutosJustificados};${faltasMap[tipoFalta]}`,
+                `${funcionario.identificacao};${formatarData(dia.data)};${tipoFalta};${faltasMap[tipoFalta]};${minutosJustificados}`,
               );
             }
           }
