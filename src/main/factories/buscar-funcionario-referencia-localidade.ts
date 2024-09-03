@@ -11,13 +11,17 @@ import { FuncionarioImpressaoCalculoPostgresRepository } from "@infra/db/postgre
 export const makeBuscarFuncionarioReferenciaLocalidadeController = (): Controller => {
   const buscarFuncionarioReferenciaLocalidadePostgresRepository = new BuscarFuncionarioReferenciaLocalidadePostgresRepository();
   const buscarTodosPostgresRepository = new BuscarTodosPostgresRepository();
-  const finalizarCartaoPostgresRepository = new FinalizarCartaoPostgresRepository();
-  const finalizarCartaoController = new FinalizarCartaoController(finalizarCartaoPostgresRepository);
   const funcionarioImpressaoCalculoPostgresRepository = new FuncionarioImpressaoCalculoPostgresRepository();
 
   const getFuncionarioImpressaoCalculoController = new GetFuncionarioImpressaoCalculoController(
     funcionarioImpressaoCalculoPostgresRepository,
   );
+  const finalizarCartaoPostgresRepository = new FinalizarCartaoPostgresRepository();
+  const finalizarCartaoController = new FinalizarCartaoController(
+    finalizarCartaoPostgresRepository,
+    getFuncionarioImpressaoCalculoController,
+  );
+
   const buscarFuncionarioReferenciaLocalidadeAgrupadaController = new BuscarFuncionarioReferenciaLocalidadeAgrupadaController(
     buscarFuncionarioReferenciaLocalidadePostgresRepository,
     buscarTodosPostgresRepository,

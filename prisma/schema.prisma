@@ -130,6 +130,7 @@ model cartao {
   cartao_dia              cartao_dia[]
   cartao_status           cartao_status?            @relation(fields: [statusId], references: [id], onDelete: Cascade)
   cartao_horario_anterior cartao_horario_anterior[]
+  cartao_horario_pago     cartao_horario_pago[]
 
   @@unique([funcionarioId, referencia])
 }
@@ -147,10 +148,24 @@ model cartao_horario_anterior {
   @@unique([cartaoId, periodoId])
 }
 
+model cartao_horario_pago {
+  id        Int                             @id @default(autoincrement())
+  cartaoId  Int
+  periodoId Int
+  ext1      Int
+  ext2      Int
+  ext3      Int
+  periodo   cartao_horario_anterior_periodo @relation(fields: [periodoId], references: [id])
+  cartao    cartao                          @relation(fields: [cartaoId], references: [id])
+
+  @@unique([cartaoId, periodoId])
+}
+
 model cartao_horario_anterior_periodo {
   id                      Int                       @id @default(autoincrement())
   nome                    String                    @unique()
   cartao_horario_anterior cartao_horario_anterior[]
+  cartao_horario_pago     cartao_horario_pago[]
 }
 
 model cartao_status {

@@ -21,11 +21,19 @@ export class FinalizarCartaoPostgresRepository {
             cartao_dia_lancamentos: true,
           },
         },
+        funcionario: { select: { localidadeId: true } },
       },
     });
   }
 
-  public async update(input: { id: number; userName: string; updateAt: Date; statusId: number }) {
+  public async update(input: {
+    id: number;
+    userName: string;
+    updateAt: Date;
+    statusId: number;
+    compensado: { diurno: { ext1: number; ext2: number; ext3: number }; noturno: { ext1: number; ext2: number; ext3: number } };
+    pago: { diurno: { ext1: number; ext2: number; ext3: number }; noturno: { ext1: number; ext2: number; ext3: number } };
+  }) {
     return await this.prisma.cartao.update({
       where: {
         id: input.id,
@@ -34,6 +42,74 @@ export class FinalizarCartaoPostgresRepository {
         statusId: input.statusId,
         userName: input.userName,
         updateAt: input.updateAt,
+        cartao_horario_anterior: {
+          upsert: [
+            {
+              create: {
+                periodoId: 1,
+                ext1: input.compensado.diurno.ext1,
+                ext2: input.compensado.diurno.ext2,
+                ext3: input.compensado.diurno.ext3,
+              },
+              update: {
+                periodoId: 1,
+                ext1: input.compensado.diurno.ext1,
+                ext2: input.compensado.diurno.ext2,
+                ext3: input.compensado.diurno.ext3,
+              },
+              where: { cartaoId_periodoId: { cartaoId: input.id, periodoId: 1 } },
+            },
+            {
+              create: {
+                periodoId: 2,
+                ext1: input.compensado.noturno.ext1,
+                ext2: input.compensado.noturno.ext2,
+                ext3: input.compensado.noturno.ext3,
+              },
+              update: {
+                periodoId: 2,
+                ext1: input.compensado.noturno.ext1,
+                ext2: input.compensado.noturno.ext2,
+                ext3: input.compensado.noturno.ext3,
+              },
+              where: { cartaoId_periodoId: { cartaoId: input.id, periodoId: 2 } },
+            },
+          ],
+        },
+        cartao_horario_pago: {
+          upsert: [
+            {
+              create: {
+                periodoId: 1,
+                ext1: input.pago.diurno.ext1,
+                ext2: input.pago.diurno.ext2,
+                ext3: input.pago.diurno.ext3,
+              },
+              update: {
+                periodoId: 1,
+                ext1: input.pago.diurno.ext1,
+                ext2: input.pago.diurno.ext2,
+                ext3: input.pago.diurno.ext3,
+              },
+              where: { cartaoId_periodoId: { cartaoId: input.id, periodoId: 1 } },
+            },
+            {
+              create: {
+                periodoId: 2,
+                ext1: input.pago.noturno.ext1,
+                ext2: input.pago.noturno.ext2,
+                ext3: input.pago.noturno.ext3,
+              },
+              update: {
+                periodoId: 2,
+                ext1: input.pago.noturno.ext1,
+                ext2: input.pago.noturno.ext2,
+                ext3: input.pago.noturno.ext3,
+              },
+              where: { cartaoId_periodoId: { cartaoId: input.id, periodoId: 2 } },
+            },
+          ],
+        },
       },
     });
   }
