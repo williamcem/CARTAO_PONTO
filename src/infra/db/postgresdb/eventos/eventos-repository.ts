@@ -6,10 +6,14 @@ import { prisma } from "@infra/database/Prisma";
 import { AdicionarEventos } from "../../../../data/usecase/add-eventos/add-eventos";
 import { criarEventoIntervaloEntrePeriodos } from "./intervaloEntrePeriodos";
 import { RecalcularTurnoController } from "../../../../presentation/controllers/recalcular-turno/recalcular-turno";
+import { CompensacaoEventoRepository } from "../compensacao-eventos-automaticos-repository/compensacao-eventos-automaticos-repository";
 export class CriarEventosPostgresRepository implements AdicionarEventos {
   private prisma: PrismaClient;
 
-  constructor(private readonly recalcularTurnoController: RecalcularTurnoController) {
+  constructor(
+    private readonly recalcularTurnoController: RecalcularTurnoController,
+    private compensacaoEventoRepository: CompensacaoEventoRepository,
+  ) {
     this.prisma = prisma;
   }
   public porcentagemAdicionalNoturno = 0.14;
@@ -92,6 +96,11 @@ export class CriarEventosPostgresRepository implements AdicionarEventos {
         return evento;
       }),
     });
+
+    // Compensar eventos após a criação dos novos eventos
+    for (const evento of newEventosData) {
+      await this.compensacaoEventoRepository.compensarEventos(evento.cartaoDiaId);
+    }
 
     return true;
   }
@@ -277,7 +286,9 @@ export class CriarEventosPostgresRepository implements AdicionarEventos {
 
     // Verificar se todos os horários são zero
     const cargaHorariaCompletaArray = this.pegarCargaHorarioCompleta(lancamento.cartao_dia.cargaHorariaCompleta);
-    const isFolga = cargaHorariaCompletaArray.every((horario) => horario.hora === 0 && horario.minuto === 0);
+    const horariosRelevantes = cargaHorariaCompletaArray.filter((horario) => horario.hora !== 0 || horario.minuto !== 0);
+
+    const isFolga = horariosRelevantes.length === 0;
 
     if (entrada.isBefore(horarioEntradaEsperado1)) {
       const eventoPeriodoReal = {
@@ -353,7 +364,9 @@ export class CriarEventosPostgresRepository implements AdicionarEventos {
 
     // Verificar se todos os horários são zero
     const cargaHorariaCompletaArray = this.pegarCargaHorarioCompleta(lancamento.cartao_dia.cargaHorariaCompleta);
-    const isFolga = cargaHorariaCompletaArray.every((horario) => horario.hora === 0 && horario.minuto === 0);
+    const horariosRelevantes = cargaHorariaCompletaArray.filter((horario) => horario.hora !== 0 || horario.minuto !== 0);
+
+    const isFolga = horariosRelevantes.length === 0;
 
     if (saida.isBefore(horarioSaidaEsperado)) {
       const eventoPeriodoReal = {
