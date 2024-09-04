@@ -106,7 +106,7 @@ export class RespaldarController implements Controller {
           return badRequest(new FuncionarioParamError(`Status ${statusId} não tratado!`));
       }
 
-      switch (atestado.documentoId) {
+      switch (atestado.tipoId) {
         case 1:
           break;
         case 2:
@@ -191,7 +191,7 @@ export class RespaldarController implements Controller {
                   observacao,
                   statusId,
                   userName,
-                  acao,
+                  acao: acao || atestado.acao,
                   acidente_trabalho,
                   crm,
                   data,
@@ -432,6 +432,72 @@ export class RespaldarController implements Controller {
 
     abonos = this.gerarAbono(input.dias, { inicio: input.atestado.inicio, fim: input.atestado.fim });
 
+    const novosEventos: {
+      cartaoDiaId: number;
+      hora: string;
+      tipoId: number | null;
+      funcionarioId: number;
+      tratado: boolean;
+      minutos: number;
+    }[] = [];
+
+    const atualizacaoEventos: {
+      id: number;
+      cartaoDiaId: number;
+      hora: string;
+      tipoId: number | null;
+      funcionarioId: number;
+      tratado: boolean;
+      minutos: number;
+    }[] = [];
+
+    for (const abono of abonos) {
+      let saldoEventos = 0;
+      let funcionarioId = 0;
+
+      const eventos = await this.respaldarAtestadoPostgresRepository.findManyEventos({
+        cartaoDiaId: abono.cartaoDiaId,
+        tipoId: 2,
+        tratado: false,
+      });
+
+      eventos.map((evento) => {
+        atualizacaoEventos.push({ ...evento, ...{ tratado: true } });
+        if (funcionarioId === 0) funcionarioId = evento.funcionarioId;
+        saldoEventos += Math.abs(evento.minutos);
+      });
+
+      //Se não abonar tudo, irá executar o que o gerênte solicitou
+      if (abono.minutos < saldoEventos) {
+        const saldoFaltante = abono.minutos - saldoEventos;
+        let minutos = 0;
+
+        switch (input.atestado.acao) {
+          case 3:
+            minutos = 0;
+            break;
+
+          case 5:
+            minutos = Math.abs(saldoFaltante);
+            break;
+
+          default:
+            break;
+        }
+
+        console.log("input.atestado.acao", input.atestado.acao);
+        novosEventos.push({
+          cartaoDiaId: abono.cartaoDiaId,
+          hora: "AÇÃO GERENTE",
+          tipoId: input.atestado.acao || 0,
+          funcionarioId,
+          tratado: true,
+          minutos,
+        });
+      }
+    }
+
+    console.log("novosEventos", novosEventos);
     const atualizado = await this.respaldarAtestadoPostgresRepository.updateAtestado({
       id: input.atestado.id,
       statusId: input.atestado.statusId,
@@ -460,6 +526,7 @@ export class RespaldarController implements Controller {
       tipoGrauParentescoId: input.atestado.tipoGrauParentescoId,
       tipoId: input.atestado.tipoId,
       trabalhou_dia: input.atestado.trabalhou_dia,
+      eventos: { createMany: novosEventos, updateMany: atualizacaoEventos },
     });
 
     if (!atualizado) return "Erro ao atualizar atestado";

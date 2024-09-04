@@ -3,28 +3,22 @@ import { prisma, prismaPromise } from "../../../database/Prisma";
 import { RespaldarAtestado } from "../../../../data/usecase/respaldar-atestado/respaldar-atestado";
 import moment from "moment";
 
-export class RespaldarAtestadoPostgresRepository implements RespaldarAtestado {
+export class RespaldarAtestadoPostgresRepository {
   private prisma: PrismaClient;
 
   constructor() {
     this.prisma = prisma;
   }
 
-  public async findfirst(input: {
-    id: number;
-  }): Promise<{ id: number; documentoId: number; statusId: number; funcionarioId: number } | undefined> {
+  public async findfirst(input: { id: number }) {
     const result = await this.prisma.atestado_funcionario.findFirst({
       where: { id: input.id },
+      select: { id: true, tipoId: true, statusId: true, funcionarioId: true, acao: true },
     });
 
     if (!result) return;
 
-    return {
-      id: result.id,
-      documentoId: result.tipoId,
-      statusId: result.statusId,
-      funcionarioId: result.funcionarioId,
-    };
+    return result;
   }
 
   public async findManyCartaoDia(input: { inicio: Date; fim: Date; funcionarioId: number }): Promise<
@@ -81,9 +75,30 @@ export class RespaldarAtestadoPostgresRepository implements RespaldarAtestado {
     funcao?: number;
     nomeFuncionario?: string;
     ocupacaoId?: number;
+    eventos?: {
+      updateMany?: {
+        id: number;
+        cartaoDiaId: number;
+        hora: string;
+        tipoId: number | null;
+        funcionarioId: number;
+        tratado: boolean;
+        minutos: number;
+      }[];
+      createMany?: {
+        cartaoDiaId: number;
+        hora: string;
+        tipoId: number | null;
+        funcionarioId: number;
+        tratado: boolean;
+        minutos: number;
+      }[];
+    };
   }): Promise<boolean> {
-    return Boolean(
-      await this.prisma.atestado_funcionario.update({
+    const queries: prismaPromise[] = [];
+
+    queries.push(
+      this.prisma.atestado_funcionario.update({
         where: { id: input.id },
         data: {
           statusId: input.statusId,
@@ -122,6 +137,25 @@ export class RespaldarAtestadoPostgresRepository implements RespaldarAtestado {
         },
       }),
     );
+
+    input.eventos?.createMany?.map((evento) => {
+      queries.push(
+        this.prisma.eventos.create({
+          data: evento,
+        }),
+      );
+    });
+
+    input.eventos?.updateMany?.map((evento) => {
+      queries.push(
+        this.prisma.eventos.update({
+          data: { ...evento },
+          where: { id: evento.id },
+        }),
+      );
+    });
+
+    return Boolean((await this.prisma.$transaction(queries)).length);
   }
 
   public async findManyAtestados(input: {
@@ -192,5 +226,24 @@ export class RespaldarAtestadoPostgresRepository implements RespaldarAtestado {
     });
 
     return Boolean(await this.prisma.$transaction(query));
+  }
+
+  public async findManyEventos(input: { cartaoDiaId: number; tipoId: number; tratado: boolean }) {
+    return await this.prisma.eventos.findMany({
+      where: { cartaoDiaId: input.cartaoDiaId, tipoId: input.tipoId, tratado: input.tratado },
+    });
+  }
+
+  public async createEvento(input: {
+    funcionarioId: number;
+    hora: string;
+    minutos: number;
+    cartaoDiaId: number;
+    tipoId: number;
+    tratado: boolean;
+  }) {
+    return await this.prisma.eventos.create({
+      data: input,
+    });
   }
 }
