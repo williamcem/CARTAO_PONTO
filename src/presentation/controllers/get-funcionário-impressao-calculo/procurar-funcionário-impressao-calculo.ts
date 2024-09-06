@@ -86,16 +86,41 @@ export class GetFuncionarioImpressaoCalculoController implements Controller {
         };
 
         const dias = cartao.cartao_dia.map((dia) => {
-          let dataFormatada = moment.utc(dia.data).format("DD/MM/YYYY ddd").toUpperCase();
-
-          if (onlyDays) return { data: dia.data, dataFormatada, status: dia.cartao_dia_status, id: dia.id };
+          const periodos: { entrada: string; saida: string; periodoId: number; validadoPeloOperador: boolean }[] = [];
 
           let resumoLegado = {
             diurno: "",
             noturno: "",
           };
+          let dataFormatada = moment.utc(dia.data).format("DD/MM/YYYY ddd").toUpperCase();
+
+          if (onlyDays) return { data: dia.data, dataFormatada, status: dia.cartao_dia_status, id: dia.id };
 
           const contemAusencia = dia.eventos.some((evento) => evento.tipoId === 2);
+
+          if (contemAusencia && dia.cargaHorPrimeiroPeriodo) {
+            const existeLancamento = dia.cartao_dia_lancamentos.some((lancamento) => lancamento.periodoId === 1);
+            if (!existeLancamento) {
+              periodos.push({
+                entrada: "Ausência",
+                saida: "Ausência",
+                periodoId: 1,
+                validadoPeloOperador: true,
+              });
+            }
+          }
+
+          if (contemAusencia && dia.cargaHorSegundoPeriodo) {
+            const existeLancamento = dia.cartao_dia_lancamentos.some((lancamento) => lancamento.periodoId === 2);
+            if (!existeLancamento) {
+              periodos.push({
+                entrada: "Ausência",
+                saida: "Ausência",
+                periodoId: 2,
+                validadoPeloOperador: true,
+              });
+            }
+          }
 
           const eventos = dia.eventos.map((evento) => {
             return { minutos: evento.minutos, tipoId: evento.tipoId || 0, tratado: evento.tratado };
@@ -160,7 +185,6 @@ export class GetFuncionarioImpressaoCalculoController implements Controller {
               if (typeof resumo.noturno.ext3 === "number") resumoCartao.atual.noturno.ext3 += resumo.noturno.ext3;
             }
           }
-          const periodos: { entrada: string; saida: string; periodoId: number; validadoPeloOperador: boolean }[] = [];
 
           dia.cartao_dia_lancamentos.map((lancamento) => {
             periodos.push({
@@ -206,7 +230,7 @@ export class GetFuncionarioImpressaoCalculoController implements Controller {
             resumo,
             periodos,
             resumoLegado,
-            contemAusencia,
+
             status: dia.cartao_dia_status,
             id: dia.id,
             saldoAtual,
