@@ -18,6 +18,7 @@ export class FinalizarCartaoController implements Controller {
         userName,
         pago,
         compensado,
+        forcado,
       }: {
         id: number;
         userName: string;
@@ -26,6 +27,7 @@ export class FinalizarCartaoController implements Controller {
           diurno: { ext1: number; ext2: number; ext3: number };
           noturno: { ext1: number; ext2: number; ext3: number };
         };
+        forcado?: boolean;
       } = httpRequest.body;
 
       if (!id) return badRequest(new FuncionarioParamError("Falta id do cartão!"));
@@ -33,7 +35,6 @@ export class FinalizarCartaoController implements Controller {
 
       //Verifica pago
       {
-        console.log(pago);
         if (!pago) return badRequest(new FuncionarioParamError("Falta o que será pago!"));
         if (!pago.diurno) return badRequest(new FuncionarioParamError("Falta pago diurno!"));
         if (!Number.isInteger(pago.diurno.ext1)) return badRequest(new FuncionarioParamError("Falta extra 1 pago diurno!"));
@@ -97,7 +98,10 @@ export class FinalizarCartaoController implements Controller {
         tipo: atestado.tipos_documentos.nome,
       }));
 
-      if (atestados.length || lancamentosNaoValidado.length || ocorrenciasNaoTratada.length || diasSemLancamento.length)
+      if (
+        !forcado &&
+        (atestados.length || lancamentosNaoValidado.length || ocorrenciasNaoTratada.length || diasSemLancamento.length)
+      )
         return badRequestNovo({
           message: { lancamentosNaoValidado, ocorrenciasNaoTratada, diasSemLancamento, atestadosEmAnalise },
         });
