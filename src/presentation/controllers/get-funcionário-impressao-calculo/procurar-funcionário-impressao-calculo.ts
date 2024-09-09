@@ -254,16 +254,21 @@ export class GetFuncionarioImpressaoCalculoController implements Controller {
               },
             };
 
+          const eventosJustificativa = dia.eventos.filter(
+            (evento) => evento.tipoId === 5 || evento.tipoId === 6 || evento.tipoId === 12,
+          );
+
           return {
             data: dia.data,
             dataFormatada,
             resumo,
             periodos,
             resumoLegado,
-
             status: dia.cartao_dia_status,
             id: dia.id,
             saldoAtual,
+            abonosAtestado: dia.atestado_abonos,
+            eventos: eventosJustificativa,
           };
         });
 
