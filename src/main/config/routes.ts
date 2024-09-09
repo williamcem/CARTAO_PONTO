@@ -15,6 +15,7 @@ import funcionarioImpressaoCalculo from "../routes/horarios/get-funcionario-impr
 import funcionarioImpressao from "../routes/horarios/get-funcionario-impressao-routes";
 import funcionario from "../routes/horarios/get-funcionario-routes";
 import lancarDia from "../routes/horarios/lancar-dia-routes";
+import lancarDiaNovo from "../routes/horarios/lancar-dia-novo-routes";
 import listarAcompanhante from "../routes/horarios/listar-acompanhante-routes";
 import listarAtestados60Dias from "../routes/horarios/listar-atestados-60-dias-routes";
 import listarAtestado from "../routes/horarios/listar-atestados-não-tratados";
@@ -59,6 +60,7 @@ export const setupRoutes = (app: Express): void => {
   funcionario(router);
   todosfuncionarios(router);
   lancarDia(router);
+  lancarDiaNovo(router);
   procurarLocalidade(router);
   deletecartao(router);
   ocorrencia(router);
@@ -103,5 +105,5 @@ export const setupRoutes = (app: Express): void => {
   recalcularTurnos(router);
   buscarAlteracaoTurno(router);
   buscarCid(router);
-  finalizarCartao(router)
+  finalizarCartao(router);
 };
