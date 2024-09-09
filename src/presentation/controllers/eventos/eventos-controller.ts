@@ -2,7 +2,7 @@ import { CriarEventosPostgresRepository } from "../../../infra/db/postgresdb/eve
 import { badRequest, ok, serverError } from "../../helpers/http-helpers";
 import { Controller, HttpRequest, HttpResponse } from "./eventos-protocols";
 
-export class CriarEventosControllerNovo implements Controller {
+export class CriarEventosController implements Controller {
   constructor(private readonly criarEventosPostgresRepository: CriarEventosPostgresRepository) {}
 
   async handle(req: HttpRequest): Promise<HttpResponse> {
