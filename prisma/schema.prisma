@@ -142,8 +142,8 @@ model cartao_horario_anterior {
   ext1      Int
   ext2      Int
   ext3      Int
-  periodo   cartao_horario_anterior_periodo @relation(fields: [periodoId], references: [id])
-  cartao    cartao                          @relation(fields: [cartaoId], references: [id])
+  periodo   cartao_horario_anterior_periodo @relation(fields: [periodoId], references: [id], onDelete: Cascade)
+  cartao    cartao                          @relation(fields: [cartaoId], references: [id], onDelete: Cascade)
 
   @@unique([cartaoId, periodoId])
 }
@@ -155,8 +155,8 @@ model cartao_horario_pago {
   ext1      Int
   ext2      Int
   ext3      Int
-  periodo   cartao_horario_anterior_periodo @relation(fields: [periodoId], references: [id])
-  cartao    cartao                          @relation(fields: [cartaoId], references: [id])
+  periodo   cartao_horario_anterior_periodo @relation(fields: [periodoId], references: [id], onDelete: Cascade)
+  cartao    cartao                          @relation(fields: [cartaoId], references: [id], onDelete: Cascade)
 
   @@unique([cartaoId, periodoId])
 }
@@ -168,8 +168,8 @@ model cartao_horario_compensado {
   ext1      Int
   ext2      Int
   ext3      Int
-  periodo   cartao_horario_anterior_periodo @relation(fields: [periodoId], references: [id])
-  cartao    cartao                          @relation(fields: [cartaoId], references: [id])
+  periodo   cartao_horario_anterior_periodo @relation(fields: [periodoId], references: [id], onDelete: Cascade)
+  cartao    cartao                          @relation(fields: [cartaoId], references: [id], onDelete: Cascade)
 
   @@unique([cartaoId, periodoId])
 }
@@ -210,7 +210,7 @@ model cartao_dia {
   cartao_dia_lancamentos      cartao_dia_lancamento[]
   eventos                     eventos[]
   atestado_abonos             atestado_abono[]
-  funcionario_alteracao_turno funcionario_alteracao_turno? @relation(fields: [funcionarioAlteracaoTurnoId], references: [id])
+  funcionario_alteracao_turno funcionario_alteracao_turno? @relation(fields: [funcionarioAlteracaoTurnoId], references: [id], onDelete: Cascade)
 
   @@unique([cartaoId, data])
 }
@@ -263,7 +263,7 @@ model funcionarios_afastados {
   userName      String?
   diaId         Int?
 
-  funcionario                   funcionario?                  @relation(fields: [funcionarioId], references: [id])
+  funcionario                   funcionario?                  @relation(fields: [funcionarioId], references: [id], onDelete: Cascade)
   funcionarios_afastados_status funcionarios_afastados_status @relation(fields: [statusId], references: [id], onDelete: Cascade)
 
   @@unique([inicio, funcionarioId, statusId])
@@ -306,17 +306,17 @@ model atestado_funcionario {
   createAt                  DateTime
   updateAt                  DateTime
 
-  tipos_documentos          tipos_documentos           @relation(fields: [tipoId], references: [id])
-  funcionario               funcionario                @relation(fields: [funcionarioId], references: [id])
-  tipo_acompanhante         tipo_acompanhante?         @relation(fields: [tipoAcompanhanteId], references: [id])
-  tipo_ocupacao             tipo_ocupacao?             @relation(fields: [ocupacaoId], references: [id])
-  tipo_status               tipo_status?               @relation(fields: [statusId], references: [id])
-  funcao                    funcao                     @relation(fields: [funcionarioFuncaoId], references: [id])
-  tipo_eventos              tipo_eventos?              @relation(fields: [acao], references: [id])
+  tipos_documentos          tipos_documentos           @relation(fields: [tipoId], references: [id], onDelete: Cascade)
+  funcionario               funcionario                @relation(fields: [funcionarioId], references: [id], onDelete: Cascade)
+  tipo_acompanhante         tipo_acompanhante?         @relation(fields: [tipoAcompanhanteId], references: [id], onDelete: Cascade)
+  tipo_ocupacao             tipo_ocupacao?             @relation(fields: [ocupacaoId], references: [id], onDelete: Cascade)
+  tipo_status               tipo_status?               @relation(fields: [statusId], references: [id], onDelete: Cascade)
+  funcao                    funcao                     @relation(fields: [funcionarioFuncaoId], references: [id], onDelete: Cascade)
+  tipo_eventos              tipo_eventos?              @relation(fields: [acao], references: [id], onDelete: Cascade)
   atestado_abonos           atestado_abono[]
   entradas_saidas_atestado  entradas_saidas_atestado[]
-  tipo_comprovante_ausencia tipo_comprovante_ausencia? @relation(fields: [tipo_comprovanteId], references: [id])
-  tipo_certidao_obito       tipo_certidao_obito?       @relation(fields: [tipoGrauParentescoId], references: [id])
+  tipo_comprovante_ausencia tipo_comprovante_ausencia? @relation(fields: [tipo_comprovanteId], references: [id], onDelete: Cascade)
+  tipo_certidao_obito       tipo_certidao_obito?       @relation(fields: [tipoGrauParentescoId], references: [id], onDelete: Cascade)
 }
 
 model atestado_abono {
@@ -325,8 +325,8 @@ model atestado_abono {
   cartaoDiaId          Int
   minutos              Int
   userName             String
-  atestado_funcionario atestado_funcionario @relation(fields: [atestadoId], references: [id])
-  cartao_dia           cartao_dia           @relation(fields: [cartaoDiaId], references: [id])
+  atestado_funcionario atestado_funcionario @relation(fields: [atestadoId], references: [id], onDelete: Cascade)
+  cartao_dia           cartao_dia           @relation(fields: [cartaoDiaId], references: [id], onDelete: Cascade)
 
   @@unique([cartaoDiaId, atestadoId])
 }
@@ -362,7 +362,7 @@ model turno_dia {
   periodoDescanso             Int    @default(0)
   cargaHorariaNoturna         Int    @default(0)
   cargaHorariaCompleta        String @default("")
-  turno                       turno  @relation(fields: [turnoId], references: [id])
+  turno                       turno  @relation(fields: [turnoId], references: [id], onDelete: Cascade)
 
   @@unique([turnoId, diaSemana])
 }
@@ -394,7 +394,7 @@ model entradas_saidas_atestado {
   entrada    String
   saida      String
 
-  atestado_funcionario atestado_funcionario @relation(fields: [atestadoId], references: [id])
+  atestado_funcionario atestado_funcionario @relation(fields: [atestadoId], references: [id], onDelete: Cascade)
 }
 
 model descricaco_cid {
@@ -414,7 +414,7 @@ model eventos {
   tratado       Boolean @default(false)
 
   tipo_eventos tipo_eventos? @relation(fields: [tipoId], references: [id], onDelete: Cascade)
-  funcionario  funcionario   @relation(fields: [funcionarioId], references: [id])
+  funcionario  funcionario   @relation(fields: [funcionarioId], references: [id], onDelete: Cascade)
   cartao_dia   cartao_dia?   @relation(fields: [cartaoDiaId], references: [id], onDelete: Cascade)
 }
 
@@ -473,8 +473,8 @@ model usuario {
   userName         String
   createAt         DateTime       @default(now())
   updateAt         DateTime       @updatedAt
-  localidade       localidade     @relation(fields: [localidadeCodigo], references: [codigo])
-  usuarioPerfil    usuario_perfil @relation(fields: [usuarioPerfilId], references: [id])
+  localidade       localidade     @relation(fields: [localidadeCodigo], references: [codigo], onDelete: Cascade)
+  usuarioPerfil    usuario_perfil @relation(fields: [usuarioPerfilId], references: [id], onDelete: Cascade)
 
   @@unique([localidadeCodigo, usuarioPerfilId])
 }
@@ -496,8 +496,8 @@ model funcionario_alteracao_turno {
   userName      String
 
   dias        cartao_dia[]
-  turno       turno        @relation(fields: [turnoId], references: [id])
-  funcionario funcionario  @relation(fields: [funcionarioId], references: [id])
+  turno       turno        @relation(fields: [turnoId], references: [id], onDelete: Cascade)
+  funcionario funcionario  @relation(fields: [funcionarioId], references: [id], onDelete: Cascade)
 }
 
 model cid {

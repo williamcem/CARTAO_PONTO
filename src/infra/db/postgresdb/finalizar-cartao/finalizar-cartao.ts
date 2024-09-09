@@ -9,10 +9,12 @@ export class FinalizarCartaoPostgresRepository {
     this.prisma = prisma;
   }
 
-  public async findFisrt(input: { id: number }) {
+  public async findFisrt(input: { id?: number; referencia?: Date; funcionarioId?: number }) {
     return await this.prisma.cartao.findFirst({
       where: {
         id: input.id,
+        referencia: input.referencia,
+        funcionarioId: input.funcionarioId,
       },
       include: {
         cartao_dia: {
@@ -33,85 +35,155 @@ export class FinalizarCartaoPostgresRepository {
     statusId: number;
     compensado: { diurno: { ext1: number; ext2: number; ext3: number }; noturno: { ext1: number; ext2: number; ext3: number } };
     pago: { diurno: { ext1: number; ext2: number; ext3: number }; noturno: { ext1: number; ext2: number; ext3: number } };
+    cartaoPosterior?: {
+      id: number;
+      anterior: {
+        diurno: {
+          ext1: number;
+          ext2: number;
+          ext3: number;
+        };
+        noturno: {
+          ext1: number;
+          ext2: number;
+          ext3: number;
+        };
+      };
+    };
   }) {
-    return await this.prisma.cartao.update({
-      where: {
-        id: input.id,
-      },
-      data: {
-        statusId: input.statusId,
-        userName: input.userName,
-        updateAt: input.updateAt,
-        cartao_horario_compensado: {
-          upsert: [
-            {
-              create: {
-                periodoId: 1,
-                ext1: input.compensado.diurno.ext1,
-                ext2: input.compensado.diurno.ext2,
-                ext3: input.compensado.diurno.ext3,
-              },
-              update: {
-                periodoId: 1,
-                ext1: input.compensado.diurno.ext1,
-                ext2: input.compensado.diurno.ext2,
-                ext3: input.compensado.diurno.ext3,
-              },
-              where: { cartaoId_periodoId: { cartaoId: input.id, periodoId: 1 } },
-            },
-            {
-              create: {
-                periodoId: 2,
-                ext1: input.compensado.noturno.ext1,
-                ext2: input.compensado.noturno.ext2,
-                ext3: input.compensado.noturno.ext3,
-              },
-              update: {
-                periodoId: 2,
-                ext1: input.compensado.noturno.ext1,
-                ext2: input.compensado.noturno.ext2,
-                ext3: input.compensado.noturno.ext3,
-              },
-              where: { cartaoId_periodoId: { cartaoId: input.id, periodoId: 2 } },
-            },
-          ],
+    const queries: prismaPromise[] = [];
+    queries.push(
+      this.prisma.cartao.update({
+        where: {
+          id: input.id,
         },
-        cartao_horario_pago: {
-          upsert: [
-            {
-              create: {
-                periodoId: 1,
-                ext1: input.pago.diurno.ext1,
-                ext2: input.pago.diurno.ext2,
-                ext3: input.pago.diurno.ext3,
+        data: {
+          statusId: input.statusId,
+          userName: input.userName,
+          updateAt: input.updateAt,
+          cartao_horario_compensado: {
+            upsert: [
+              {
+                create: {
+                  periodoId: 1,
+                  ext1: input.compensado.diurno.ext1,
+                  ext2: input.compensado.diurno.ext2,
+                  ext3: input.compensado.diurno.ext3,
+                },
+                update: {
+                  periodoId: 1,
+                  ext1: input.compensado.diurno.ext1,
+                  ext2: input.compensado.diurno.ext2,
+                  ext3: input.compensado.diurno.ext3,
+                },
+                where: { cartaoId_periodoId: { cartaoId: input.id, periodoId: 1 } },
               },
-              update: {
-                periodoId: 1,
-                ext1: input.pago.diurno.ext1,
-                ext2: input.pago.diurno.ext2,
-                ext3: input.pago.diurno.ext3,
+              {
+                create: {
+                  periodoId: 2,
+                  ext1: input.compensado.noturno.ext1,
+                  ext2: input.compensado.noturno.ext2,
+                  ext3: input.compensado.noturno.ext3,
+                },
+                update: {
+                  periodoId: 2,
+                  ext1: input.compensado.noturno.ext1,
+                  ext2: input.compensado.noturno.ext2,
+                  ext3: input.compensado.noturno.ext3,
+                },
+                where: { cartaoId_periodoId: { cartaoId: input.id, periodoId: 2 } },
               },
-              where: { cartaoId_periodoId: { cartaoId: input.id, periodoId: 1 } },
-            },
-            {
-              create: {
-                periodoId: 2,
-                ext1: input.pago.noturno.ext1,
-                ext2: input.pago.noturno.ext2,
-                ext3: input.pago.noturno.ext3,
+            ],
+          },
+          cartao_horario_pago: {
+            upsert: [
+              {
+                create: {
+                  periodoId: 1,
+                  ext1: input.pago.diurno.ext1,
+                  ext2: input.pago.diurno.ext2,
+                  ext3: input.pago.diurno.ext3,
+                },
+                update: {
+                  periodoId: 1,
+                  ext1: input.pago.diurno.ext1,
+                  ext2: input.pago.diurno.ext2,
+                  ext3: input.pago.diurno.ext3,
+                },
+                where: { cartaoId_periodoId: { cartaoId: input.id, periodoId: 1 } },
               },
-              update: {
-                periodoId: 2,
-                ext1: input.pago.noturno.ext1,
-                ext2: input.pago.noturno.ext2,
-                ext3: input.pago.noturno.ext3,
+              {
+                create: {
+                  periodoId: 2,
+                  ext1: input.pago.noturno.ext1,
+                  ext2: input.pago.noturno.ext2,
+                  ext3: input.pago.noturno.ext3,
+                },
+                update: {
+                  periodoId: 2,
+                  ext1: input.pago.noturno.ext1,
+                  ext2: input.pago.noturno.ext2,
+                  ext3: input.pago.noturno.ext3,
+                },
+                where: { cartaoId_periodoId: { cartaoId: input.id, periodoId: 2 } },
               },
-              where: { cartaoId_periodoId: { cartaoId: input.id, periodoId: 2 } },
-            },
-          ],
+            ],
+          },
         },
-      },
-    });
+      }),
+    );
+
+    if (input.cartaoPosterior) {
+      queries.push(
+        this.prisma.cartao_horario_anterior.upsert({
+          where: {
+            cartaoId_periodoId: {
+              cartaoId: input.cartaoPosterior.id,
+              periodoId: 1,
+            },
+          },
+          create: {
+            periodoId: 1,
+            cartaoId: input.cartaoPosterior.id,
+            ext1: input.cartaoPosterior.anterior.diurno.ext1,
+            ext2: input.cartaoPosterior.anterior.diurno.ext2,
+            ext3: input.cartaoPosterior.anterior.diurno.ext3,
+          },
+          update: {
+            periodoId: 1,
+            cartaoId: input.cartaoPosterior.id,
+            ext1: input.cartaoPosterior.anterior.diurno.ext1,
+            ext2: input.cartaoPosterior.anterior.diurno.ext2,
+            ext3: input.cartaoPosterior.anterior.diurno.ext3,
+          },
+        }),
+      );
+      queries.push(
+        this.prisma.cartao_horario_anterior.upsert({
+          where: {
+            cartaoId_periodoId: {
+              cartaoId: input.cartaoPosterior.id,
+              periodoId: 2,
+            },
+          },
+          create: {
+            periodoId: 2,
+            cartaoId: input.cartaoPosterior.id,
+            ext1: input.cartaoPosterior.anterior.noturno.ext1,
+            ext2: input.cartaoPosterior.anterior.noturno.ext2,
+            ext3: input.cartaoPosterior.anterior.noturno.ext3,
+          },
+          update: {
+            periodoId: 2,
+            cartaoId: input.cartaoPosterior.id,
+            ext1: input.cartaoPosterior.anterior.noturno.ext1,
+            ext2: input.cartaoPosterior.anterior.noturno.ext2,
+            ext3: input.cartaoPosterior.anterior.noturno.ext3,
+          },
+        }),
+      );
+    }
+    return Boolean((await this.prisma.$transaction(queries)).length);
   }
 
   public async findManyAtestado(input: { funcionarioId: number; statusId: number }) {

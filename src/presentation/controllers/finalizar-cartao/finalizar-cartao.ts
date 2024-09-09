@@ -209,6 +209,38 @@ export class FinalizarCartaoController implements Controller {
 
       if (sendError) return badRequestNovo({ message: errors });
 
+      const referenciaPosterior = new Date(cartao.referencia);
+      referenciaPosterior.setMonth(referenciaPosterior.getMonth() + 1);
+
+      const existeCartaoPosterior = await this.finalizarCartaoPostgresRepository.findFisrt({
+        funcionarioId: cartao.funcionarioId,
+        referencia: referenciaPosterior,
+      });
+
+      let cartaoPosterior:
+        | {
+            id: number;
+            anterior: {
+              diurno: {
+                ext1: number;
+                ext2: number;
+                ext3: number;
+              };
+              noturno: {
+                ext1: number;
+                ext2: number;
+                ext3: number;
+              };
+            };
+          }
+        | undefined = undefined;
+
+      if (existeCartaoPosterior)
+        cartaoPosterior = {
+          id: existeCartaoPosterior.id,
+          anterior: compensado,
+        };
+
       const saved = await this.finalizarCartaoPostgresRepository.update({
         id: cartao.id,
         statusId: 2, //finalizado
@@ -216,6 +248,7 @@ export class FinalizarCartaoController implements Controller {
         userName,
         compensado,
         pago,
+        cartaoPosterior,
       });
 
       if (!saved) serverError();

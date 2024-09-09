@@ -21,6 +21,18 @@ export interface AddCartaoUpsertModel {
     };
   }[];
   userName: string;
+  anterior?: {
+    diurno: {
+      ext1: number;
+      ext2: number;
+      ext3: number;
+    };
+    noturno: {
+      ext1: number;
+      ext2: number;
+      ext3: number;
+    };
+  };
 }
 
 export interface AddCartoes {

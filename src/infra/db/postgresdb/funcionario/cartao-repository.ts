@@ -46,6 +46,47 @@ export class CartaoPostgresRepository implements AddCartoes {
       where: { funcionarioId_referencia: { referencia: input.referencia, funcionarioId: input.funcionarioId } },
     });
 
+    if (input.anterior) {
+      await this.prisma.cartao_horario_anterior.upsert({
+        create: {
+          ext1: input.anterior.diurno.ext1,
+          ext2: input.anterior.diurno.ext2,
+          ext3: input.anterior.diurno.ext3,
+          cartaoId: saved.id,
+          periodoId: 1,
+        },
+        update: {
+          ext1: input.anterior.diurno.ext1,
+          ext2: input.anterior.diurno.ext2,
+          ext3: input.anterior.diurno.ext3,
+          cartaoId: saved.id,
+          periodoId: 1,
+        },
+        where: {
+          cartaoId_periodoId: { cartaoId: saved.id, periodoId: 1 },
+        },
+      });
+      await this.prisma.cartao_horario_anterior.upsert({
+        create: {
+          ext1: input.anterior.noturno.ext1,
+          ext2: input.anterior.noturno.ext2,
+          ext3: input.anterior.noturno.ext3,
+          cartaoId: saved.id,
+          periodoId: 2,
+        },
+        update: {
+          ext1: input.anterior.noturno.ext1,
+          ext2: input.anterior.noturno.ext2,
+          ext3: input.anterior.noturno.ext3,
+          cartaoId: saved.id,
+          periodoId: 2,
+        },
+        where: {
+          cartaoId_periodoId: { cartaoId: saved.id, periodoId: 2 },
+        },
+      });
+    }
+
     const output:
       | {
           id: number;
@@ -116,5 +157,15 @@ export class CartaoPostgresRepository implements AddCartoes {
     if (!saved) return undefined;
 
     return output;
+  }
+
+  public async findFisrt(input: { referencia: Date; funcionarioId: number }) {
+    return await this.prisma.cartao.findFirst({
+      select: {
+        id: true,
+        cartao_horario_compensado: true,
+      },
+      where: { referencia: input.referencia, funcionarioId: input.funcionarioId },
+    });
   }
 }

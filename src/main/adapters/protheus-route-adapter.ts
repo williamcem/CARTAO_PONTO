@@ -230,6 +230,10 @@ export async function importarArquivoCartao(
         };
       }[];
       userName: string;
+      anterior?: {
+        diurno: { ext1: number; ext2: number; ext3: number };
+        noturno: { ext1: number; ext2: number; ext3: number };
+      };
     } = {
       identificacao: "",
       funcionarioId: 0,
@@ -264,7 +268,38 @@ export async function importarArquivoCartao(
       const descanso = descansoSemFormato.replace("\r", "");
 
       if (identificacao !== cartao.identificacao) {
-        if (cartao.identificacao !== "") await salvarCartao({ cartao });
+        if (cartao.identificacao !== "") {
+          const referenciaAnterior = new Date(cartao.referencia);
+          referenciaAnterior.setMonth(referenciaAnterior.getMonth() - 1);
+
+          const cartaoAnterior = await cartaoPostgresRepository.findFisrt({
+            funcionarioId: cartao.funcionarioId,
+            referencia: referenciaAnterior,
+          });
+
+          let anterior = {
+            diurno: {
+              ext1: 0,
+              ext2: 0,
+              ext3: 0,
+            },
+            noturno: {
+              ext1: 0,
+              ext2: 0,
+              ext3: 0,
+            },
+          };
+          if (cartaoAnterior) {
+            cartaoAnterior.cartao_horario_compensado.map((compensado) => {
+              if (compensado.periodoId === 1)
+                anterior.diurno = { ext1: compensado.ext1, ext2: compensado.ext2, ext3: compensado.ext3 };
+
+              if (compensado.periodoId === 2)
+                anterior.noturno = { ext1: compensado.ext1, ext2: compensado.ext2, ext3: compensado.ext3 };
+            });
+          }
+          await salvarCartao({ cartao: { ...cartao, ...{ anterior } } });
+        }
 
         cartao.identificacao = identificacao;
         cartao.saldoAnterior100 = 0;
@@ -475,6 +510,18 @@ const salvarCartao = async (input: {
       };
     }[];
     userName: string;
+    anterior?: {
+      diurno: {
+        ext1: number;
+        ext2: number;
+        ext3: number;
+      };
+      noturno: {
+        ext1: number;
+        ext2: number;
+        ext3: number;
+      };
+    };
   };
 }) => {
   const cartaoPostgresRepository = new CartaoPostgresRepository();
