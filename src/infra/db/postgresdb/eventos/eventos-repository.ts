@@ -4,9 +4,9 @@ import moment from "moment";
 import { prisma } from "@infra/database/Prisma";
 
 import { AdicionarEventos } from "../../../../data/usecase/add-eventos/add-eventos";
-import { criarEventoIntervaloEntrePeriodos } from "./intervaloEntrePeriodos";
 import { RecalcularTurnoController } from "../../../../presentation/controllers/recalcular-turno/recalcular-turno";
 import { CompensacaoEventoRepository } from "../compensacao-eventos-automaticos-repository/compensacao-eventos-automaticos-repository";
+import { criarEventoIntervaloEntrePeriodos } from "./intervaloEntrePeriodos";
 export class CriarEventosPostgresRepository implements AdicionarEventos {
   private prisma: PrismaClient;
 
@@ -19,6 +19,14 @@ export class CriarEventosPostgresRepository implements AdicionarEventos {
   public porcentagemAdicionalNoturno = 0.14;
 
   public async add(input: { identificacao?: string }): Promise<boolean> {
+    // Verifique se o valor de identificação é um número
+    const cartaoDiaId = Number(input?.identificacao);
+    if (isNaN(cartaoDiaId)) {
+      console.error("Identificação inválida, não é um número:", input?.identificacao);
+      return false;
+    }
+
+    // Busque os lançamentos pelo ID do cartão
     const lancamentos = await this.prisma.cartao_dia_lancamento.findMany({
       include: {
         cartao_dia: {
@@ -32,10 +40,19 @@ export class CriarEventosPostgresRepository implements AdicionarEventos {
         },
       },
       where: {
-        cartao_dia: { cartao: { funcionario: { identificacao: input?.identificacao }, statusId: 1 } },
+        cartao_dia: {
+          id: cartaoDiaId,
+        },
       },
       orderBy: [{ cartao_dia: { cartao: { funcionarioId: "asc" } } }, { cartao_dia_id: "asc" }, { periodoId: "asc" }],
     });
+
+    console.log("Lançamentos encontrados no método de geração de eventos:", lancamentos);
+
+    if (lancamentos.length === 0) {
+      console.log("Nenhum lançamento encontrado para o cartão/dia.");
+      return false;
+    }
 
     const eventosData = await this.gerarEventos({ lancamentos });
 
@@ -67,6 +84,11 @@ export class CriarEventosPostgresRepository implements AdicionarEventos {
     for (let index = 0; index < validEventosData.length; index++) {
       const evento = validEventosData[index];
 
+      // Converta as datas para strings no formato ISO
+      const inicioDoDia = new Date(evento.entrada).setHours(0, 0, 0, 0);
+      const fimDoDia = new Date(evento.saida).setHours(23, 59, 59, 999);
+
+      // Filtrar por eventos no mesmo dia (início e fim do dia)
       const exist = await this.prisma.eventos.findFirst({
         where: {
           cartaoDiaId: evento.cartaoDiaId,
@@ -124,18 +146,24 @@ export class CriarEventosPostgresRepository implements AdicionarEventos {
       };
     }[];
   }) {
+    console.log("Iniciando geração de eventos para os lançamentos:", input.lancamentos);
+
     let eventos: any[] = [];
     let eventosExcendentes: any[] = [];
 
     // VERIFICAR SE EXISTE EXCEDENTE EM ALGUM PERIODO
     let excedeu = false;
     input.lancamentos.forEach((lancamento, index, lancamentosArray) => {
+      console.log(`Processando lançamento: ${lancamento.periodoId}`);
       if (index === 0 || input.lancamentos[index - 1].cartao_dia.id !== lancamento.cartao_dia.id) {
         excedeu = false;
         eventosExcendentes = [];
       }
 
-      if (!lancamento.entrada || !lancamento.saida) return;
+      if (!lancamento.entrada || !lancamento.saida) {
+        console.log("Lançamento sem entrada ou saída:", lancamento);
+        return;
+      }
 
       const entrada = this.pegarLancamento({ data: lancamento.entrada });
       const saida = this.pegarLancamento({ data: lancamento.saida });
@@ -209,10 +237,7 @@ export class CriarEventosPostgresRepository implements AdicionarEventos {
         });
 
         novoEventos.push(value);
-
         eventos = novoEventos;
-
-        //eventos.push(value);
       });
 
       eventosExcendentes = [];
@@ -236,6 +261,7 @@ export class CriarEventosPostgresRepository implements AdicionarEventos {
       eventos = await this.aplicarTolerancia10Minutos({ eventos });
     }
 
+    console.log("Eventos gerados:", eventos);
     return eventos;
   }
 
