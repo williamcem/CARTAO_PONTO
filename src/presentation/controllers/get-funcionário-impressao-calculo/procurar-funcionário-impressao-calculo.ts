@@ -101,7 +101,7 @@ export class GetFuncionarioImpressaoCalculoController implements Controller {
               ext3: minutosNoturnosPagos?.ext3 || 0,
             },
           },
-          compesado: {
+          compensado: {
             diurno: {
               ext1: minutosDiurnosCompesados?.ext1 || 0,
               ext2: minutosDiurnosCompesados?.ext2 || 0,
