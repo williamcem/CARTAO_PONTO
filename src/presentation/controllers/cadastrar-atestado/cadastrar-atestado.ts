@@ -47,11 +47,12 @@ export class AtestadoController implements Controller {
       if (!acao) return badRequest(new FuncionarioParamError("Falta escolher a ação caso seja recusado!"));
       if (!data) return badRequest(new FuncionarioParamError("Falta a data do atestado!"));
 
-      if (tipoId === 1 && !sintomas && !grupo_cid) {
+      if (tipoId === 1 && !tipoAcompanhanteId && (!sintomas || !grupo_cid)) {
         return badRequest(new FuncionarioParamError("Faltam os sintomas ou o grupo CID"));
       }
 
-      if (tipoId === 1 && !crm) return badRequest(new FuncionarioParamError("Falta crm!"));
+      //Não é obrigatório
+      /* if (tipoId === 1 && !crm) return badRequest(new FuncionarioParamError("Falta crm!")); */
 
       if (tipo_comprovanteId === 1 && !tipoGrauParentescoId) {
         return badRequest(new FuncionarioParamError("Colocar grau de parentesco"));
@@ -99,7 +100,7 @@ export class AtestadoController implements Controller {
         nome_acompanhante: nome_acompanhante ? nome_acompanhante.toUpperCase() : undefined,
         exame: exame ? exame.toUpperCase() : undefined,
         tipoGrauParentescoId,
-        crm
+        crm,
       });
 
       if (!atestadoSalvo) throw new Error("Erro ao salvar atestado!");
