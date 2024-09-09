@@ -77,8 +77,8 @@ export class GetFuncionarioImpressaoCalculoController implements Controller {
         const minutosDiurnosPagos = cartao.cartao_horario_pago.find((pago) => pago.periodoId === 1);
         const minutosNoturnosPagos = cartao.cartao_horario_pago.find((pago) => pago.periodoId === 2);
 
-        const minutosDiurnosCompesados = cartao.cartao_horario_pago.find((pago) => pago.periodoId === 1);
-        const minutosNoturnosCompesados = cartao.cartao_horario_pago.find((pago) => pago.periodoId === 2);
+        const minutosDiurnosCompesados = cartao.cartao_horario_compensado.find((pago) => pago.periodoId === 1);
+        const minutosNoturnosCompesados = cartao.cartao_horario_compensado.find((pago) => pago.periodoId === 2);
 
         const resumoCartao = {
           atual: {
