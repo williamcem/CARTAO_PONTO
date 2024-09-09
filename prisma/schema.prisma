@@ -115,22 +115,22 @@ model email {
 }
 
 model cartao {
-  id                     Int       @id @default(autoincrement())
-  funcionarioId          Int
-  referencia             DateTime
-  saldoAnterior60        Int
-  saldoAnterior100       Int
-  statusId               Int
-  cartaoHorarioAnterioId Int?
-  createAt               DateTime? @default(now())
-  updateAt               DateTime? @updatedAt
-  userName               String?
+  id               Int       @id @default(autoincrement())
+  funcionarioId    Int
+  referencia       DateTime
+  saldoAnterior60  Int
+  saldoAnterior100 Int
+  statusId         Int
+  createAt         DateTime? @default(now())
+  updateAt         DateTime? @updatedAt
+  userName         String?
 
-  funcionario             funcionario               @relation(fields: [funcionarioId], references: [id], onDelete: Cascade)
-  cartao_dia              cartao_dia[]
-  cartao_status           cartao_status?            @relation(fields: [statusId], references: [id], onDelete: Cascade)
-  cartao_horario_anterior cartao_horario_anterior[]
-  cartao_horario_pago     cartao_horario_pago[]
+  funcionario               funcionario                 @relation(fields: [funcionarioId], references: [id], onDelete: Cascade)
+  cartao_dia                cartao_dia[]
+  cartao_status             cartao_status?              @relation(fields: [statusId], references: [id], onDelete: Cascade)
+  cartao_horario_anterior   cartao_horario_anterior[]
+  cartao_horario_pago       cartao_horario_pago[]
+  cartao_horario_compensado cartao_horario_compensado[]
 
   @@unique([funcionarioId, referencia])
 }
@@ -161,11 +161,25 @@ model cartao_horario_pago {
   @@unique([cartaoId, periodoId])
 }
 
+model cartao_horario_compensado {
+  id        Int                             @id @default(autoincrement())
+  cartaoId  Int
+  periodoId Int
+  ext1      Int
+  ext2      Int
+  ext3      Int
+  periodo   cartao_horario_anterior_periodo @relation(fields: [periodoId], references: [id])
+  cartao    cartao                          @relation(fields: [cartaoId], references: [id])
+
+  @@unique([cartaoId, periodoId])
+}
+
 model cartao_horario_anterior_periodo {
-  id                      Int                       @id @default(autoincrement())
-  nome                    String                    @unique()
-  cartao_horario_anterior cartao_horario_anterior[]
-  cartao_horario_pago     cartao_horario_pago[]
+  id                        Int                         @id @default(autoincrement())
+  nome                      String                      @unique()
+  cartao_horario_anterior   cartao_horario_anterior[]
+  cartao_horario_pago       cartao_horario_pago[]
+  cartao_horario_compensado cartao_horario_compensado[]
 }
 
 model cartao_status {

@@ -42,7 +42,7 @@ export class FinalizarCartaoPostgresRepository {
         statusId: input.statusId,
         userName: input.userName,
         updateAt: input.updateAt,
-        cartao_horario_anterior: {
+        cartao_horario_compensado: {
           upsert: [
             {
               create: {
