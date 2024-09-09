@@ -74,6 +74,12 @@ export class GetFuncionarioImpressaoCalculoController implements Controller {
         const minutosDiurnos = cartao.cartao_horario_anterior.find((anterior) => anterior.periodoId === 1);
         const minutosNoturnos = cartao.cartao_horario_anterior.find((anterior) => anterior.periodoId === 2);
 
+        const minutosDiurnosPagos = cartao.cartao_horario_pago.find((pago) => pago.periodoId === 1);
+        const minutosNoturnosPagos = cartao.cartao_horario_pago.find((pago) => pago.periodoId === 2);
+
+        const minutosDiurnosCompesados = cartao.cartao_horario_pago.find((pago) => pago.periodoId === 1);
+        const minutosNoturnosCompesados = cartao.cartao_horario_pago.find((pago) => pago.periodoId === 2);
+
         const resumoCartao = {
           atual: {
             diurno: { ext1: minutosDiurnos?.ext1 || 0, ext2: minutosDiurnos?.ext2 || 0, ext3: minutosDiurnos?.ext3 || 0 },
@@ -82,6 +88,30 @@ export class GetFuncionarioImpressaoCalculoController implements Controller {
           anterior: {
             diurno: { ext1: minutosDiurnos?.ext1 || 0, ext2: minutosDiurnos?.ext2 || 0, ext3: minutosDiurnos?.ext3 || 0 },
             noturno: { ext1: minutosNoturnos?.ext1 || 0, ext2: minutosNoturnos?.ext2 || 0, ext3: minutosNoturnos?.ext3 || 0 },
+          },
+          pago: {
+            diurno: {
+              ext1: minutosDiurnosPagos?.ext1 || 0,
+              ext2: minutosDiurnosPagos?.ext2 || 0,
+              ext3: minutosDiurnosPagos?.ext3 || 0,
+            },
+            noturno: {
+              ext1: minutosNoturnosPagos?.ext1 || 0,
+              ext2: minutosNoturnosPagos?.ext2 || 0,
+              ext3: minutosNoturnosPagos?.ext3 || 0,
+            },
+          },
+          compesado: {
+            diurno: {
+              ext1: minutosDiurnosCompesados?.ext1 || 0,
+              ext2: minutosDiurnosCompesados?.ext2 || 0,
+              ext3: minutosDiurnosCompesados?.ext3 || 0,
+            },
+            noturno: {
+              ext1: minutosNoturnosCompesados?.ext1 || 0,
+              ext2: minutosNoturnosCompesados?.ext2 || 0,
+              ext3: minutosNoturnosCompesados?.ext3 || 0,
+            },
           },
         };
 

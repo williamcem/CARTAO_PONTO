@@ -38,6 +38,8 @@ export class FuncionarioImpressaoCalculoPostgresRepository {
           },
         },
         cartao_horario_anterior: { orderBy: { periodoId: "asc" } },
+        cartao_horario_pago: { orderBy: { periodoId: "asc" } },
+        cartao_horario_compensado: { orderBy: { periodoId: "asc" } },
       },
       orderBy: { id: "asc" },
     });
