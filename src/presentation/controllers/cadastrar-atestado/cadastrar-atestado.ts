@@ -47,7 +47,7 @@ export class AtestadoController implements Controller {
       if (!acao) return badRequest(new FuncionarioParamError("Falta escolher a ação caso seja recusado!"));
       if (!data) return badRequest(new FuncionarioParamError("Falta a data do atestado!"));
 
-      if (tipoId === 1 && !tipoAcompanhanteId && (!sintomas || !grupo_cid)) {
+      if (tipoId === 1 && !tipoAcompanhanteId && (!sintomas && !grupo_cid)) {
         return badRequest(new FuncionarioParamError("Faltam os sintomas ou o grupo CID"));
       }
 
