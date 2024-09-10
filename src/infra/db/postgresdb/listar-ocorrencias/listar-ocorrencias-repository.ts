@@ -69,7 +69,15 @@ export class OcorrenciaPostgresRepository {
         identificacao: identificacao,
         localidadeId: localidade,
         cartao: {
-          some: { cartao_dia: { some: { cartao_dia_lancamentos: { some: { validadoPeloOperador: true } } } } },
+          some: {
+            cartao_dia: {
+              some: {
+                eventos: {
+                  some: { tratado: false, cartao_dia: { cartao_dia_lancamentos: { some: { validadoPeloOperador: true } } } },
+                },
+              },
+            },
+          },
         },
       },
       include: {
@@ -78,9 +86,7 @@ export class OcorrenciaPostgresRepository {
             referencia: true,
             cartao_dia: {
               include: {
-                eventos: {
-                  where: { cartao_dia: { cartao_dia_lancamentos: { some: { validadoPeloOperador: true } } } },
-                }, // Aqui incluímos todos os eventos
+                eventos: true, // Aqui incluímos todos os eventos
                 cartao_dia_lancamentos: {
                   select: {
                     periodoId: true,
