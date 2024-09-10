@@ -36,6 +36,11 @@ export const serverErrorNovo = (error: any): HttpResponse => ({
   body: error,
 });
 
+export const notFoundNovo = (error: any): HttpResponse => ({
+  statusCode: 404,
+  body: error,
+});
+
 /* const sendError = (message: string, error: "Bad Request" | "Not Found" | "Server Error"): HttpResponse => {
   const output: HttpResponse;
 };
