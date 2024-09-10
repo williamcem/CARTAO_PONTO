@@ -5,9 +5,9 @@ import { ConsultarAgrupamentoLocalidadePostgresRepository } from "@infra/db/post
 
 export const makeConsultarAgrupamentoLocalidadeController = (): Controller => {
   const consultarAgrupamentoLocalidadePostgresRepository = new ConsultarAgrupamentoLocalidadePostgresRepository();
-  const excluirAgrupamentoLocalidadeController = new ConsultarAgrupamentoLocalidadeController(
+  const consultarAgrupamentoLocalidadeController = new ConsultarAgrupamentoLocalidadeController(
     consultarAgrupamentoLocalidadePostgresRepository,
   );
 
-  return new LogControllerDecorator(excluirAgrupamentoLocalidadeController);
+  return new LogControllerDecorator(consultarAgrupamentoLocalidadeController);
 };
