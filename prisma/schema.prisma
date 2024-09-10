@@ -63,7 +63,7 @@ model localidade {
 
   funcionarios    funcionario[]
   usuarios        usuario[]
-  grupoLocalidade grupo_localidade? @relation(fields: [grupoLocalidadeId], references: [id], onDelete: Cascade)
+  grupoLocalidade grupo_localidade? @relation(fields: [grupoLocalidadeId], references: [id])
 }
 
 model turno {
