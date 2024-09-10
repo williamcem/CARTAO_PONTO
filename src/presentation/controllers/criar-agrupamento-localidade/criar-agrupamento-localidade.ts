@@ -10,9 +10,13 @@ export class CriarAgrupamentoLocalidadeController implements Controller {
     try {
       const {
         localidades,
+        nome,
       }: {
         localidades: { codigo: string }[];
+        nome: string;
       } = httpRequest.body;
+
+      if (!nome) return badRequestNovo({ message: "Falta nome!" });
 
       if (!localidades) return badRequestNovo({ message: "Falta localidades!" });
 
@@ -28,8 +32,13 @@ export class CriarAgrupamentoLocalidadeController implements Controller {
         if (!existLocalidade) return notFoundRequest(new FuncionarioParamError(`Código de localidade ${localidade} não existe!`));
       }
 
+      const existeAgrupamento = await this.criarAgrupamentoLocalidadePostgresRepository.findFisrtAgrupamento({ nome });
+
+      if (existeAgrupamento) return badRequestNovo({ message: `Já existe um agrupamento com o nome ${nome}!` });
+
       const result = await this.criarAgrupamentoLocalidadePostgresRepository.createAgrupamentoLocalidade({
         codigos: localidades.map((localidade) => localidade.codigo),
+        nome,
       });
 
       if (!result) return serverError();

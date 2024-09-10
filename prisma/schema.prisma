@@ -511,5 +511,6 @@ model cid {
 
 model grupo_localidade {
   id          Int          @id @default(autoincrement())
+  nome        String       @unique
   localidades localidade[]
 }
