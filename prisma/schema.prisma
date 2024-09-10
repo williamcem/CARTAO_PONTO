@@ -57,10 +57,13 @@ model funcionario_historico {
 }
 
 model localidade {
-  codigo       String        @id @unique
-  nome         String
-  funcionarios funcionario[]
-  usuarios     usuario[]
+  codigo            String @id @unique
+  nome              String
+  grupoLocalidadeId Int?
+
+  funcionarios    funcionario[]
+  usuarios        usuario[]
+  grupoLocalidade grupo_localidade? @relation(fields: [grupoLocalidadeId], references: [id], onDelete: Cascade)
 }
 
 model turno {
@@ -504,4 +507,9 @@ model cid {
   id        Int    @id @default(autoincrement())
   codigo    String @unique
   descricao String
+}
+
+model grupo_localidade {
+  id          Int          @id @default(autoincrement())
+  localidades localidade[]
 }
