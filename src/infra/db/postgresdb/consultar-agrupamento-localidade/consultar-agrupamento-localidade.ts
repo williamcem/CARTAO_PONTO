@@ -10,7 +10,7 @@ export class ConsultarAgrupamentoLocalidadePostgresRepository {
   }
 
   public async findMany() {
-    return await this.prisma.grupo_localidade.findFirst({
+    return await this.prisma.grupo_localidade.findMany({
       include: {
         localidades: true,
       },
