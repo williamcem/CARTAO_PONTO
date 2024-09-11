@@ -26,7 +26,7 @@ export class ProcurarLocalidadeController implements Controller {
         grupoId = (await this.localidadePostgresRepository.findFisrt({ codigo: codigoLocalidade }))?.grupoLocalidadeId;
 
       const output = localidades.filter((localidade) => {
-        if (!notGroupId && !grupoId) return localidade;
+        if (!notGroupId && !codigoLocalidade) return localidade;
         else if (grupoId && grupoId === localidade.grupoLocalidadeId) return localidade;
         else if (notGroupId && localidade.grupoLocalidadeId !== Number(notGroupId)) return localidade;
       });
