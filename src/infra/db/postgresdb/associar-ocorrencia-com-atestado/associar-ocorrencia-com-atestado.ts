@@ -26,10 +26,18 @@ export class AssociarOcorrenciaComAtestadoPostgresRepository {
     });
   }
 
-  public async updateOcorrencia(input: { id: number; atestadoId: number }) {
-    return await this.prisma.eventos.update({
-      where: { id: input.id },
-      data: { atestadoFuncionarioId: input.atestadoId },
+  public async updateManyOcorrencia(input: { ids: number[]; atestadoId: number }) {
+    const queries: prismaPromise[] = [];
+
+    input.ids.map((id) => {
+      queries.push(
+        this.prisma.eventos.update({
+          where: { id },
+          data: { atestadoFuncionarioId: input.atestadoId },
+        }),
+      );
     });
+
+    return Boolean((await this.prisma.$transaction(queries)).length);
   }
 }

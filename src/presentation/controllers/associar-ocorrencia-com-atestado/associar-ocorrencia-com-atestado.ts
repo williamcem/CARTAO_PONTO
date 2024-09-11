@@ -9,28 +9,40 @@ export class AssociarOcorrenciaComAtestadoController implements Controller {
 
   async handle(httpRequest: HttpRequest): Promise<HttpResponse> {
     try {
-      const { ocorrenciaId, atestadoId }: { ocorrenciaId: number; atestadoId: number } = httpRequest.body;
+      const { ocorrencias, atestadoId }: { ocorrencias: { id: number }[]; atestadoId: number } = httpRequest.body;
 
-      if (!ocorrenciaId) return badRequestNovo({ message: "Falta sequência da ocorrência!" });
+      if (!ocorrencias) return badRequestNovo({ message: "Falta ocorrência!" });
+
+      if (!ocorrencias?.length) return badRequestNovo({ message: "Ocorrências é um array!" });
+
+      for (const ocorrencia of ocorrencias) if (!ocorrencia?.id) return badRequestNovo({ message: "Falta id da ocorrência!" });
+
       if (!atestadoId) return badRequestNovo({ message: "Falta sequência da atestado!" });
 
       const atestado = await this.associarOcorrenciaComAtestadoPostgresRepository.findFisrtAtestado({ id: Number(atestadoId) });
 
       if (!atestado) return notFoundNovo({ message: "Atestado não existe!" });
 
-      const ocorrencia = await this.associarOcorrenciaComAtestadoPostgresRepository.findFisrtOcorrencia({
-        id: Number(ocorrenciaId),
-      });
+      let ocorrenciasLocal: { id: number; funcionarioId: number }[] = [];
 
-      if (!ocorrencia) return notFoundNovo({ message: "Ocorrência não existe!" });
+      for (const ocorrencia of ocorrencias) {
+        const ocorrenciaLocal = await this.associarOcorrenciaComAtestadoPostgresRepository.findFisrtOcorrencia({
+          id: Number(ocorrencia.id),
+        });
 
-      if (atestado.funcionarioId !== ocorrencia.funcionarioId)
-        return badRequestNovo({ message: "O atestado não pertence a mesma pessoa da ocorrência!" });
+        if (!ocorrenciaLocal) return notFoundNovo({ message: "Ocorrência não existe!" });
 
-      const salvo = await this.associarOcorrenciaComAtestadoPostgresRepository.updateOcorrencia({
+        if (atestado.funcionarioId !== ocorrenciaLocal.funcionarioId)
+          return badRequestNovo({ message: "O atestado não pertence a mesma pessoa da ocorrência!" });
+
+        ocorrenciasLocal.push(ocorrenciaLocal);
+      }
+
+      const salvo = await this.associarOcorrenciaComAtestadoPostgresRepository.updateManyOcorrencia({
         atestadoId: atestado.id,
-        id: ocorrencia.id,
+        ids: ocorrencias.map((ocorrencia) => ocorrencia.id),
       });
+
       if (!salvo) return serverError();
 
       return ok({ message: salvo });
