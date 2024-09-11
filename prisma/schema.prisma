@@ -33,9 +33,10 @@ model funcionario {
   afastamento  funcionarios_afastados[]
   eventos      eventos[]
 
-  localidade           localidade                    @relation(fields: [localidadeId], references: [codigo], onDelete: Cascade)
-  atestado_funcionario atestado_funcionario[]
-  alteracoesTurno      funcionario_alteracao_turno[]
+  localidade            localidade                    @relation(fields: [localidadeId], references: [codigo], onDelete: Cascade)
+  atestado_funcionario  atestado_funcionario[]
+  alteracoesTurno       funcionario_alteracao_turno[]
+  funcionario_desligado funcionario_desligado?
 }
 
 model funcionario_historico {
@@ -516,4 +517,11 @@ model grupo_localidade {
   id          Int          @id @default(autoincrement())
   nome        String       @unique
   localidades localidade[]
+}
+
+model funcionario_desligado {
+  id            Int         @id @default(autoincrement())
+  data          DateTime
+  funcionarioId Int         @unique
+  funcionario   funcionario @relation(fields: [funcionarioId], references: [id])
 }
