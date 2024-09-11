@@ -254,9 +254,21 @@ export class GetFuncionarioImpressaoCalculoController implements Controller {
               },
             };
 
-          const eventosJustificativa = dia.eventos.filter(
-            (evento) => evento.tipoId === 2 || evento.tipoId === 5 || evento.tipoId === 6 || evento.tipoId === 12,
-          );
+          const eventosJustificativa: {
+            id: number;
+            tipoId: number;
+          }[] = [];
+
+          const atestados: { id: number; statusId: number }[] = [];
+          dia.eventos.map((evento) => {
+            if (evento.tipoId === 2 || evento.tipoId === 5 || evento.tipoId === 6 || evento.tipoId === 12) {
+              eventosJustificativa.push({ id: evento.id, tipoId: evento.tipoId });
+              if (evento.atestado_funcionario) {
+                const exist = atestados.some((atestado) => evento.atestado_funcionario?.id === atestado.id);
+                if (!exist) atestados.push(evento.atestado_funcionario);
+              }
+            }
+          });
 
           return {
             data: dia.data,
@@ -267,7 +279,7 @@ export class GetFuncionarioImpressaoCalculoController implements Controller {
             status: dia.cartao_dia_status,
             id: dia.id,
             saldoAtual,
-            abonosAtestado: dia.atestado_abonos,
+            atestados,
             eventos: eventosJustificativa,
           };
         });
