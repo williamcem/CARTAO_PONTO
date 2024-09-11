@@ -27,7 +27,7 @@ export class AssociarOcorrenciaComAtestadoController implements Controller {
       if (atestado.funcionarioId !== ocorrencia.funcionarioId)
         return badRequestNovo({ message: "O atestado não pertence a mesma pessoa da ocorrência!" });
 
-      const salvo = this.associarOcorrenciaComAtestadoPostgresRepository.updateOcorrencia({
+      const salvo = await this.associarOcorrenciaComAtestadoPostgresRepository.updateOcorrencia({
         atestadoId: atestado.id,
         id: ocorrencia.id,
       });
