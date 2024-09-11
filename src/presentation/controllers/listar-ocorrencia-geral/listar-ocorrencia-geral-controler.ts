@@ -14,7 +14,7 @@ export class OcorrenciaGeralController implements Controller {
 
       if (!referencia) return badRequest(new Error("Referência não informada"));
 
-      const data = await this.ocorrenciaGeralPostgresRepository.findOcorrencia(localidade,referencia);
+      const data = await this.ocorrenciaGeralPostgresRepository.findOcorrencia(localidade, referencia);
 
       const funcionarios: { id: number; identificacao: string; nome: string }[] = [];
 
@@ -24,7 +24,10 @@ export class OcorrenciaGeralController implements Controller {
             let adicionar = false;
 
             if (dia.cartao_dia_lancamentos.length !== 0) {
-              const naoValidado = dia.cartao_dia_lancamentos.find((lancamento) => !lancamento.validadoPeloOperador);
+              const naoValidado = dia.cartao_dia_lancamentos.find(
+                (lancamento) => lancamento.cartao_dia_id === dia.id && !lancamento.validadoPeloOperador,
+              );
+
               if (naoValidado) return;
             }
 
@@ -32,9 +35,11 @@ export class OcorrenciaGeralController implements Controller {
 
             if (ocorrencia) adicionar = true;
 
-            const intervalos = dia.eventos.filter((evento) => evento.tipoId === 8);
+            if (!adicionar) {
+              const intervalos = dia.eventos.filter((evento) => evento.tipoId === 8);
 
-            if (intervalos.length > 1) adicionar = true;
+              if (intervalos.length > 1) adicionar = true;
+            }
 
             if (adicionar) {
               const existeIndexFuncionario = funcionarios.findIndex((func) => funcionario.id === func.id);

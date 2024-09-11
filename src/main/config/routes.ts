@@ -51,6 +51,9 @@ import recalcularTurnos from "../routes/horarios/recalcular-turnos-routes";
 import buscarAlteracaoTurno from "../routes/horarios/buscar-alteracao-turno";
 import buscarCid from "../routes/horarios/buscar-cid";
 import finalizarCartao from "../routes/horarios/finalizar-cartao";
+import criarAgrupamentoLocalidade from "../routes/horarios/criar-agrupamento-localidade";
+import excluirAgrupamentoLocalidade from "../routes/horarios/excluir-agrupamento-localidade";
+import consultarAgrupamentoLocalidade from "../routes/horarios/consultar-agrupamento-localidade";
 
 export const setupRoutes = (app: Express): void => {
   const router = Router();
@@ -106,4 +109,7 @@ export const setupRoutes = (app: Express): void => {
   buscarAlteracaoTurno(router);
   buscarCid(router);
   finalizarCartao(router);
+  criarAgrupamentoLocalidade(router);
+  excluirAgrupamentoLocalidade(router);
+  consultarAgrupamentoLocalidade(router);
 };
