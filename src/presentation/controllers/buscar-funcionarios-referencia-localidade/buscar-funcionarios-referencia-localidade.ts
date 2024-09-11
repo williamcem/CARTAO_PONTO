@@ -103,7 +103,8 @@ export class BuscarFuncionarioReferenciaLocalidadeAgrupadaController implements 
             }
           }
 
-          andamento = Number(((totalDiasTrabalhados * 100) / totalDiasParaTrabalhar).toFixed());
+          if (!totalDiasTrabalhados && !totalDiasParaTrabalhar) andamento = 100;
+          else andamento = Number(((totalDiasTrabalhados * 100) / totalDiasParaTrabalhar).toFixed());
         }
 
         if (showSummary) {
