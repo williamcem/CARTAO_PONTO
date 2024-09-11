@@ -320,6 +320,7 @@ model atestado_funcionario {
   entradas_saidas_atestado  entradas_saidas_atestado[]
   tipo_comprovante_ausencia tipo_comprovante_ausencia? @relation(fields: [tipo_comprovanteId], references: [id], onDelete: Cascade)
   tipo_certidao_obito       tipo_certidao_obito?       @relation(fields: [tipoGrauParentescoId], references: [id], onDelete: Cascade)
+  eventos                   eventos[]
 }
 
 model atestado_abono {
@@ -408,17 +409,19 @@ model descricaco_cid {
 }
 
 model eventos {
-  id            Int     @id @default(autoincrement())
-  cartaoDiaId   Int
-  hora          String
-  funcionarioId Int
-  minutos       Int
-  tipoId        Int?
-  tratado       Boolean @default(false)
+  id                    Int     @id @default(autoincrement())
+  cartaoDiaId           Int
+  hora                  String
+  funcionarioId         Int
+  minutos               Int
+  tipoId                Int?
+  tratado               Boolean @default(false)
+  atestadoFuncionarioId Int?
 
-  tipo_eventos tipo_eventos? @relation(fields: [tipoId], references: [id], onDelete: Cascade)
-  funcionario  funcionario   @relation(fields: [funcionarioId], references: [id], onDelete: Cascade)
-  cartao_dia   cartao_dia?   @relation(fields: [cartaoDiaId], references: [id], onDelete: Cascade)
+  tipo_eventos         tipo_eventos?         @relation(fields: [tipoId], references: [id], onDelete: Cascade)
+  funcionario          funcionario           @relation(fields: [funcionarioId], references: [id], onDelete: Cascade)
+  cartao_dia           cartao_dia?           @relation(fields: [cartaoDiaId], references: [id], onDelete: Cascade)
+  atestado_funcionario atestado_funcionario? @relation(fields: [atestadoFuncionarioId], references: [id])
 }
 
 model tipo_eventos {
