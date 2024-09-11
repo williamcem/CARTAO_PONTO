@@ -54,6 +54,7 @@ import finalizarCartao from "../routes/horarios/finalizar-cartao";
 import criarAgrupamentoLocalidade from "../routes/horarios/criar-agrupamento-localidade";
 import excluirAgrupamentoLocalidade from "../routes/horarios/excluir-agrupamento-localidade";
 import consultarAgrupamentoLocalidade from "../routes/horarios/consultar-agrupamento-localidade";
+import associarOcorrenciaComAtestado from "../routes/horarios/associar-ocorrencia-com-atestado";
 
 export const setupRoutes = (app: Express): void => {
   const router = Router();
@@ -112,4 +113,5 @@ export const setupRoutes = (app: Express): void => {
   criarAgrupamentoLocalidade(router);
   excluirAgrupamentoLocalidade(router);
   consultarAgrupamentoLocalidade(router);
+  associarOcorrenciaComAtestado(router);
 };
