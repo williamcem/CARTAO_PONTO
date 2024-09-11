@@ -10,19 +10,27 @@ export class ProcurarLocalidadeController implements Controller {
     try {
       const {
         notGroupId,
+        codigoLocalidade,
       }: {
         notGroupId: number;
+        codigoLocalidade: string;
       } = httpRequest.query;
 
       const localidades = await this.localidadePostgresRepository.findMany({
         not: { groupId: notGroupId ? Number(notGroupId) : undefined },
       });
 
-      const output = localidades.filter((localidade) => {
-        if (!notGroupId) return localidade;
+      let grupoId: undefined | number | null = undefined;
 
-        if (localidade.grupoLocalidadeId !== Number(notGroupId)) return localidade;
+      if (codigoLocalidade)
+        grupoId = (await this.localidadePostgresRepository.findFisrt({ codigo: codigoLocalidade }))?.grupoLocalidadeId;
+
+      const output = localidades.filter((localidade) => {
+        if (!notGroupId && !grupoId) return localidade;
+        else if (grupoId && grupoId === localidade.grupoLocalidadeId) return localidade;
+        else if (notGroupId && localidade.grupoLocalidadeId !== Number(notGroupId)) return localidade;
       });
+
       return ok(output);
     } catch (error) {
       console.error(error);
