@@ -255,7 +255,7 @@ export class GetFuncionarioImpressaoCalculoController implements Controller {
             };
 
           const eventosJustificativa = dia.eventos.filter(
-            (evento) => evento.tipoId === 5 || evento.tipoId === 6 || evento.tipoId === 12,
+            (evento) => evento.tipoId === 2 || evento.tipoId === 5 || evento.tipoId === 6 || evento.tipoId === 12,
           );
 
           return {
