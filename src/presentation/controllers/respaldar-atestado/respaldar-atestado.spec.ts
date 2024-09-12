@@ -1,9 +1,10 @@
 import { describe, expect, test } from "vitest";
 import { RespaldarController } from "./respaldar-atestado";
 import { RespaldarAtestadoPostgresRepository } from "@infra/db/postgresdb/respaldar-atestado/respaldar-atestado";
+import { SolucaoEventoRepository } from "@infra/db/postgresdb/solucao-eventos-repository/solucao-eventos-repository";
 
 describe("Gerar abono de atestado", () => {
-  const respaldarController = new RespaldarController(new RespaldarAtestadoPostgresRepository());
+  const respaldarController = new RespaldarController(new RespaldarAtestadoPostgresRepository(), new SolucaoEventoRepository());
 
   test("1º Periodo", async () => {
     const atestado = {

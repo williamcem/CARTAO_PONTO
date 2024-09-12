@@ -5,6 +5,7 @@ import { RespaldarAtestadoPostgresRepository } from "@infra/db/postgresdb/respal
 import { FuncionarioParamError } from "../../errors/Funcionario-param-error";
 import { badRequest, notFoundRequest, ok, serverError } from "../../helpers/http-helpers";
 import { Controller, HttpRequest, HttpResponse } from "./respaldar-atestado-protocols";
+import { SolucaoEventoRepository } from "@infra/db/postgresdb/solucao-eventos-repository/solucao-eventos-repository";
 
 type IDia = {
   id: number;
@@ -17,7 +18,10 @@ type IDia = {
 };
 
 export class RespaldarController implements Controller {
-  constructor(private readonly respaldarAtestadoPostgresRepository: RespaldarAtestadoPostgresRepository) {}
+  constructor(
+    private readonly respaldarAtestadoPostgresRepository: RespaldarAtestadoPostgresRepository,
+    private readonly solucaoEventoRepository: SolucaoEventoRepository,
+  ) {}
 
   async handle(httpRequest: HttpRequest): Promise<HttpResponse> {
     try {
@@ -249,10 +253,10 @@ export class RespaldarController implements Controller {
               if (!evento.tratado && evento.tipoId === 2) {
                 eventos.updateMany.push({ ...evento, ...{ id: evento.id, tratado: true } });
 
-                let minutos = 0;
-                if (atestado.acao === 3 || atestado.acao === 7) minutos = 0;
-                else if (atestado.acao === 5 || atestado.acao === 6 || atestado.acao === 12) minutos = Math.abs(evento.minutos);
-                else minutos = evento.minutos;
+                let minutos = this.solucaoEventoRepository.calcularMinutosBaseadoNaAcao({
+                  minutosOriginal: evento.minutos,
+                  tipoId: atestado.acao,
+                });
 
                 eventos.createMany.push({
                   atestadoFuncionarioId: evento.atestadoFuncionarioId || undefined,
