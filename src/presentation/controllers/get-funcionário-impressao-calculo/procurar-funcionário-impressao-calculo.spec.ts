@@ -207,9 +207,9 @@ describe("Cálcula minutos do dia", () => {
   });
 });
 
-describe.only("Regra de compensação", () => {
+describe("Regra de compensação", () => {
   test("Minutos -200 sem saldo", async () => {
-    const resultado = getFuncionarioImpressaoCalculoController.executarRegraCompensacaoExtra({
+    const resultado = getFuncionarioImpressaoCalculoController.executarRegraCompensacaoComExtra({
       minutos: -200,
       saldo: { diurno: { ext1: 0, ext2: 0, ext3: 0 }, noturno: { ext1: 0, ext2: 0, ext3: 0 } },
     });
@@ -218,7 +218,7 @@ describe.only("Regra de compensação", () => {
   });
 
   test("Minutos -50 sem saldo", async () => {
-    const resultado = getFuncionarioImpressaoCalculoController.executarRegraCompensacaoExtra({
+    const resultado = getFuncionarioImpressaoCalculoController.executarRegraCompensacaoComExtra({
       minutos: -50,
       saldo: { diurno: { ext1: 0, ext2: 0, ext3: 0 }, noturno: { ext1: 0, ext2: 0, ext3: 0 } },
     });
@@ -227,7 +227,7 @@ describe.only("Regra de compensação", () => {
   });
 
   test("Minutos -50 com ext1 20", async () => {
-    const resultado = getFuncionarioImpressaoCalculoController.executarRegraCompensacaoExtra({
+    const resultado = getFuncionarioImpressaoCalculoController.executarRegraCompensacaoComExtra({
       minutos: -50,
       saldo: { diurno: { ext1: 20, ext2: 0, ext3: 0 }, noturno: { ext1: 0, ext2: 0, ext3: 0 } },
     });
@@ -236,7 +236,7 @@ describe.only("Regra de compensação", () => {
   });
 
   test("Minutos -50 com ext1 60", async () => {
-    const resultado = getFuncionarioImpressaoCalculoController.executarRegraCompensacaoExtra({
+    const resultado = getFuncionarioImpressaoCalculoController.executarRegraCompensacaoComExtra({
       minutos: -50,
       saldo: { diurno: { ext1: 60, ext2: 0, ext3: 0 }, noturno: { ext1: 0, ext2: 0, ext3: 0 } },
     });
@@ -245,7 +245,7 @@ describe.only("Regra de compensação", () => {
   });
 
   test("Minutos -120 com ext1 60 e ext2 50", async () => {
-    const resultado = getFuncionarioImpressaoCalculoController.executarRegraCompensacaoExtra({
+    const resultado = getFuncionarioImpressaoCalculoController.executarRegraCompensacaoComExtra({
       minutos: -120,
       saldo: { diurno: { ext1: 60, ext2: 50, ext3: 0 }, noturno: { ext1: 0, ext2: 0, ext3: 0 } },
     });
@@ -254,7 +254,7 @@ describe.only("Regra de compensação", () => {
   });
 
   test("Minutos -120 com ext1 60 e ext2 60", async () => {
-    const resultado = getFuncionarioImpressaoCalculoController.executarRegraCompensacaoExtra({
+    const resultado = getFuncionarioImpressaoCalculoController.executarRegraCompensacaoComExtra({
       minutos: -120,
       saldo: { diurno: { ext1: 60, ext2: 60, ext3: 0 }, noturno: { ext1: 0, ext2: 0, ext3: 0 } },
     });
@@ -263,7 +263,7 @@ describe.only("Regra de compensação", () => {
   });
 
   test("Minutos -130 com ext1 60 e ext2 60", async () => {
-    const resultado = getFuncionarioImpressaoCalculoController.executarRegraCompensacaoExtra({
+    const resultado = getFuncionarioImpressaoCalculoController.executarRegraCompensacaoComExtra({
       minutos: -130,
       saldo: { diurno: { ext1: 60, ext2: 60, ext3: 0 }, noturno: { ext1: 0, ext2: 0, ext3: 0 } },
     });
@@ -272,7 +272,7 @@ describe.only("Regra de compensação", () => {
   });
 
   test("Minutos -50 com ext1 60 e ext2 60", async () => {
-    const resultado = getFuncionarioImpressaoCalculoController.executarRegraCompensacaoExtra({
+    const resultado = getFuncionarioImpressaoCalculoController.executarRegraCompensacaoComExtra({
       minutos: -50,
       saldo: { diurno: { ext1: 60, ext2: 60, ext3: 0 }, noturno: { ext1: 0, ext2: 0, ext3: 0 } },
     });
@@ -281,7 +281,7 @@ describe.only("Regra de compensação", () => {
   });
 
   test("Minutos -50 com ext1 60 e ext2 60", async () => {
-    const resultado = getFuncionarioImpressaoCalculoController.executarRegraCompensacaoExtra({
+    const resultado = getFuncionarioImpressaoCalculoController.executarRegraCompensacaoComExtra({
       minutos: -50,
       saldo: { diurno: { ext1: 60, ext2: 60, ext3: 0 }, noturno: { ext1: 0, ext2: 0, ext3: 0 } },
     });
@@ -290,7 +290,7 @@ describe.only("Regra de compensação", () => {
   });
 
   test("Minutos -145 com ext1 60 e ext2 60 e ext3 20", async () => {
-    const resultado = getFuncionarioImpressaoCalculoController.executarRegraCompensacaoExtra({
+    const resultado = getFuncionarioImpressaoCalculoController.executarRegraCompensacaoComExtra({
       minutos: -145,
       saldo: { diurno: { ext1: 60, ext2: 60, ext3: 20 }, noturno: { ext1: 0, ext2: 0, ext3: 0 } },
     });

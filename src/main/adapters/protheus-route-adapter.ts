@@ -9,6 +9,7 @@ import { RespaldarAtestadoPostgresRepository } from "@infra/db/postgresdb/respal
 
 import { BuscarHorarioNortunoEmMinutos } from "../../presentation/controllers/get-funcionário/utils";
 import { RespaldarController } from "../../presentation/controllers/respaldar-atestado/respaldar-atestado";
+import { SolucaoEventoRepository } from "@infra/db/postgresdb/solucao-eventos-repository/solucao-eventos-repository";
 
 export async function importarArquivoGrupoTrabalho(
   req: { file?: Express.Multer.File | undefined; body: { userName: string } },
@@ -390,7 +391,8 @@ export async function importarArquivoCartao(
 
 const abonarAtestado = async (input: { cartao: { dias: { data: Date }[]; funcionarioId: number }; userName: string }) => {
   const respaldarAtestadoPostgresRepository = new RespaldarAtestadoPostgresRepository();
-  const respaldarController = new RespaldarController(respaldarAtestadoPostgresRepository);
+
+  const respaldarController = new RespaldarController(respaldarAtestadoPostgresRepository, new SolucaoEventoRepository());
 
   const atestados = await respaldarAtestadoPostgresRepository.findManyAtestados({
     statusId: 2,

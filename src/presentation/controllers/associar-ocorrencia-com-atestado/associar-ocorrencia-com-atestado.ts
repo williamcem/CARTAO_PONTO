@@ -1,10 +1,12 @@
 import { AssociarOcorrenciaComAtestadoPostgresRepository } from "@infra/db/postgresdb/associar-ocorrencia-com-atestado/associar-ocorrencia-com-atestado";
 import { badRequestNovo, notFoundNovo, ok, serverError } from "../../helpers/http-helpers";
 import { Controller, HttpRequest, HttpResponse } from "./associar-ocorrencia-com-atestado-protocols";
+import { SolucaoEventoRepository } from "@infra/db/postgresdb/solucao-eventos-repository/solucao-eventos-repository";
 
 export class AssociarOcorrenciaComAtestadoController implements Controller {
   constructor(
     private readonly associarOcorrenciaComAtestadoPostgresRepository: AssociarOcorrenciaComAtestadoPostgresRepository,
+    private readonly solucaoEventoRepository: SolucaoEventoRepository,
   ) {}
 
   async handle(httpRequest: HttpRequest): Promise<HttpResponse> {
@@ -64,10 +66,10 @@ export class AssociarOcorrenciaComAtestadoController implements Controller {
         ocorrenciasLocal.map((evento) => {
           if (evento.tratado || evento.tipoId !== 2) return;
 
-          let minutos;
-          if (atestado.acao === 3 || atestado.acao === 7) minutos = 0;
-          else if (atestado.acao === 5 || atestado.acao === 6 || atestado.acao === 12) minutos = Math.abs(evento.minutos);
-          else minutos = evento.minutos;
+          let minutos = this.solucaoEventoRepository.calcularMinutosBaseadoNaAcao({
+            minutosOriginal: evento.minutos,
+            tipoId: atestado.acao,
+          });
 
           eventos.updateMany.push({ id: evento.id, tratado: true });
 

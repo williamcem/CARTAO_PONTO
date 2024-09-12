@@ -29,10 +29,7 @@ export class SolucaoEventoRepository {
 
       if (!eventoOriginal) throw new Error("Evento original não encontrado");
 
-      let minutos;
-      if (tipoId === 3 || tipoId === 7) minutos = 0;
-      else if (tipoId === 5 || tipoId === 6 || tipoId === 12) minutos = Math.abs(eventoOriginal.minutos);
-      else minutos = eventoOriginal.minutos;
+      let minutos = this.calcularMinutosBaseadoNaAcao({ minutosOriginal: eventoOriginal.minutos, tipoId });
 
       // Atualizar o evento original para definir tratado como true
       queries.push(
@@ -122,5 +119,14 @@ export class SolucaoEventoRepository {
     });
 
     return Boolean((await this.prisma.$transaction(queries)).length);
+  }
+
+  calcularMinutosBaseadoNaAcao(input: { tipoId: number; minutosOriginal: number }) {
+    let minutos = 0;
+    if (input.tipoId === 3 || input.tipoId === 7) minutos = 0;
+    else if (input.tipoId === 5 || input.tipoId === 6 || input.tipoId === 12) minutos = Math.abs(input.minutosOriginal);
+    else minutos = input.minutosOriginal;
+
+    return minutos;
   }
 }
