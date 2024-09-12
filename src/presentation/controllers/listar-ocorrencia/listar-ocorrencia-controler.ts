@@ -89,9 +89,15 @@ export class OcorrenciaController implements Controller {
                 : undefined;
 
               return {
-                ...evento,
                 ...{
                   atestado,
+                  cartaoDiaId: evento.cartaoDiaId,
+                  funcionarioId: evento.funcionarioId,
+                  hora: evento.hora,
+                  id: evento.id,
+                  minutos: evento.minutos,
+                  tipoId: evento.tipoId,
+                  tratado: evento.tratado,
                 },
               };
             }),
