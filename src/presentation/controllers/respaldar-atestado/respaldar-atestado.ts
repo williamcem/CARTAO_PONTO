@@ -220,6 +220,52 @@ export class RespaldarController implements Controller {
 
         case 3:
           {
+            const eventos: {
+              updateMany: {
+                id: number;
+                cartaoDiaId: number;
+                hora: string;
+                tipoId: number | null;
+                funcionarioId: number;
+                tratado: boolean;
+                minutos: number;
+                atestadoFuncionarioId?: number | null;
+              }[];
+              createMany: {
+                cartaoDiaId: number;
+                hora: string;
+                tipoId: number | null;
+                funcionarioId: number;
+                tratado: boolean;
+                minutos: number;
+                atestadoFuncionarioId?: number | null;
+              }[];
+            } = {
+              updateMany: [],
+              createMany: [],
+            };
+
+            atestado.eventos.map((evento) => {
+              if (!evento.tratado && evento.tipoId === 2) {
+                eventos.updateMany.push({ ...evento, ...{ id: evento.id, tratado: true } });
+
+                let minutos = 0;
+                if (atestado.acao === 3 || atestado.acao === 7) minutos = 0;
+                else if (atestado.acao === 5 || atestado.acao === 6 || atestado.acao === 12) minutos = Math.abs(evento.minutos);
+                else minutos = evento.minutos;
+
+                eventos.createMany.push({
+                  atestadoFuncionarioId: evento.atestadoFuncionarioId || undefined,
+                  cartaoDiaId: evento.cartaoDiaId,
+                  funcionarioId: evento.funcionarioId,
+                  hora: evento.hora,
+                  minutos,
+                  tipoId: atestado.acao,
+                  tratado: true,
+                });
+              }
+            });
+
             const atualizado = await this.respaldarAtestadoPostgresRepository.updateAtestado({
               id: atestado.id,
               statusId,
@@ -248,6 +294,7 @@ export class RespaldarController implements Controller {
               tipoGrauParentescoId,
               tipoId,
               trabalhou_dia,
+              eventos,
             });
 
             if (!atualizado) return serverError();
@@ -485,7 +532,6 @@ export class RespaldarController implements Controller {
             break;
         }
 
-        console.log("input.atestado.acao", input.atestado.acao);
         novosEventos.push({
           cartaoDiaId: abono.cartaoDiaId,
           hora: "AÇÃO GERENTE",
@@ -497,7 +543,6 @@ export class RespaldarController implements Controller {
       }
     }
 
-    console.log("novosEventos", novosEventos);
     const atualizado = await this.respaldarAtestadoPostgresRepository.updateAtestado({
       id: input.atestado.id,
       statusId: input.atestado.statusId,

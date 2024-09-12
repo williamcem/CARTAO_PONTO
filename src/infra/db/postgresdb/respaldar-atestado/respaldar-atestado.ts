@@ -13,7 +13,14 @@ export class RespaldarAtestadoPostgresRepository {
   public async findfirst(input: { id: number }) {
     const result = await this.prisma.atestado_funcionario.findFirst({
       where: { id: input.id },
-      select: { id: true, tipoId: true, statusId: true, funcionarioId: true, acao: true },
+      select: {
+        id: true,
+        tipoId: true,
+        statusId: true,
+        funcionarioId: true,
+        acao: true,
+        eventos: true,
+      },
     });
 
     if (!result) return;
@@ -84,6 +91,7 @@ export class RespaldarAtestadoPostgresRepository {
         funcionarioId: number;
         tratado: boolean;
         minutos: number;
+        atestadoFuncionarioId?: number | null;
       }[];
       createMany?: {
         cartaoDiaId: number;
@@ -92,6 +100,7 @@ export class RespaldarAtestadoPostgresRepository {
         funcionarioId: number;
         tratado: boolean;
         minutos: number;
+        atestadoFuncionarioId?: number | null;
       }[];
     };
   }): Promise<boolean> {
