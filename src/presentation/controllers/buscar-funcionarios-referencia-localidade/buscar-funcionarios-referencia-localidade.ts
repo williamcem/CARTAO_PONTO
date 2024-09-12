@@ -138,6 +138,7 @@ export class BuscarFuncionarioReferenciaLocalidadeAgrupadaController implements 
                   id: dia.id,
                   eventos: dia.eventos,
                   lancamentos: dia.cartao_dia_lancamentos,
+                  statusId: dia.statusId,
                 })),
               },
             });
