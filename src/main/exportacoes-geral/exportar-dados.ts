@@ -4,7 +4,7 @@ import moment from "moment";
 
 const prisma = new PrismaClient();
 
-export const exportarDadosParaArquivo = async () => {
+export const exportarDadosParaArquivo = async (input: { referencia: Date }) => {
   try {
     // Buscar os dados das tabelas
     const funcionarios = await prisma.funcionario.findMany({
@@ -20,6 +20,9 @@ export const exportarDadosParaArquivo = async () => {
                 data: "asc", // Ordena os dias de cartão por data em ordem crescente
               },
             },
+          },
+          where: {
+            referencia: input.referencia,
           },
         },
       },
