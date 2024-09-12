@@ -23,7 +23,16 @@ export class AssociarOcorrenciaComAtestadoController implements Controller {
 
       if (!atestado) return notFoundNovo({ message: "Atestado não existe!" });
 
-      let ocorrenciasLocal: { id: number; funcionarioId: number }[] = [];
+      let ocorrenciasLocal: {
+        id: number;
+        cartaoDiaId: number;
+        hora: string;
+        funcionarioId: number;
+        minutos: number;
+        tipoId: number | null;
+        tratado: boolean;
+        atestadoFuncionarioId: number | null;
+      }[] = [];
 
       for (const ocorrencia of ocorrencias) {
         const ocorrenciaLocal = await this.associarOcorrenciaComAtestadoPostgresRepository.findFisrtOcorrencia({
@@ -38,9 +47,46 @@ export class AssociarOcorrenciaComAtestadoController implements Controller {
         ocorrenciasLocal.push(ocorrenciaLocal);
       }
 
+      const eventos: {
+        updateMany: { id: number; tratado: boolean }[];
+        createMany: {
+          cartaoDiaId: number;
+          funcionarioId: number;
+          hora: string;
+          minutos: number;
+          tipoId: number;
+          tratado: boolean;
+          atestadoFuncionarioId?: number | null;
+        }[];
+      } = { createMany: [], updateMany: [] };
+
+      if (atestado.statusId === 3) {
+        ocorrenciasLocal.map((evento) => {
+          if (evento.tratado || evento.tipoId !== 2) return;
+
+          let minutos;
+          if (atestado.acao === 3 || atestado.acao === 7) minutos = 0;
+          else if (atestado.acao === 5 || atestado.acao === 6 || atestado.acao === 12) minutos = Math.abs(evento.minutos);
+          else minutos = evento.minutos;
+
+          eventos.updateMany.push({ id: evento.id, tratado: true });
+
+          eventos.createMany.push({
+            tratado: true,
+            tipoId: atestado.acao,
+            minutos,
+            cartaoDiaId: evento.cartaoDiaId,
+            funcionarioId: evento.funcionarioId,
+            hora: evento.hora,
+            atestadoFuncionarioId: atestado.id,
+          });
+        });
+      }
+
       const salvo = await this.associarOcorrenciaComAtestadoPostgresRepository.updateManyOcorrencia({
         atestadoId: atestado.id,
         ids: ocorrencias.map((ocorrencia) => ocorrencia.id),
+        eventos,
       });
 
       if (!salvo) return serverError();
