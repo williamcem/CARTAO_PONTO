@@ -2,7 +2,6 @@ import { PrismaClient } from "@prisma/client";
 
 import { CalcularResumoPostgresRepository } from "@infra/db/postgresdb/calcular-resumo/calcular-resumo-repository";
 
-import { ListarOcorrencias } from "../../../../data/usecase/listar-ocorrencias/add-listar-ocorrencias";
 import { OcorrenciasNull } from "../../../../presentation/errors/Funcionario-param-error";
 import { prisma } from "../../../database/Prisma";
 
@@ -67,7 +66,11 @@ export class OcorrenciaSolucionadasPostgresRepository {
             referencia: true,
             cartao_dia: {
               include: {
-                eventos: true,
+                eventos: {
+                  include: {
+                    atestado_funcionario: { select: { id: true, statusId: true } },
+                  },
+                },
                 cartao_dia_lancamentos: {
                   select: {
                     periodoId: true,
@@ -109,6 +112,11 @@ export class OcorrenciaSolucionadasPostgresRepository {
                 const eventosComSolucaoDada = await Promise.all(
                   eventos.map(async (evento) => {
                     const solucaoDada = await this.getEventTypeByHour(evento.hora, evento.tipoId);
+
+                    const atestado = evento.atestado_funcionario
+                      ? { id: evento.atestado_funcionario.id, statusId: evento.atestado_funcionario.statusId }
+                      : undefined;
+
                     return {
                       id: evento.id,
                       cartaoDiaId: evento.cartaoDiaId,
@@ -118,6 +126,7 @@ export class OcorrenciaSolucionadasPostgresRepository {
                       tipoId: evento.tipoId as number,
                       tratado: evento.tratado,
                       solucaoDada,
+                      atestado,
                     };
                   }),
                 );
