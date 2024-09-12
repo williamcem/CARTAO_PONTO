@@ -15,6 +15,8 @@ export class AssociarOcorrenciaComAtestadoPostgresRepository {
       select: {
         id: true,
         funcionarioId: true,
+        statusId: true,
+        acao: true,
       },
     });
   }
@@ -22,11 +24,25 @@ export class AssociarOcorrenciaComAtestadoPostgresRepository {
   public async findFisrtOcorrencia(input: { id: number }) {
     return await this.prisma.eventos.findFirst({
       where: { id: input.id },
-      select: { id: true, funcionarioId: true },
     });
   }
 
-  public async updateManyOcorrencia(input: { ids: number[]; atestadoId: number }) {
+  public async updateManyOcorrencia(input: {
+    ids: number[];
+    atestadoId: number;
+    eventos?: {
+      updateMany: { id: number; tratado: boolean }[];
+      createMany: {
+        cartaoDiaId: number;
+        funcionarioId: number;
+        hora: string;
+        minutos: number;
+        tipoId: number;
+        tratado: boolean;
+        atestadoFuncionarioId?: number | null;
+      }[];
+    };
+  }) {
     const queries: prismaPromise[] = [];
 
     input.ids.map((id) => {
@@ -37,6 +53,25 @@ export class AssociarOcorrenciaComAtestadoPostgresRepository {
         }),
       );
     });
+
+    input.eventos?.createMany.map((evento) =>
+      queries.push(
+        this.prisma.eventos.create({
+          data: { ...evento },
+        }),
+      ),
+    );
+
+    input.eventos?.updateMany.map((evento) =>
+      queries.push(
+        this.prisma.eventos.update({
+          where: { id: evento.id },
+          data: {
+            tratado: evento.tratado,
+          },
+        }),
+      ),
+    );
 
     return Boolean((await this.prisma.$transaction(queries)).length);
   }
