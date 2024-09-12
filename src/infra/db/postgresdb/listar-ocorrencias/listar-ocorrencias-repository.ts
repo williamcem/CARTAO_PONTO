@@ -86,7 +86,16 @@ export class OcorrenciaPostgresRepository {
             referencia: true,
             cartao_dia: {
               include: {
-                eventos: true, // Aqui incluímos todos os eventos
+                eventos: {
+                  include: {
+                    atestado_funcionario: {
+                      select: {
+                        id: true,
+                        statusId: true,
+                      },
+                    },
+                  },
+                }, // Aqui incluímos todos os eventos
                 cartao_dia_lancamentos: {
                   select: {
                     periodoId: true,
@@ -105,6 +114,12 @@ export class OcorrenciaPostgresRepository {
         localidade: true,
         afastamento: {
           include: { funcionarios_afastados_status: true },
+        },
+        atestado_funcionario: {
+          select: {
+            id: true,
+            statusId: true,
+          },
         },
       },
       orderBy: { id: "asc" },
