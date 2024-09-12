@@ -23,7 +23,50 @@ export class OcorrenciaController implements Controller {
 
       if (data.funcionarios.length === 0) return notFoundRequest(new Error("Nenhum funcionário encontrado"));
 
-      let output: any[] = [];
+      let output: {
+        id: number;
+        identificacao: string;
+        nome: string;
+        nomeTurno: string;
+        codigoLocalidade: string;
+        referencia: Date | null;
+        dias: {
+          data: Date;
+          eventos: {
+            id: number;
+            cartaoDiaId: number;
+            hora: string;
+            funcionarioId: number;
+            minutos: number;
+            tipoId: number | null;
+            tratado: boolean;
+            atestadoFuncionarioId: number | null;
+            atestado?: {
+              id: number;
+              statusId: number;
+            };
+          }[];
+          lancamentos: {
+            periodoId: number;
+            entrada: Date | null;
+            saida: Date | null;
+          }[];
+        }[];
+        eventos: {
+          id: number;
+          cartaoDiaId: number;
+          hora: string;
+          funcionarioId: number;
+          minutos: number;
+          tipoId: number | null;
+          tratado: boolean;
+          atestadoFuncionarioId: number | null;
+          atestado?: {
+            id: number;
+            statusId: number;
+          };
+        }[];
+      }[] = [];
 
       for (const funcionario of data.funcionarios) {
         if (funcionario.dias.length === 0) continue;
@@ -37,15 +80,41 @@ export class OcorrenciaController implements Controller {
           referencia: funcionario.referencia,
           dias: funcionario.dias.map((dia) => ({
             data: dia.data,
-            eventos: dia.eventos,
+            eventos: dia.eventos.map((evento) => {
+              const atestado = evento.atestado_funcionario
+                ? {
+                    id: evento.atestado_funcionario?.id,
+                    statusId: evento.atestado_funcionario?.statusId,
+                  }
+                : undefined;
+
+              return {
+                ...evento,
+                ...{
+                  atestado,
+                },
+              };
+            }),
             lancamentos: dia.lancamentos,
           })),
-          resumo: funcionario.Resumo, // Usando o resumo calculado diretamente
           eventos: [],
         });
       }
 
-      const eventos: any = [];
+      const eventos: {
+        id: number;
+        cartaoDiaId: number;
+        hora: string;
+        funcionarioId: number;
+        minutos: number;
+        tipoId: number | null;
+        tratado: boolean;
+        atestadoFuncionarioId: number | null;
+        atestado?: {
+          id: number;
+          statusId: number;
+        };
+      }[] = [];
 
       output.map((funcionario) =>
         funcionario.dias.map((dia: any) => {
@@ -71,6 +140,7 @@ export class OcorrenciaController implements Controller {
                 statusId: 1,
               });
 
+              //Verificar se irá remover
               if (existeAtestadoPendente) {
                 hora = "EM ANÁLISE";
                 analise = true;
@@ -84,9 +154,9 @@ export class OcorrenciaController implements Controller {
 
       if (output.length == 0) return notFoundRequest(new FuncionarioParamError("Não há ocorrências para essa identificação"));
 
-      output = [{ eventos }];
+      const novoOutput = [{ eventos }];
 
-      return ok(output);
+      return ok(novoOutput);
     } catch (error) {
       if (error instanceof OcorrenciasNull) {
         return badRequest(new FuncionarioParamError(error.message));
