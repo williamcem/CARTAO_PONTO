@@ -83,6 +83,7 @@ export class FinalizarCartaoController implements Controller {
             id: dia.id,
             eventos: dia.eventos,
             lancamentos: dia.cartao_dia_lancamentos,
+            statusId: dia.statusId,
           })),
         },
       });
@@ -290,6 +291,7 @@ export class FinalizarCartaoController implements Controller {
         cargaHor: number;
         eventos: { id: number; hora: string; tipoId: number | null; tratado: boolean }[];
         lancamentos: { periodoId: number; validadoPeloOperador: boolean }[];
+        statusId: number;
       }[];
     };
   }) {
@@ -298,7 +300,7 @@ export class FinalizarCartaoController implements Controller {
     const ocorrenciasNaoTratada: { id: number; data: Date; eventos: { id: number; hora: string }[] }[] = [];
 
     input.cartao.dias.map((dia) => {
-      if (dia.cargaHor === 0) return;
+      if (dia.cargaHor === 0 || dia.statusId === 11) return;
 
       if (!dia.eventos.length) {
         diasSemLancamento.push({ data: dia.data, id: dia.id });
