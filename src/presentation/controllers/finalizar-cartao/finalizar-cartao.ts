@@ -18,7 +18,6 @@ export class FinalizarCartaoController implements Controller {
         userName,
         pago,
         compensado,
-        forcado,
       }: {
         id: number;
         userName: string;
@@ -27,7 +26,6 @@ export class FinalizarCartaoController implements Controller {
           diurno: { ext1: number; ext2: number; ext3: number };
           noturno: { ext1: number; ext2: number; ext3: number };
         };
-        forcado?: boolean;
       } = httpRequest.body;
 
       if (!id) return badRequest(new FuncionarioParamError("Falta id do cartão!"));
@@ -73,7 +71,9 @@ export class FinalizarCartaoController implements Controller {
 
       if (!cartao) return notFoundRequest(new FuncionarioParamError("Cartão não localizado!"));
 
-      if (cartao.statusId != 1) return badRequest(new FuncionarioParamError("Cartão já está finalizado!"));
+      if (cartao.statusId === 2) return badRequest(new FuncionarioParamError("Cartão já está finalizado!"));
+
+      //Se status for importado irá verificar as pendências
 
       const { diasSemLancamento, lancamentosNaoValidado, ocorrenciasNaoTratada } = this.buscarPendenciaCartao({
         cartao: {
@@ -85,6 +85,7 @@ export class FinalizarCartaoController implements Controller {
             lancamentos: dia.cartao_dia_lancamentos,
             statusId: dia.statusId,
           })),
+          statusId: cartao.statusId,
         },
       });
 
@@ -99,10 +100,7 @@ export class FinalizarCartaoController implements Controller {
         tipo: atestado.tipos_documentos.nome,
       }));
 
-      if (
-        !forcado &&
-        (atestados.length || lancamentosNaoValidado.length || ocorrenciasNaoTratada.length || diasSemLancamento.length)
-      )
+      if (atestados.length || lancamentosNaoValidado.length || ocorrenciasNaoTratada.length || diasSemLancamento.length)
         return badRequestNovo({
           message: { lancamentosNaoValidado, ocorrenciasNaoTratada, diasSemLancamento, atestadosEmAnalise },
         });
@@ -293,11 +291,14 @@ export class FinalizarCartaoController implements Controller {
         lancamentos: { periodoId: number; validadoPeloOperador: boolean }[];
         statusId: number;
       }[];
+      statusId: number;
     };
   }) {
     const diasSemLancamento: { id: number; data: Date }[] = [];
     const lancamentosNaoValidado: { id: number; data: Date; lancamentos: { periodoId: number }[] }[] = [];
     const ocorrenciasNaoTratada: { id: number; data: Date; eventos: { id: number; hora: string }[] }[] = [];
+
+    if (input.cartao.statusId === 3) return { diasSemLancamento, lancamentosNaoValidado, ocorrenciasNaoTratada };
 
     input.cartao.dias.map((dia) => {
       if (dia.cargaHor === 0 || dia.statusId === 11) return;
