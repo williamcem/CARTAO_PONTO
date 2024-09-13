@@ -5,6 +5,6 @@ import { ListarTurnoPostgresRepository } from "@infra/db/postgresdb/listar-turno
 
 export const makeListarTurnosController = (): Controller => {
   const listarTurnoPostgresRepository = new ListarTurnoPostgresRepository();
-  const buscarFuncionarioReferenciaLocalidadeAgrupadaController = new ListarTurnoController(listarTurnoPostgresRepository);
-  return new LogControllerDecorator(buscarFuncionarioReferenciaLocalidadeAgrupadaController);
+  const listarTurnoController = new ListarTurnoController(listarTurnoPostgresRepository);
+  return new LogControllerDecorator(listarTurnoController);
 };
