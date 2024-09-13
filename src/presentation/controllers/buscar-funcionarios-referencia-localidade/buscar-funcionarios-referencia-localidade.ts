@@ -20,7 +20,7 @@ export class BuscarFuncionarioReferenciaLocalidadeAgrupadaController implements 
 
   async handle(httpRequest: HttpRequest): Promise<HttpResponse> {
     try {
-      const { localidadeId, referencia, showProgress, mostrarPendencias, cartaoStatusId, showSummary } = httpRequest?.query;
+      const { localidadeId, referencia, showProgress, mostrarPendencias, cartaoStatusIds, showSummary } = httpRequest?.query;
 
       if (!localidadeId) return badRequest(new FuncionarioParamError("Falta localidade!"));
 
@@ -28,8 +28,17 @@ export class BuscarFuncionarioReferenciaLocalidadeAgrupadaController implements 
 
       if (!moment(referencia).isValid()) return badRequest(new FuncionarioParamError("Data da referência inválida!"));
 
-      if (cartaoStatusId)
-        if (!Number.isInteger(Number(cartaoStatusId))) return badRequest(new FuncionarioParamError("Status do cartão é número!"));
+      let cartaoStatusIdsFormatado = [];
+      if (cartaoStatusIds) {
+        if (!JSON.parse(cartaoStatusIds)?.length) return badRequest(new FuncionarioParamError("Cartão status ids é um array!"));
+        for (const cartaoStatusId of JSON.parse(cartaoStatusIds)) {
+          console.log(Number.isInteger(Number(cartaoStatusId)));
+          if (!Number.isInteger(Number(cartaoStatusId)))
+            return badRequest(new FuncionarioParamError("Status do cartão é número!"));
+
+          cartaoStatusIdsFormatado.push(Number(cartaoStatusId));
+        }
+      }
 
       const localidade = await this.buscarFuncionarioReferenciaLocalidadePostgresRepository.findFisrtLocalidade({ localidadeId });
       if (!localidade) return notFoundRequest(new FuncionarioParamError(`Localidade ${localidadeId} não encontrada!`));
@@ -46,7 +55,7 @@ export class BuscarFuncionarioReferenciaLocalidadeAgrupadaController implements 
       let funcionarios = await this.buscarFuncionarioReferenciaLocalidadePostgresRepository.findManyFuncionarios({
         data: new Date(referencia),
         localidadeId,
-        statusId: cartaoStatusId ? Number(cartaoStatusId) : undefined,
+        statusIds: cartaoStatusIds ? cartaoStatusIdsFormatado : undefined,
       });
 
       const output: {
@@ -140,6 +149,7 @@ export class BuscarFuncionarioReferenciaLocalidadeAgrupadaController implements 
                   lancamentos: dia.cartao_dia_lancamentos,
                   statusId: dia.statusId,
                 })),
+                statusId: cartao.statusId,
               },
             });
           }
