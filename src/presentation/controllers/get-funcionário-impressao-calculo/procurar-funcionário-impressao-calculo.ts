@@ -257,17 +257,34 @@ export class GetFuncionarioImpressaoCalculoController implements Controller {
           const eventosJustificativa: {
             id: number;
             tipoId: number;
+            tipo: string;
+            minutos: number;
           }[] = [];
 
-          const atestados: { id: number; statusId: number }[] = [];
+          const atestados: { id: number; statusId: number; tipo_status: { nome: string } | null }[] = [];
           dia.eventos.map((evento) => {
-            if (evento.tipoId === 2 || evento.tipoId === 5 || evento.tipoId === 6 || evento.tipoId === 12) {
-              eventosJustificativa.push({ id: evento.id, tipoId: evento.tipoId });
+            if ((evento.tipoId === 2 && !evento.tratado) || evento.tipoId === 5 || evento.tipoId === 6 || evento.tipoId === 12) {
+              if (evento.minutos === 0) return undefined;
+              eventosJustificativa.push({
+                id: evento.id,
+                tipoId: evento.tipoId,
+                tipo: evento.tipo_eventos?.nome || "",
+                minutos: evento.minutos,
+              });
               if (evento.atestado_funcionario) {
                 const exist = atestados.some((atestado) => evento.atestado_funcionario?.id === atestado.id);
-                if (!exist) atestados.push(evento.atestado_funcionario);
+                if (!exist)
+                  atestados.push({
+                    ...evento.atestado_funcionario,
+                  });
               }
             }
+          });
+
+          dia.atestado_abonos.map((abono) => {
+            const existAtestado = atestados.some((atestado) => atestado.id === abono.atestado_funcionario.id);
+
+            if (!existAtestado) atestados.push(abono.atestado_funcionario);
           });
 
           return {

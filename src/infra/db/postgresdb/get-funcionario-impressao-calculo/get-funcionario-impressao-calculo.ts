@@ -21,8 +21,28 @@ export class FuncionarioImpressaoCalculoPostgresRepository {
               },
             },
             cartao_dia_status: true,
-            eventos: { include: { atestado_funcionario: { select: { id: true, statusId: true } } } },
-            atestado_abonos: true,
+            eventos: {
+              include: {
+                atestado_funcionario: { select: { id: true, statusId: true, tipo_status: { select: { nome: true } } } },
+                tipo_eventos: { select: { nome: true } },
+              },
+            },
+            atestado_abonos: {
+              select: {
+                atestado_funcionario: {
+                  select: {
+                    id: true,
+                    statusId: true,
+                    tipo_status: {
+                      select: {
+                        nome: true,
+                      },
+                    },
+                  },
+                },
+                minutos: true,
+              },
+            },
           },
           orderBy: { id: "asc" },
         },
