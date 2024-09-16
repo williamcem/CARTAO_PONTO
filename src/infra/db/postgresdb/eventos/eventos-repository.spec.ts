@@ -3,16 +3,16 @@ import { describe, expect, test } from "vitest";
 import { CriarEventosPostgresRepository } from "./eventos-repository";
 import { RecalcularTurnoController } from "../../../../presentation/controllers/recalcular-turno/recalcular-turno";
 import { RecalcularTurnoPostgresRepository } from "../recalcular-turno/recalcular-turno";
-import { CompensacaoEventoRepository } from "../compensacao-eventos-automaticos-repository/compensacao-eventos-automaticos-repository";
-
+/* import { CompensacaoEventoRepository } from "../compensacao-eventos-automaticos-repository/compensacao-eventos-automaticos-repository";
+ */
 describe("Gerar Eventos", () => {
   const recalcularTurnoPostgresRepository = new RecalcularTurnoPostgresRepository();
   const recalcularTurnoController = new RecalcularTurnoController(recalcularTurnoPostgresRepository);
-  const compensacaoEventoRepository = new CompensacaoEventoRepository();
-  const criarEventosPostgresRepository = new CriarEventosPostgresRepository(
+/*   const compensacaoEventoRepository = new CompensacaoEventoRepository();
+ */  const criarEventosPostgresRepository = new CriarEventosPostgresRepository(
     recalcularTurnoController,
-    compensacaoEventoRepository,
-  );
+/*     compensacaoEventoRepository
+ */  );
 
   test("Teste carga 18.00;23.30;00.30;01.54;01.09 -- Somente o segundo periodo, cargaHor 414", async () => {
     const lancamentos = [
@@ -880,11 +880,11 @@ describe("Gerar Eventos", () => {
 describe("Achar Regra", () => {
   const recalcularTurnoPostgresRepository = new RecalcularTurnoPostgresRepository();
   const recalcularTurnoController = new RecalcularTurnoController(recalcularTurnoPostgresRepository);
-  const compensacaoEventoRepository = new CompensacaoEventoRepository();
-  const criarEventosPostgresRepository = new CriarEventosPostgresRepository(
+/*   const compensacaoEventoRepository = new CompensacaoEventoRepository();
+ */  const criarEventosPostgresRepository = new CriarEventosPostgresRepository(
     recalcularTurnoController,
-    compensacaoEventoRepository,
-  );
+/*     compensacaoEventoRepository
+ */  );
 
   test("1ª", async () => {
     const regra = criarEventosPostgresRepository.acharRegraMinutosResiduais({
@@ -1016,11 +1016,11 @@ describe("Achar Regra", () => {
 describe("Localizar horario fora do previsto", () => {
   const recalcularTurnoPostgresRepository = new RecalcularTurnoPostgresRepository();
   const recalcularTurnoController = new RecalcularTurnoController(recalcularTurnoPostgresRepository);
-  const compensacaoEventoRepository = new CompensacaoEventoRepository();
-  const criarEventosPostgresRepository = new CriarEventosPostgresRepository(
+/*   const compensacaoEventoRepository = new CompensacaoEventoRepository();
+ */  const criarEventosPostgresRepository = new CriarEventosPostgresRepository(
     recalcularTurnoController,
-    compensacaoEventoRepository,
-  );
+/*     compensacaoEventoRepository
+ */  );
 
   test("Entrada e saida não está na jornada", () => {
     const result = criarEventosPostgresRepository.localizarHorarioForaDaJornadaPrevista({
