@@ -64,14 +64,16 @@ export class BuscarFuncionarioReferenciaLocalidadeAgrupadaController implements 
         identificacao: string;
         andamento?: number;
         cartaoId: number;
-        statusId: number;
         turno: { id: number; nome: string };
         diasSemLancamento?: [];
         lancamentosNaoValidado?: [];
         ocorrenciasNaoTratada?: [];
         resumo?: { diurno: { ext1: number; ext2: number; ext3: number }; noturno: { ext1: number; ext2: number; ext3: number } };
         pendencias?: any;
-        statusName: string;
+        cartao: {
+          status: { nome: string };
+          statusId: number;
+        };
       }[] = [];
 
       for (const funcionario of funcionarios) {
@@ -174,11 +176,10 @@ export class BuscarFuncionarioReferenciaLocalidadeAgrupadaController implements 
           identificacao: funcionario.identificacao,
           nome: funcionario.nome,
           cartaoId: funcionario.cartao[0].id,
-          statusId: funcionario.cartao[0].statusId,
           turno: funcionario.turno,
           resumo,
           pendencias,
-          statusName: funcionario.cartao[0].cartao_status?.nome || "",
+          cartao: { status: { nome: funcionario.cartao[0].cartao_status?.nome || "" }, statusId: funcionario.cartao[0].statusId },
         });
       }
 
