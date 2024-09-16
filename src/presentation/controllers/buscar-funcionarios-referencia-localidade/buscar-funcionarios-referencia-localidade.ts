@@ -32,7 +32,6 @@ export class BuscarFuncionarioReferenciaLocalidadeAgrupadaController implements 
       if (cartaoStatusIds) {
         if (!JSON.parse(cartaoStatusIds)?.length) return badRequest(new FuncionarioParamError("Cartão status ids é um array!"));
         for (const cartaoStatusId of JSON.parse(cartaoStatusIds)) {
-          console.log(Number.isInteger(Number(cartaoStatusId)));
           if (!Number.isInteger(Number(cartaoStatusId)))
             return badRequest(new FuncionarioParamError("Status do cartão é número!"));
 
@@ -72,6 +71,7 @@ export class BuscarFuncionarioReferenciaLocalidadeAgrupadaController implements 
         ocorrenciasNaoTratada?: [];
         resumo?: { diurno: { ext1: number; ext2: number; ext3: number }; noturno: { ext1: number; ext2: number; ext3: number } };
         pendencias?: any;
+        statusName: string;
       }[] = [];
 
       for (const funcionario of funcionarios) {
@@ -178,6 +178,7 @@ export class BuscarFuncionarioReferenciaLocalidadeAgrupadaController implements 
           turno: funcionario.turno,
           resumo,
           pendencias,
+          statusName: funcionario.cartao[0].cartao_status?.nome || "",
         });
       }
 
