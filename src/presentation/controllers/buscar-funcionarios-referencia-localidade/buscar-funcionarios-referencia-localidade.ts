@@ -72,6 +72,9 @@ export class BuscarFuncionarioReferenciaLocalidadeAgrupadaController implements 
         ocorrenciasNaoTratada?: [];
         resumo?: { diurno: { ext1: number; ext2: number; ext3: number }; noturno: { ext1: number; ext2: number; ext3: number } };
         pendencias?: any;
+        cartao: {
+          status: { nome: string };
+        };
       }[] = [];
 
       for (const funcionario of funcionarios) {
@@ -178,6 +181,7 @@ export class BuscarFuncionarioReferenciaLocalidadeAgrupadaController implements 
           turno: funcionario.turno,
           resumo,
           pendencias,
+          cartao: { status: { nome: funcionario.cartao[0].cartao_status?.nome || "" } },
         });
       }
 
