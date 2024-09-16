@@ -34,6 +34,7 @@ export class BuscarFuncionarioReferenciaLocalidadePostgresRepository {
                 },
               },
             },
+            cartao_status: { select: { nome: true } },
           },
           where: {
             referencia: input.data,
