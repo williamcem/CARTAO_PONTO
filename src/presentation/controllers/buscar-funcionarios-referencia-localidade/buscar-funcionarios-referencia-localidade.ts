@@ -72,7 +72,6 @@ export class BuscarFuncionarioReferenciaLocalidadeAgrupadaController implements 
         pendencias?: any;
         cartao: {
           status: { nome: string };
-          statusId: number;
         };
       }[] = [];
 
