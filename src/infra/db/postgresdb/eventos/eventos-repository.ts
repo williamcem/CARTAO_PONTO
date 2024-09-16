@@ -5,15 +5,15 @@ import { prisma } from "@infra/database/Prisma";
 
 import { AdicionarEventos } from "../../../../data/usecase/add-eventos/add-eventos";
 import { RecalcularTurnoController } from "../../../../presentation/controllers/recalcular-turno/recalcular-turno";
-import { CompensacaoEventoRepository } from "../compensacao-eventos-automaticos-repository/compensacao-eventos-automaticos-repository";
-import { criarEventoIntervaloEntrePeriodos } from "./intervaloEntrePeriodos";
+/* import { CompensacaoEventoRepository } from "../compensacao-eventos-automaticos-repository/compensacao-eventos-automaticos-repository";
+ */import { criarEventoIntervaloEntrePeriodos } from "./intervaloEntrePeriodos";
 export class CriarEventosPostgresRepository implements AdicionarEventos {
   private prisma: PrismaClient;
 
   constructor(
     private readonly recalcularTurnoController: RecalcularTurnoController,
-    private compensacaoEventoRepository: CompensacaoEventoRepository,
-  ) {
+/*     private compensacaoEventoRepository: CompensacaoEventoRepository,
+ */  ) {
     this.prisma = prisma;
   }
   public porcentagemAdicionalNoturno = 0.14;
@@ -119,10 +119,10 @@ export class CriarEventosPostgresRepository implements AdicionarEventos {
       }),
     });
 
-    // Compensar eventos após a criação dos novos eventos
-    for (const evento of newEventosData) {
+    // Compensar eventos após a criação dos novos eventos, comentadao no, pois a forma como será deverá ser discutida ainda
+/*     for (const evento of newEventosData) {
       await this.compensacaoEventoRepository.compensarEventos(evento.cartaoDiaId);
-    }
+    } */
 
     return true;
   }
