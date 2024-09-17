@@ -307,6 +307,7 @@ model atestado_funcionario {
   nomeFuncionario           String    @default("")
   ocupacaoId                Int?
   crm                       String?
+  diasAusencia              Int       @default(1)
   createAt                  DateTime
   updateAt                  DateTime
 

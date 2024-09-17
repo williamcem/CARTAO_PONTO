@@ -52,6 +52,7 @@ export class RespaldarController implements Controller {
         ocupacaoId,
         crm,
         funcao,
+        diasAusencia,
       }: {
         id: number;
         data: Date;
@@ -79,11 +80,14 @@ export class RespaldarController implements Controller {
         ocupacaoId: number;
         funcao: number;
         crm: string;
+        diasAusencia?: number;
       } = httpRequest?.body;
 
       if (!id) return badRequest(new FuncionarioParamError("Falta id do periodo!"));
       if (!statusId) return badRequest(new FuncionarioParamError("Falta status!"));
       if (!userName) return badRequest(new FuncionarioParamError("Falta usuário para lançar cartão"));
+      if (diasAusencia)
+        if (!Number.isInteger(diasAusencia)) return badRequest(new FuncionarioParamError("Dia ausência é número!"));
 
       const atestado = await this.respaldarAtestadoPostgresRepository.findfirst({ id });
 
@@ -159,6 +163,7 @@ export class RespaldarController implements Controller {
               tipoGrauParentescoId,
               tipoId,
               trabalhou_dia,
+              diasAusencia,
             });
 
             if (!atualizado) return serverError();
@@ -215,6 +220,7 @@ export class RespaldarController implements Controller {
                   tipoGrauParentescoId,
                   tipoId,
                   trabalhou_dia,
+                  diasAusencia,
                 },
               },
               userName,
@@ -299,6 +305,7 @@ export class RespaldarController implements Controller {
               tipoId,
               trabalhou_dia,
               eventos,
+              diasAusencia,
             });
 
             if (!atualizado) return serverError();
@@ -475,6 +482,7 @@ export class RespaldarController implements Controller {
       funcao?: number;
       crm?: string;
       data?: Date;
+      diasAusencia?: number;
     };
     userName: string;
     dias: IDia[];
@@ -576,6 +584,7 @@ export class RespaldarController implements Controller {
       tipoId: input.atestado.tipoId,
       trabalhou_dia: input.atestado.trabalhou_dia,
       eventos: { createMany: novosEventos, updateMany: atualizacaoEventos },
+      diasAusencia: input.atestado.diasAusencia,
     });
 
     if (!atualizado) return "Erro ao atualizar atestado";
