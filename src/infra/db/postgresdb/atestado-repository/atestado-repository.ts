@@ -83,6 +83,7 @@ export class AtestadoRepository implements AddAtestado {
             crm: input.crm,
             createAt: moment().utc(true).toDate(),
             updateAt: moment().utc(true).toDate(),
+            diasAusencia: input.diasAusencia,
           },
         });
 
