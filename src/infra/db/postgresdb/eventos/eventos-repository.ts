@@ -6,14 +6,15 @@ import { prisma } from "@infra/database/Prisma";
 import { AdicionarEventos } from "../../../../data/usecase/add-eventos/add-eventos";
 import { RecalcularTurnoController } from "../../../../presentation/controllers/recalcular-turno/recalcular-turno";
 /* import { CompensacaoEventoRepository } from "../compensacao-eventos-automaticos-repository/compensacao-eventos-automaticos-repository";
- */import { criarEventoIntervaloEntrePeriodos } from "./intervaloEntrePeriodos";
+ */ import { criarEventoIntervaloEntrePeriodos } from "./intervaloEntrePeriodos";
 export class CriarEventosPostgresRepository implements AdicionarEventos {
   private prisma: PrismaClient;
 
   constructor(
     private readonly recalcularTurnoController: RecalcularTurnoController,
-/*     private compensacaoEventoRepository: CompensacaoEventoRepository,
- */  ) {
+    /*     private compensacaoEventoRepository: CompensacaoEventoRepository,
+     */
+  ) {
     this.prisma = prisma;
   }
   public porcentagemAdicionalNoturno = 0.14;
@@ -120,7 +121,7 @@ export class CriarEventosPostgresRepository implements AdicionarEventos {
     });
 
     // Compensar eventos após a criação dos novos eventos, comentadao no, pois a forma como será deverá ser discutida ainda
-/*     for (const evento of newEventosData) {
+    /*     for (const evento of newEventosData) {
       await this.compensacaoEventoRepository.compensarEventos(evento.cartaoDiaId);
     } */
 
@@ -667,68 +668,125 @@ export class CriarEventosPostgresRepository implements AdicionarEventos {
   }
 
   private async aplicarTolerancia10Minutos(input: { eventos: any[] }) {
+    // Primeiro, buscar os lançamentos associados
+    const lancamentos = await this.prisma.cartao_dia_lancamento.findMany({
+      include: {
+        cartao_dia: {
+          include: {
+            cartao: {
+              include: {
+                funcionario: true,
+              },
+            },
+          },
+        },
+      },
+      where: {
+        cartao_dia_id: input.eventos[0].cartaoDiaId, // Garantir que estamos buscando pelo cartaoDiaId correto
+      },
+      orderBy: [{ cartao_dia: { cartao: { funcionarioId: "asc" } } }, { cartao_dia_id: "asc" }, { periodoId: "asc" }],
+    });
+
+    if (lancamentos.length === 0) {
+      console.error("Nenhum lançamento encontrado.");
+      return input.eventos;
+    }
+
     const eventosAgrupadosPorDia: {
       cartaoDiaId: number;
       funcionarioId: number;
-      eventos: { hora: string; tipoId: number; minutos: number; periodoId: number }[];
+      lancamento: any;
+      eventos: {
+        hora: string;
+        tipoId: number;
+        minutos: number;
+        periodoId: number;
+        entrada?: Date;
+        saida?: Date;
+      }[];
     }[] = [];
 
-    input.eventos.map((evento) => {
-      const existIndex = eventosAgrupadosPorDia.findIndex((eventoAgrupado) => eventoAgrupado.cartaoDiaId === evento.cartaoDiaId);
+    // Agrupar eventos por dia e períodos
+    input.eventos.forEach((evento) => {
+      const index = eventosAgrupadosPorDia.findIndex((eventoAgrupado) => eventoAgrupado.cartaoDiaId === evento.cartaoDiaId);
 
-      if (existIndex === -1) {
+      if (index === -1) {
         eventosAgrupadosPorDia.push({
           cartaoDiaId: evento.cartaoDiaId,
           funcionarioId: evento.funcionarioId,
-          eventos: [{ hora: evento.hora, minutos: evento.minutos, tipoId: evento.tipoId, periodoId: evento.periodoId }],
+          lancamento: lancamentos.find((l) => l.cartao_dia.id === evento.cartaoDiaId),
+          eventos: [
+            {
+              hora: evento.hora,
+              minutos: evento.minutos,
+              tipoId: evento.tipoId,
+              periodoId: evento.periodoId,
+              entrada: evento.entrada,
+              saida: evento.saida,
+            },
+          ],
         });
       } else {
-        eventosAgrupadosPorDia[existIndex].eventos.push({
+        eventosAgrupadosPorDia[index].eventos.push({
           hora: evento.hora,
           minutos: evento.minutos,
           tipoId: evento.tipoId,
           periodoId: evento.periodoId,
+          entrada: evento.entrada,
+          saida: evento.saida,
         });
       }
     });
 
+    // Processar os eventos agrupados e aplicar a tolerância de 10 minutos
     for (const eventoAgrupado of eventosAgrupadosPorDia) {
       const dia = await this.prisma.cartao_dia.findFirst({ where: { id: eventoAgrupado.cartaoDiaId } });
       if (dia?.cargaHor) {
         let minutosTrabalhados = 0;
-        let minutosTrabalhadosPrimeiroPeriodo = 0;
-        let minutosTrabalhadosSegundoPeriodo = 0;
 
-        eventoAgrupado.eventos.map((evento) => {
+        // Somar os minutos trabalhados
+        eventoAgrupado.eventos.forEach((evento) => {
           if (evento.tipoId === 1 || evento.tipoId === 4 || evento.tipoId === 12 || evento.tipoId === 14) {
-            if (evento.tipoId === 14) evento.minutos = evento.minutos * 0.14;
             minutosTrabalhados += evento.minutos;
-            if (evento.periodoId === 1) minutosTrabalhadosPrimeiroPeriodo += evento.minutos;
-            if (evento.periodoId === 2) minutosTrabalhadosSegundoPeriodo += evento.minutos;
           }
         });
 
         let diferencaComCargaHoraria = dia?.cargaHor - minutosTrabalhados;
 
         if (diferencaComCargaHoraria >= -10 && diferencaComCargaHoraria <= 10) {
+          // Remover eventos negativos se a diferença com a carga horária for aceitável
           const removerNegativoIndex: number[] = [];
-          input.eventos.map((evento, index) => {
+          input.eventos.forEach((evento, index) => {
             if (evento.cartaoDiaId === eventoAgrupado.cartaoDiaId && (evento.minutos < 0 || evento.tipoId === 4)) {
-              if (evento.tipoId === 4) {
-                diferencaComCargaHoraria += evento.minutos;
-              }
               removerNegativoIndex.push(index);
             }
           });
-          input.eventos = input.eventos.filter((_, index) => !removerNegativoIndex.find((negativo) => negativo === index));
 
+          input.eventos = input.eventos.filter((_, index) => !removerNegativoIndex.includes(index));
+
+          // Extraindo o primeiro e o último horário da cargaHorariaCompleta
+          const cargaHorariaCompletaArray = dia.cargaHorariaCompleta.split(";").map((item) => item.replace(".", ":"));
+
+          // Verificar se a pessoa tem dois períodos beseado com comprimnto do array se tiver mas de um 00:00
+          const temDoisPeriodos = cargaHorariaCompletaArray[2] !== "00:00";
+
+          // Filtrar os horários diferentes de '00:00'
+          const horariosValidos = cargaHorariaCompletaArray.filter((horario) => horario !== "00:00");
+
+          // Se houver apenas um período, pegar o último horário válido
+          const primeiroHorario = horariosValidos[0]; // Exemplo: '07:12'
+          const ultimoHorarioValido = temDoisPeriodos
+            ? cargaHorariaCompletaArray[3] // Horário do segundo período, quando tem dois periodos
+            : cargaHorariaCompletaArray[1]; // Horário de saída do primeiro período, quando só tiver um
+
+          // Criar evento de abono com horários corretamente formatados
           if (diferencaComCargaHoraria !== 0) {
             input.eventos.push({
               funcionarioId: eventoAgrupado.funcionarioId,
               cartaoDiaId: eventoAgrupado.cartaoDiaId,
               minutos: diferencaComCargaHoraria,
-              tipoId: 12,
-              hora: "ABONO",
+              tipoId: 12, // Evento de Abono
+              hora: `${primeiroHorario} - ${ultimoHorarioValido}`, // Definindo o horário do evento de abono
             });
           }
         }
@@ -984,7 +1042,7 @@ export class CriarEventosPostgresRepository implements AdicionarEventos {
                   cartaoDiaId: eventoAgrupado.cartaoDiaId,
                   minutos: Math.abs(diferencaComCargaHoraria),
                   tipoId: 12,
-                  hora: `ABONO`,
+                  hora: this.ordenarHorario({ inicio: moment.utc(noturno.inicio), fim: moment.utc(noturno.final) }),
                   periodoId: lancamento.periodoId,
                 });
 
