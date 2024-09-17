@@ -495,7 +495,7 @@ export class CriarEventosPostgresRepository implements AdicionarEventos {
       if (!temApenasUmPeriodo) {
         const eventoExcedentePositivo = {
           cartaoDiaId: lancamento.cartao_dia.id,
-          hora: "aqui 2",
+          hora: this.ordenarHorario({ inicio: entrada, fim: horarioSaidaEsperado }),
           tipoId: 1,
           funcionarioId: lancamento.cartao_dia.cartao.funcionario.id,
           minutos: saida.diff(horarioSaidaEsperado, "minutes"),
@@ -518,7 +518,7 @@ export class CriarEventosPostgresRepository implements AdicionarEventos {
       // Extrai a quantidade de lamçamentos feito no dia
       const qtdeLancamento = lancamentos?.filter((lanc: any) => lanc.cartao_dia.id === lancamento.cartao_dia.id).length;
 
-      if (!temApenasUmPeriodo || qtdeLancamento === 2) {
+      if (temApenasUmPeriodo && qtdeLancamento === 2) {
         const eventoPeriodoEsperado = {
           cartaoDiaId: lancamento.cartao_dia.id,
           hora: this.ordenarHorario({ inicio: horarioEntradaSegundoPeriodo, fim: saida }),
