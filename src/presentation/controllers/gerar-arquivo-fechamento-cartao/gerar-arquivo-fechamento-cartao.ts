@@ -119,7 +119,7 @@ export class GerarArquivoFechamentoCartaoController {
 
     cartoesParaExportar.map(
       (cartao) =>
-        (data += `${cartao.identificacao};${cartao.data};PAGAR;DIURNO;${cartao.pagar.diurno.ext1};${cartao.pagar.diurno.ext2};${cartao.pagar.diurno.ext3};NOTURNO;${cartao.pagar.noturno.ext1};${cartao.pagar.noturno.ext2};${cartao.pagar.noturno.ext3};COMPENSAR;DIURNO;${cartao.compensar.diurno.ext1};${cartao.compensar.diurno.ext2};${cartao.compensar.diurno.ext3};NOTURNO;${cartao.compensar.noturno.ext1};${cartao.compensar.noturno.ext2};${cartao.compensar.noturno.ext3}\n`),
+        (data += `${cartao.identificacao};${cartao.data};PAGAR;DIURNO;${cartao.pagar.diurno.ext1};${cartao.pagar.diurno.ext2};${cartao.pagar.diurno.ext3};NOTURNO;${cartao.pagar.noturno.ext1};${cartao.pagar.noturno.ext2};${cartao.pagar.noturno.ext3}\n${cartao.identificacao};${cartao.data};COMPENSAR;DIURNO;${cartao.compensar.diurno.ext1};${cartao.compensar.diurno.ext2};${cartao.compensar.diurno.ext3};NOTURNO;${cartao.compensar.noturno.ext1};${cartao.compensar.noturno.ext2};${cartao.compensar.noturno.ext3}\n`),
     );
 
     return { body: Buffer.from(data, "utf-8"), statusCode: 200, type: "txt" };
