@@ -101,7 +101,11 @@ export class LancarDiaControllerNovo implements Controller {
         });
 
         if (!saved) {
-          return badRequest(new FuncionarioParamError(`Lançamento já existente para o período ${periodoId}.`));
+          return badRequest(
+            new FuncionarioParamError(
+              `Lançamento já existente para o período ${periodoId}. Em caso de erro de digitação apague a linha e faça um novo lançamento`,
+            ),
+          );
         }
       }
 
