@@ -68,6 +68,7 @@ export class ListarTodosAtestadoRepsository implements ListarTodosAtestados {
         entrada: valor.entrada,
         saida: valor.saida,
       })),
+      diasAusencia: atestado.diasAusencia,
     }));
   }
 }

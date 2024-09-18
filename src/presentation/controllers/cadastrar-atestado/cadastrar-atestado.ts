@@ -41,13 +41,18 @@ export class AtestadoController implements Controller {
         crm,
       } = httpRequest.body;
 
+      if (httpRequest?.body?.dias) {
+        if (!Number.isInteger(httpRequest?.body?.dias)) return badRequest(new FuncionarioParamError("Dias é número!"));
+      }
+      let diasAusencia = httpRequest?.body?.diasAusencia || 1;
+
       if (!userName) return badRequest(new FuncionarioParamError("Falta Usuário!"));
       if (!tipoId) return badRequest(new FuncionarioParamError("Falta o tipo do atestado!"));
       if (!funcionarioId) return badRequest(new FuncionarioParamError("Falta funcionárioId!"));
       if (!acao) return badRequest(new FuncionarioParamError("Falta escolher a ação caso seja recusado!"));
       if (!data) return badRequest(new FuncionarioParamError("Falta a data do atestado!"));
 
-      if (tipoId === 1 && !tipoAcompanhanteId && (!sintomas && !grupo_cid)) {
+      if (tipoId === 1 && !tipoAcompanhanteId && !sintomas && !grupo_cid) {
         return badRequest(new FuncionarioParamError("Faltam os sintomas ou o grupo CID"));
       }
 
@@ -101,6 +106,7 @@ export class AtestadoController implements Controller {
         exame: exame ? exame.toUpperCase() : undefined,
         tipoGrauParentescoId,
         crm,
+        diasAusencia,
       });
 
       if (!atestadoSalvo) throw new Error("Erro ao salvar atestado!");

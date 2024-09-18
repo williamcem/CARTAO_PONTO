@@ -103,6 +103,7 @@ export class RespaldarAtestadoPostgresRepository {
         atestadoFuncionarioId?: number | null;
       }[];
     };
+    diasAusencia?: number;
   }): Promise<boolean> {
     const queries: prismaPromise[] = [];
 
@@ -143,6 +144,7 @@ export class RespaldarAtestadoPostgresRepository {
           tipoGrauParentescoId: input.tipoGrauParentescoId,
           tipoId: input.tipoId,
           updateAt: moment().utc(true).toDate(),
+          diasAusencia: input.diasAusencia,
         },
       }),
     );
