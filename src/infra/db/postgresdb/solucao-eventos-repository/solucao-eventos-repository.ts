@@ -83,8 +83,6 @@ export class SolucaoEventoRepository {
             }),
           );
 
-          console.log(`Hora do evento com minutos entre -1 e -5: ${evento.hora}`);
-
           const minutos = tipoId === 3 ? 0 : Math.abs(evento.minutos); // Define minutos como 0 para tipoId 3 e positivo para tipoId 6 ou 5
 
           const existDuplicateCreate = create.some(

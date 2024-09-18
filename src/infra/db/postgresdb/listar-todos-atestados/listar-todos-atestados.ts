@@ -12,8 +12,6 @@ export class ListarTodosAtestadoRepsository implements ListarTodosAtestados {
 
   public async listarTodos(funcionarioId: number): Promise<any[]> {
     const funcionarioIdConvertido = Number(funcionarioId);
-    console.log("funcionarioId Original:", funcionarioId, typeof funcionarioId); // Valor original
-    console.log("funcionarioId Valor Convertido:", funcionarioIdConvertido, typeof funcionarioIdConvertido); // Verificar a conversão
 
     const atestados = await this.prisma.atestado_funcionario.findMany({
       where: {
