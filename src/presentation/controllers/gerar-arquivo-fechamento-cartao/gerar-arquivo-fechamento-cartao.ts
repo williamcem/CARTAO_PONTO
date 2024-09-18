@@ -15,6 +15,7 @@ export class GerarArquivoFechamentoCartaoController {
 
     const cartoes = await this.gerarArquivoFechamentoCartaoPostgresRepository.findManyCartao({
       referencia: referencia.toDate(),
+      statusId: 2,
     });
 
     const cartoesParaExportar: {

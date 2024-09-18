@@ -9,10 +9,11 @@ export class GerarArquivoFechamentoCartaoPostgresRepository {
     this.prisma = prisma;
   }
 
-  public async findManyCartao(input: { referencia: Date }) {
+  public async findManyCartao(input: { referencia: Date; statusId: number }) {
     return await this.prisma.cartao.findMany({
       where: {
         referencia: input.referencia,
+        statusId: input.statusId,
       },
       select: {
         id: true,
