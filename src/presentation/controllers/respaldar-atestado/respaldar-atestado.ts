@@ -544,14 +544,15 @@ export class RespaldarController implements Controller {
             break;
         }
 
-        novosEventos.push({
-          cartaoDiaId: abono.cartaoDiaId,
-          hora: "AÇÃO GERENTE",
-          tipoId: input.atestado.acao || 0,
-          funcionarioId,
-          tratado: true,
-          minutos,
-        });
+        if (input.atestado.acao)
+          novosEventos.push({
+            cartaoDiaId: abono.cartaoDiaId,
+            hora: "AÇÃO GERENTE",
+            tipoId: input.atestado.acao,
+            funcionarioId,
+            tratado: true,
+            minutos,
+          });
       }
     }
 
