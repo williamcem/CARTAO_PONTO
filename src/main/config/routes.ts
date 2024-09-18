@@ -57,6 +57,7 @@ import consultarAgrupamentoLocalidade from "../routes/horarios/consultar-agrupam
 import associarOcorrenciaComAtestado from "../routes/horarios/associar-ocorrencia-com-atestado";
 import desligarFuncionario from "../routes/horarios/desligar-funcionario";
 import mudarStatusCartaoAfastado from "../routes/horarios/mudar-status-cartao-afastado";
+import gerarArquivoFechamentoCartao from "../routes/horarios/gerar-arquivo-fechamento-cartao";
 
 export const setupRoutes = (app: Express): void => {
   const router = Router();
@@ -118,4 +119,5 @@ export const setupRoutes = (app: Express): void => {
   associarOcorrenciaComAtestado(router);
   desligarFuncionario(router);
   mudarStatusCartaoAfastado(router);
+  gerarArquivoFechamentoCartao(router);
 };
