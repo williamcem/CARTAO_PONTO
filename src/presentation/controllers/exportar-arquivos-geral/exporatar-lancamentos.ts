@@ -1,6 +1,5 @@
 import moment from "moment";
 import { exportarDadosParaArquivo } from "../../../main/exportacoes-geral/exportar-dados";
-import { Controller, HttpResponse } from "./export-protocols";
 import { Request, Response } from "express";
 
 export class ExportarController {
