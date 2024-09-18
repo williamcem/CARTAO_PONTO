@@ -1,13 +1,12 @@
-import { DbAddDelete } from "../../../data/usecase/delete-dia-horarios/db-add-delete";
-import { FuncionarioParamError } from "../../errors/Funcionario-param-error";
-import { badRequest, ok, serverError } from "../../helpers/http-helpers";
+import { DelDeleteRepository } from "../../../data/usecase/delete-dia-horarios/add-delete-repository";
+import { badRequestNovo, ok, serverError } from "../../helpers/http-helpers";
 import { Controller, HttpRequest, HttpResponse } from "./delete-protocols";
 
 export class DeleteController implements Controller {
-  private readonly dbAddDelete: DbAddDelete;
+  private readonly deleteRepository: DelDeleteRepository;
 
-  constructor(dbAddDelete: DbAddDelete) {
-    this.dbAddDelete = dbAddDelete;
+  constructor(deleteRepository: DelDeleteRepository) {
+    this.deleteRepository = deleteRepository;
   }
 
   async handle(httpRequest: HttpRequest): Promise<HttpResponse> {
@@ -15,14 +14,26 @@ export class DeleteController implements Controller {
       const { cartao_dia_id } = httpRequest.body; // Extrair o ID da requisição HTTP
 
       if (!cartao_dia_id) {
-        return badRequest(new FuncionarioParamError("ID do dia não fornecido"));
+        return badRequestNovo({ message: "ID do dia não fornecido" });
       }
 
-      await this.dbAddDelete.deleteById({ cartao_dia_id }); // Passar o ID extraído para deletar
+      // Buscar o cartao_dia para verificar o status do cartão
+      const cartaoDiaExists = await this.deleteRepository.findCartaoDiaById({ cartao_dia_id });
 
-      return ok({ message: "Registro deletado com sucesso" });
+      if (!cartaoDiaExists) {
+        return badRequestNovo({ message: "Cartão do dia não encontrado" });
+      }
+
+      // Deletar os lançamentos e eventos relacionados ao cartao_dia_id
+      const deletionResult = await this.deleteRepository.deleteById({ cartao_dia_id });
+
+      if (!deletionResult) {
+        return badRequestNovo({ message: "Impossível deletar registros de um cartão finalizado" });
+      }
+
+      return ok({ message: "Registros associados ao dia do cartão deletados com sucesso" });
     } catch (error) {
-      console.log(error);
+      console.error("Erro no controller ao tentar deletar registros:", error);
       return serverError();
     }
   }
