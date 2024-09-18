@@ -30,6 +30,11 @@ export class LancarDiaControllerNovo implements Controller {
         return badRequest(new FuncionarioParamError("Falta lista de lançamentos!"));
       } */
 
+      const finalizado = await this.lancarDiaPostgresRepository.isCartaoFinalizado(cartao_dia_id);
+      if (finalizado) {
+        return badRequest(new FuncionarioParamError("Impossível fazer novos lançamentos de cartão finalizado"));
+      }
+
       // Verificar a existência do cartão do dia
       const cartaoDia = await this.lancarDiaPostgresRepository.findCartaoDiaById(cartao_dia_id);
       if (!cartaoDia) return badRequest(new FuncionarioParamError("Cartão do dia não encontrado!"));

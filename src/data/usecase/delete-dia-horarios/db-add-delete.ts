@@ -8,7 +8,11 @@ export class DbAddDelete implements DelDelete {
     this.deldeleteRepository = deldeleteRepository;
   }
 
-  async deleteById(deleteData: DelDeleteModel): Promise<void> {
-    await this.deldeleteRepository.deleteById(deleteData);
+  async deleteById(deleteData: DelDeleteModel): Promise<boolean> {
+    return await this.deldeleteRepository.deleteById(deleteData);
+  }
+
+  async findCartaoDiaById(deleteData: DelDeleteModel): Promise<boolean> {
+    return await this.deldeleteRepository.findCartaoDiaById(deleteData);
   }
 }

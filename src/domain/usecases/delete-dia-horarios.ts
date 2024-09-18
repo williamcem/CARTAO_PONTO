@@ -5,5 +5,9 @@ export interface DelDeleteModel {
 }
 
 export interface DelDelete {
-  deleteById(deleteData: DeleteModel): Promise<void>;
+  deleteById(deleteData: DeleteModel): Promise<boolean>;
+}
+
+export interface DelDeleteDia {
+  findCartaoDiaById(deleteData: DelDeleteModel): Promise<boolean>;
 }
