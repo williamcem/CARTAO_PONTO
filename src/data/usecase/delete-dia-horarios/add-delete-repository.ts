@@ -1,5 +1,7 @@
 import { DeleteModel } from "../../../domain/models/delete-dia-horarios";
 
 export interface DelDeleteRepository {
-  deleteById(deleteData: DeleteModel): Promise<void>;
+  findCartaoDiaById(deleteData: DeleteModel): Promise<boolean>;
+
+  deleteById(deleteData: DeleteModel): Promise<boolean>;
 }

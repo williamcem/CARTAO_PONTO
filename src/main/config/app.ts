@@ -6,12 +6,15 @@ import { setupRoutes } from "./routes";
 import { setupTask } from "./tasks";
 
 const app = Express();
+
+app.use(cors());
+setupMiddlewares(app);
+
 app.use((req: Request, resp: Response, next: NextFunction) => {
   console.log(req.method, req.ip, req.url, req.body);
   next();
 });
-app.use(cors());
-setupMiddlewares(app);
+
 setupRoutes(app);
 setupTask();
 

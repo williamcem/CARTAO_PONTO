@@ -28,6 +28,7 @@ export interface AddAtestadoModel {
   exame?: string;
   tipoGrauParentescoId?: number;
   crm?: string;
+  diasAusencia: number;
 }
 
 export interface AddAtestado {

@@ -19,9 +19,6 @@ export class ListarAtestados60DiasRepository implements ListarAtestados60Dias {
     const atestados = await this.prisma.atestado_funcionario.findMany({
       where: {
         funcionarioId: Number(funcionarioId),
-        statusId: {
-          in: [2],
-        },
         data: {
           gte: sessentaDiasAtras,
           lte: hoje,
@@ -75,6 +72,7 @@ export class ListarAtestados60DiasRepository implements ListarAtestados60Dias {
       })),
       dias: atestado.inicio && atestado.fim ? moment(atestado.fim).diff(moment(atestado.inicio), "d") : 0,
       funcaoFuncionario: atestado.funcao.nome,
+      diasAusencia: atestado.diasAusencia,
     }));
   }
 }

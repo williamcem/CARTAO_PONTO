@@ -12,6 +12,10 @@ export class BuscarAlteracaoTurnoController implements Controller {
 
       if (!cartaoId) return badRequest(new FuncionarioParamError("Falta id do cartão"));
 
+      if (!cartaoId) return badRequest(new FuncionarioParamError("Falta id do cartão"));
+
+      if (!Number.isInteger(Number(cartaoId))) return badRequest(new FuncionarioParamError("Id do cartão é número"));
+
       const alteracoes = await this.buscarAlteracaoTurnoPostgresRepository.findMany({
         cartaoId: Number(cartaoId),
       });

@@ -84,7 +84,20 @@ export class LancarDiaPostgresRepositoryNovo implements LancarDia {
   public async findCartaoDiaById(cartao_dia_id: number): Promise<any> {
     const result = await this.prisma.cartao_dia.findUnique({
       where: { id: cartao_dia_id },
+      include: { cartao: true },
     });
     return result;
+  }
+
+  public async isCartaoFinalizado(cartao_dia_id: number): Promise<boolean> {
+    const cartaoDia = await this.findCartaoDiaById(cartao_dia_id);
+
+    if (!cartaoDia) return false; // Se o cartão não existir lança o erro do controler
+
+    if (cartaoDia.cartao.statusId === 1) {
+      return false;
+    }
+
+    return cartaoDia.statusId === 2 || cartaoDia.statusId === 6 || cartaoDia.statusId === 7 || cartaoDia.statusId === 11;
   }
 }
