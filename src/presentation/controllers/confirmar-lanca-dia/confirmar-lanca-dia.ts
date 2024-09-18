@@ -28,9 +28,6 @@ export class ConfirmarLancaDiaController implements Controller {
       let error = "";
 
       cartao_dia_lancamentos.map((lancamento, index: number) => {
-        console.log(lancamento.periodoId, !Number(lancamento.periodoId));
-        console.log(lancamento.entrada, !new Date(lancamento.entrada).getTime());
-        console.log(lancamento.saida, !new Date(lancamento.saida).getTime());
         if (!Number(lancamento.periodoId)) error = `${error}\nFalta periodo do lançamento no cartao_dia_lancamentos `;
 
         if (!new Date(lancamento.entrada).getTime())

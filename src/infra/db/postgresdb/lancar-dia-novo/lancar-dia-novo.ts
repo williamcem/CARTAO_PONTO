@@ -77,8 +77,6 @@ export class LancarDiaPostgresRepositoryNovo implements LancarDia {
       },
     });
 
-    console.log("Períodos conflitantes encontrados:", result);
-
     return result;
   }
 
@@ -87,9 +85,6 @@ export class LancarDiaPostgresRepositoryNovo implements LancarDia {
     const result = await this.prisma.cartao_dia.findUnique({
       where: { id: cartao_dia_id },
     });
-
-    console.log("Cartão dia encontrado pelo ID:", result);
-
     return result;
   }
 }

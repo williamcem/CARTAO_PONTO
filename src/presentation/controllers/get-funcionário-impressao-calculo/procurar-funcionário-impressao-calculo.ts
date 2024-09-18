@@ -892,9 +892,7 @@ export class GetFuncionarioImpressaoCalculoController implements Controller {
   }
 
   protected acharSaldo(input: { minutos: number; extra: number }) {
-    console.log("antigo saldo.diurno.ext1", input.extra);
     let saldoSupri = input.minutos + input.extra;
-    console.log("saldoSupri", saldoSupri);
     if (saldoSupri > 0) {
       input.minutos = 0;
       input.extra = saldoSupri;
@@ -902,9 +900,6 @@ export class GetFuncionarioImpressaoCalculoController implements Controller {
       input.minutos = saldoSupri;
       input.extra = 0;
     }
-
-    console.log("antigo saldo.diurno.ext1", input.extra);
-    console.log("novo saldoMinutos", input.minutos);
 
     return input;
   }
