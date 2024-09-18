@@ -20,7 +20,7 @@ export class ListarAtestados60DiasRepository implements ListarAtestados60Dias {
       where: {
         funcionarioId: Number(funcionarioId),
         statusId: {
-          in: [2],
+          in: [1, 2, 3],
         },
         data: {
           gte: sessentaDiasAtras,
