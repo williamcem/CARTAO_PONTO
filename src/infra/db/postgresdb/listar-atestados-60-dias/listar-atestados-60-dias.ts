@@ -75,6 +75,7 @@ export class ListarAtestados60DiasRepository implements ListarAtestados60Dias {
       })),
       dias: atestado.inicio && atestado.fim ? moment(atestado.fim).diff(moment(atestado.inicio), "d") : 0,
       funcaoFuncionario: atestado.funcao.nome,
+      diasAusencia: atestado.diasAusencia,
     }));
   }
 }
