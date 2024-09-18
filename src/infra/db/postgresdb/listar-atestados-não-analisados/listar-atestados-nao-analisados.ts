@@ -1,6 +1,5 @@
 import { PrismaClient } from "@prisma/client";
 
-import { ListarAtestado } from "../../../../data/usecase/add-listar-atestados/add-listar-atestados";
 import { prisma } from "../../../database/Prisma";
 
 export class ListarAtestadoRepsository {
@@ -69,6 +68,7 @@ export class ListarAtestadoRepsository {
         })),
         localidadeId: atestado.funcionario.localidadeId,
         cartaoId,
+        diasAusencia: atestado.diasAusencia,
       };
     });
   }
