@@ -360,8 +360,8 @@ export class GetFuncionarioImpressaoCalculoController implements Controller {
       noturno: { ext1: 0, ext2: 0, ext3: 0 },
     };
 
-    if (!input.dia.cargaHorariaTotal) return output;
-
+    /*     if (!input.dia.cargaHorariaTotal) return output;
+     */
     let minutosDiurnos = 0;
     let minutosNoturnos = 0;
     let existeFaltaNoturna = false;
