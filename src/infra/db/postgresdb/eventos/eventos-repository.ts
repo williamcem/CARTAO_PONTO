@@ -795,7 +795,7 @@ export class CriarEventosPostgresRepository implements AdicionarEventos {
 
         // Somar os minutos trabalhados
         eventoAgrupado.eventos.forEach((evento) => {
-          if (evento.tipoId === 1 || evento.tipoId === 4 || evento.tipoId === 12 || evento.tipoId === 14) {
+          if (evento.tipoId === 1 || /* evento.tipoId === 4 || */ evento.tipoId === 12 /* || evento.tipoId === 14 */) {
             minutosTrabalhados += evento.minutos;
           }
         });
