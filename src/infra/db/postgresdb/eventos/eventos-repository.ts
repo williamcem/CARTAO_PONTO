@@ -234,8 +234,8 @@ export class CriarEventosPostgresRepository implements AdicionarEventos {
     }
 
     {
-      eventos = await this.removerEventosNegativoIncorreto({ eventos });
-    }
+/*       eventos = await this.removerEventosNegativoIncorreto({ eventos });
+ */    }
 
     //Cria eventos adicional nortuno
     {
@@ -481,7 +481,7 @@ export class CriarEventosPostgresRepository implements AdicionarEventos {
       if (!temApenasUmPeriodo) {
         const eventoExcedentePositivo = {
           cartaoDiaId: lancamento.cartao_dia.id,
-          hora: this.ordenarHorario({ inicio: entrada, fim: horarioSaidaEsperado }),
+          hora: this.ordenarHorario({ inicio: horarioSaidaEsperado, fim: saida }),
           tipoId: 1,
           funcionarioId: lancamento.cartao_dia.cartao.funcionario.id,
           minutos: saida.diff(horarioSaidaEsperado, "minutes"),
