@@ -77,8 +77,6 @@ export class LancarDiaPostgresRepositoryNovo implements LancarDia {
       },
     });
 
-    console.log("Períodos conflitantes encontrados:", result);
-
     return result;
   }
 

@@ -44,9 +44,6 @@ export class AtestadoRepository implements AddAtestado {
           },
         });
 
-        // Log da data do cartão
-        console.log("Data do primeiro dia do cartão:", primeiroDiaCartao?.data);
-
         // Lança um erro se a data do atestado for anterior à primeira data de registro
         if (primeiroDiaCartao && new Date(input.data) < new Date(primeiroDiaCartao.data)) {
           throw new DataAtestadoInvalida(
@@ -89,8 +86,6 @@ export class AtestadoRepository implements AddAtestado {
 
         // Verifica se os arrays de horários estão definidos e têm o mesmo comprimento
         if (Array.isArray(horarioTrabalhadoInicio) && Array.isArray(horarioTrabalhadoFim)) {
-          console.log("horarioTrabalhadoInicio:", horarioTrabalhadoInicio);
-          console.log("horarioTrabalhadoFim:", horarioTrabalhadoFim);
           if (horarioTrabalhadoInicio.length !== horarioTrabalhadoFim.length) {
             throw new ComprimentoDeArray("Os horários de início e fim devem ter o mesmo comprimento.");
           }

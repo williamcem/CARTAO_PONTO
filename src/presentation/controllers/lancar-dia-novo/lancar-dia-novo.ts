@@ -85,7 +85,6 @@ export class LancarDiaControllerNovo implements Controller {
             periodoId,
           );
           if (conflictingPeriodos.length > 0) {
-            console.log(`Períodos conflitantes encontrados para o período ${periodoId}:`, conflictingPeriodos);
             return badRequest(new FuncionarioParamError(`Período já existente no período ${periodoId}!`));
           }
         }
@@ -110,9 +109,7 @@ export class LancarDiaControllerNovo implements Controller {
       }
 
       // Após os lançamentos, executar a geração de eventos
-      console.log("Iniciando processo de geração de eventos para o cartão:", cartao_dia_id);
       await this.criarEventosPostgresRepository.add({ identificacao: String(cartao_dia_id) });
-      console.log("Eventos gerados com sucesso para o cartão:", cartao_dia_id);
 
       // Chamar o LancarFaltaController para processar as faltas
       const lancarFaltaController = new LancarFaltaController(
