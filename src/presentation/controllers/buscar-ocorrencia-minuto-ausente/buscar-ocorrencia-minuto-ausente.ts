@@ -1,6 +1,5 @@
 import { BuscarOcorrenciaMinutoAusentePostgresRepository } from "@infra/db/postgresdb/buscar-ocorrencia-minuto-ausente/buscar-ocorrencia-minuto-ausente";
-import { FuncionarioParamError } from "../../errors/Funcionario-param-error";
-import { badRequest, badRequestNovo, notFoundNovo, notFoundRequest, ok, serverError } from "../../helpers/http-helpers";
+import { badRequestNovo, notFoundNovo, serverError } from "../../helpers/http-helpers";
 import { Controller, HttpRequest, HttpResponse } from "./buscar-ocorrencia-minuto-ausente-protocols";
 import moment from "moment";
 
