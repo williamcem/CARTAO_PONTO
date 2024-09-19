@@ -31,6 +31,8 @@ export class LancarFaltaPostgresRepository {
       tipoId: number;
       cartaoDiaId: number;
       funcionarioId: number;
+      inicio: Date;
+      fim: Date;
     }[],
   ) {
     const queries: prismaPromise[] = [];
@@ -44,6 +46,8 @@ export class LancarFaltaPostgresRepository {
             tipoId: evento.tipoId,
             cartaoDiaId: evento.cartaoDiaId,
             funcionarioId: evento.funcionarioId,
+            inicio: evento.inicio,
+            fim: evento.fim,
           },
         }),
       );
