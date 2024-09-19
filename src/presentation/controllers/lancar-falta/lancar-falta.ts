@@ -1,9 +1,12 @@
-import { LancarFaltaPostgresRepository } from "@infra/db/postgresdb/lancar-falta/lancar-falta";
-import { badRequest, ok, serverError } from "../../helpers/http-helpers";
-import { Controller, HttpRequest, HttpResponse } from "./lancar-falta-protocols";
-import { FuncionarioParamError } from "../../errors/Funcionario-param-error";
+import moment from "moment";
+
 import { CriarEventosPostgresRepository } from "@infra/db/postgresdb/eventos/eventos-repository";
+import { LancarFaltaPostgresRepository } from "@infra/db/postgresdb/lancar-falta/lancar-falta";
+
+import { FuncionarioParamError } from "../../errors/Funcionario-param-error";
+import { badRequest, ok, serverError } from "../../helpers/http-helpers";
 import { RecalcularTurnoController } from "../recalcular-turno/recalcular-turno";
+import { Controller, HttpRequest, HttpResponse } from "./lancar-falta-protocols";
 
 export class LancarFaltaController implements Controller {
   constructor(
@@ -22,7 +25,7 @@ export class LancarFaltaController implements Controller {
 
       if (!dia) return badRequest(new FuncionarioParamError("Dia não encontrado!"));
 
-      const eventosTrabalhados = dia?.eventos.filter((evento) => evento.tipoId == 1);
+      const eventosTrabalhados = dia?.eventos.filter((evento) => evento.tipoId === 1);
 
       const horariosDia = this.criarEventosPostgresRepository.pegarCargaHorarioCompleta(dia.cargaHorariaCompleta);
 
@@ -37,16 +40,41 @@ export class LancarFaltaController implements Controller {
           new FuncionarioParamError(`Não é possível criar falta com carga horária do dia de ${dia.cargaHor} minutos!`),
         );
 
-      const eventos: { cartaoDiaId: number; funcionarioId: number; hora: string; minutos: number; tipoId: number }[] = [];
+      const eventos: {
+        cartaoDiaId: number;
+        funcionarioId: number;
+        hora: string;
+        minutos: number;
+        tipoId: number;
+        inicio: Date;
+        fim: Date;
+      }[] = [];
 
       //Se não houver eventos trabalhados, gerar evento da carga horaria completa como indefinido
-      if (eventosTrabalhados?.length == 0) {
+      const inicio = this.criarEventosPostgresRepository.pegarHorarioCargaHoraria({
+        data: dia.data,
+        hora: horariosDia[0].hora,
+        minuto: horariosDia[0].minuto,
+      });
+
+      const fim = this.criarEventosPostgresRepository.pegarHorarioCargaHoraria({
+        data: dia.data,
+        hora: horariosDia[3].hora,
+        minuto: horariosDia[3].minuto,
+      });
+
+      if (eventosTrabalhados?.length === 0) {
+        if (fim.isBefore(inicio)) {
+          fim.add(1, "day");
+        }
         eventos.push({
           cartaoDiaId,
           funcionarioId: dia.cartao.funcionarioId,
           hora: `${this.formatoHoraMinuto(jornada.inicio)} - ${this.formatoHoraMinuto(jornada.fim)}`,
           minutos: -dia.cargaHor,
           tipoId: 2,
+          inicio: inicio.toDate(),
+          fim: fim.toDate(),
         });
       }
 
@@ -61,8 +89,8 @@ export class LancarFaltaController implements Controller {
 
       let saldoDia = minutosTrabalho - minutosAusencia - dia.cargaHor;
 
-      const existeLancamentoPeriodo1 = dia.cartao_dia_lancamentos.find((lancemento) => lancemento.periodoId == 1);
-      const existeLancamentoPeriodo2 = dia.cartao_dia_lancamentos.find((lancemento) => lancemento.periodoId == 2);
+      const existeLancamentoPeriodo1 = dia.cartao_dia_lancamentos.find((lancemento) => lancemento.periodoId === 1);
+      const existeLancamentoPeriodo2 = dia.cartao_dia_lancamentos.find((lancemento) => lancemento.periodoId === 2);
 
       //Salva ausência primeiro período
       if (eventos.length === 0 && !existeLancamentoPeriodo1 && existeLancamentoPeriodo2) {
@@ -72,6 +100,16 @@ export class LancarFaltaController implements Controller {
           fim: { hora: horariosDia[1].hora, minutos: horariosDia[1].minuto },
         });
 
+        const inicio = this.criarEventosPostgresRepository.pegarHorarioCargaHoraria({
+          data: dia.data,
+          hora: horariosDia[0].hora,
+          minuto: horariosDia[0].minuto,
+        });
+
+        const fim = moment(inicio);
+
+        fim.subtract(saldoDia, "minutes");
+
         if (existeMinutosNoturno.minutos !== 0) {
           eventos.push({
             cartaoDiaId,
@@ -79,6 +117,8 @@ export class LancarFaltaController implements Controller {
             hora: `${this.formatoHoraMinuto(horariosDia[0])} - ${this.formatoHoraMinuto(horariosDia[1])}`,
             minutos: 0,
             tipoId: 13,
+            inicio: inicio.toDate(),
+            fim: fim.toDate(),
           });
         }
         eventos.push({
@@ -87,6 +127,8 @@ export class LancarFaltaController implements Controller {
           hora: `${this.formatoHoraMinuto(horariosDia[0])} - ${this.formatoHoraMinuto(horariosDia[1])}`,
           minutos: saldoDia,
           tipoId: 2,
+          inicio: inicio.toDate(),
+          fim: fim.toDate(),
         });
       }
 
@@ -106,13 +148,25 @@ export class LancarFaltaController implements Controller {
           fim: { hora: horariosDia[3].hora, minutos: horariosDia[3].minuto },
         });
 
-        if (existeMinutosNoturno.minutos != 0) {
+        const fim = this.criarEventosPostgresRepository.pegarHorarioCargaHoraria({
+          data: dia.data,
+          hora: horariosDia[3].hora,
+          minuto: horariosDia[3].minuto,
+        });
+
+        const inicio = moment(fim);
+
+        inicio.add(saldoDia, "minutes");
+
+        if (existeMinutosNoturno.minutos !== 0) {
           eventos.push({
             cartaoDiaId,
             funcionarioId: dia.cartao.funcionarioId,
             hora: `${this.formatoHoraMinuto(horariosDia[2])} - ${this.formatoHoraMinuto(horariosDia[3])}`,
             minutos: 0,
             tipoId: 13,
+            inicio: inicio.toDate(),
+            fim: fim.toDate(),
           });
         }
 
@@ -122,13 +176,15 @@ export class LancarFaltaController implements Controller {
           hora: `${this.formatoHoraMinuto(horariosDia[2])} - ${this.formatoHoraMinuto(horariosDia[3])}`,
           minutos: saldoDia,
           tipoId: 2,
+          inicio: inicio.toDate(),
+          fim: fim.toDate(),
         });
       }
 
-      if (eventos.some((evento) => evento.minutos === 0 && evento.tipoId != 13))
+      if (eventos.some((evento) => evento.minutos === 0 && evento.tipoId !== 13))
         return badRequest(new FuncionarioParamError(`Evento de ausência já criado!`));
 
-      if (eventos.some((evento) => evento.minutos > 0 && evento.tipoId != 13))
+      if (eventos.some((evento) => evento.minutos > 0 && evento.tipoId !== 13))
         return badRequest(new FuncionarioParamError(`Não é possível gerar evento de ausência para horário positivo!`));
 
       const saved = await this.salvarEvento(eventos);
@@ -159,6 +215,8 @@ export class LancarFaltaController implements Controller {
       hora: string;
       minutos: number;
       tipoId: number;
+      inicio: Date;
+      fim: Date;
     }[],
   ) {
     for (const evento of input) {

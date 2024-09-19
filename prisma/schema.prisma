@@ -411,13 +411,15 @@ model descricaco_cid {
 }
 
 model eventos {
-  id                    Int     @id @default(autoincrement())
+  id                    Int       @id @default(autoincrement())
   cartaoDiaId           Int
   hora                  String
   funcionarioId         Int
   minutos               Int
   tipoId                Int?
-  tratado               Boolean @default(false)
+  tratado               Boolean   @default(false)
+  inicio                DateTime?
+  fim                   DateTime?
   atestadoFuncionarioId Int?
 
   tipo_eventos         tipo_eventos?         @relation(fields: [tipoId], references: [id], onDelete: Cascade)
