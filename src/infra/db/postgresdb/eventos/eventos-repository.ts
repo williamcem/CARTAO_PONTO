@@ -561,6 +561,11 @@ export class CriarEventosPostgresRepository implements AdicionarEventos {
 
       const execenteDescanso = descanso - eventoIntervalo.minutos;
 
+      // Verificar statusId de cartao_dia
+      if (lancamento.cartao_dia.statusId === 6 || lancamento.cartao_dia.statusId === 7 || lancamento.cartao_dia === 2) {
+        return;
+      }
+
       if (execenteDescanso < 0) {
         const carga = this.pegarCargaHorarioCompleta(lancamento.cartao_dia.cargaHorariaCompleta);
         const inicioDescanso = this.pegarHorarioCargaHoraria({
@@ -818,7 +823,7 @@ export class CriarEventosPostgresRepository implements AdicionarEventos {
           const horariosValidos = cargaHorariaCompletaArray.filter((horario) => horario !== "00:00");
 
           // Se houver apenas um período, pegar o último horário válido
-          const primeiroHorario = horariosValidos[0]; // Exemplo: '07:12'
+          const primeiroHorario = horariosValidos[0]; // Exemplo: '11:12'
           const ultimoHorarioValido = temDoisPeriodos
             ? cargaHorariaCompletaArray[3] // Horário do segundo período, quando tem dois periodos
             : cargaHorariaCompletaArray[1]; // Horário de saída do primeiro período, quando só tiver um
