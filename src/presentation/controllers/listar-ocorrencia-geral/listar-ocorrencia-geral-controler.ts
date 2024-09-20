@@ -1,10 +1,14 @@
 import { OcorrenciaGeralPostgresRepository } from "../../../infra/db/postgresdb/listar-ocorrencias-geral/listar-ocorrencias-repository";
 import { FuncionarioParamError, OcorrenciasNull } from "../../errors/Funcionario-param-error";
 import { badRequest, notFoundRequest, ok, serverError } from "../../helpers/http-helpers";
+import { BuscarOcorrenciaMinutoAusenteController } from "../buscar-ocorrencia-minuto-ausente/buscar-ocorrencia-minuto-ausente";
 import { Controller, HttpRequest, HttpResponse } from "./listar-ocorrencias-protocols";
 
 export class OcorrenciaGeralController implements Controller {
-  constructor(private readonly ocorrenciaGeralPostgresRepository: OcorrenciaGeralPostgresRepository) {}
+  constructor(
+    private readonly ocorrenciaGeralPostgresRepository: OcorrenciaGeralPostgresRepository,
+    private readonly buscarOcorrenciaMinutoAusenteController: BuscarOcorrenciaMinutoAusenteController,
+  ) {}
 
   async handle(httRequest: HttpRequest): Promise<HttpResponse> {
     try {
@@ -18,7 +22,24 @@ export class OcorrenciaGeralController implements Controller {
 
       const funcionarios: { id: number; identificacao: string; nome: string }[] = [];
 
-      data.map((funcionario) => {
+      for (const funcionario of data) {
+        const eventos = await this.buscarOcorrenciaMinutoAusenteController.handle({
+          query: {
+            localidade,
+            referencia,
+            identificacao: funcionario.identificacao,
+          },
+        });
+
+        console.log("eventos", eventos?.body);
+        if (eventos?.body?.message?.length)
+          funcionarios.push({
+            id: funcionario.id,
+            identificacao: funcionario.identificacao,
+            nome: funcionario.nome,
+          });
+      }
+      /*       data.map((funcionario) => {
         funcionario.cartao.map((cartao) => {
           cartao.cartao_dia.map((dia) => {
             let adicionar = false;
@@ -49,7 +70,7 @@ export class OcorrenciaGeralController implements Controller {
             }
           });
         });
-      });
+      }); */
 
       return ok(funcionarios);
     } catch (error) {
