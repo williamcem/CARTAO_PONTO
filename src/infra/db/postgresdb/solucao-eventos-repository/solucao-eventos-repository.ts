@@ -2,6 +2,7 @@ import { PrismaClient } from "@prisma/client";
 
 import { AdicionarSolucao } from "../../../../data/usecase/add-solucao-eventos/add-solucao-eventos";
 import { prisma, prismaPromise } from "../../../database/Prisma";
+import moment from "moment";
 
 export class SolucaoEventoRepository {
   private prisma: PrismaClient;
@@ -10,7 +11,9 @@ export class SolucaoEventoRepository {
     this.prisma = prisma;
   }
 
-  public async add(input: { id: number; tipoId: number }[]): Promise<boolean> {
+  public async add(
+    input: { funcionarioId: number; cartaoDiaId: number; tipoId: number; minutos: number; inicio: Date; fim: Date }[],
+  ): Promise<boolean> {
     const queries: prismaPromise[] = [];
 
     const create: {
@@ -22,24 +25,26 @@ export class SolucaoEventoRepository {
       tratado: boolean;
     }[] = [];
 
-    for (const { id, tipoId } of input) {
-      const eventoOriginal = await this.prisma.eventos.findUnique({
-        where: { id: id },
-      });
+    for (const { funcionarioId, cartaoDiaId, tipoId, minutos: minutosOriginal, inicio, fim } of input) {
+      let minutos = this.calcularMinutosBaseadoNaAcao({ minutosOriginal: minutosOriginal, tipoId });
 
-      if (!eventoOriginal) throw new Error("Evento original não encontrado");
-
-      let minutos = this.calcularMinutosBaseadoNaAcao({ minutosOriginal: eventoOriginal.minutos, tipoId });
-
-      // Atualizar o evento original para definir tratado como true
+      // Cria novo evento
       queries.push(
-        this.prisma.eventos.update({
-          where: { id: id },
-          data: { tratado: true },
+        this.prisma.eventos.create({
+          data: {
+            hora: `${moment.utc(inicio).format("HH:mm")} -${moment.utc(fim).format("HH:mm")}`,
+            minutos,
+            cartaoDiaId,
+            inicio,
+            fim,
+            tipoId,
+            tratado: false,
+            funcionarioId,
+          },
         }),
       );
 
-      const existDuplicateCreate = create.some(
+      /*       const existDuplicateCreate = create.some(
         (e) =>
           e.cartaoDiaId === eventoOriginal.cartaoDiaId &&
           e.hora === eventoOriginal.hora &&
@@ -105,26 +110,47 @@ export class SolucaoEventoRepository {
               tratado: true,
             });
         }
-      }
+      } */
     }
 
-    create.map((evento) => {
+    /*     create.map((evento) => {
       queries.push(
         this.prisma.eventos.create({
           data: evento,
         }),
       );
-    });
+    }); */
 
     return Boolean((await this.prisma.$transaction(queries)).length);
   }
 
+  public async findFisrtDia(input: { id: number }) {
+    return await this.prisma.cartao_dia.findFirst({
+      where: {
+        id: input.id,
+      },
+      select: {
+        id: true,
+        cartao: {
+          select: { funcionarioId: true },
+        },
+      },
+    });
+  }
+
   calcularMinutosBaseadoNaAcao(input: { tipoId: number; minutosOriginal: number }) {
-    let minutos = 0;
+    //Mantem minutos original positivo
+    /*     let minutos = 0;
     if (input.tipoId === 3 || input.tipoId === 7) minutos = 0;
     else if (input.tipoId === 5 || input.tipoId === 6 || input.tipoId === 12) minutos = Math.abs(input.minutosOriginal);
-    else minutos = input.minutosOriginal;
+    else minutos = input.minutosOriginal; */
 
-    return minutos;
+    return Math.abs(input.minutosOriginal);
+  }
+
+  async findFisrEvento(input: { inicio: Date; fim: Date; tipoId: number; cartaoDiaId: number }) {
+    return await this.prisma.eventos.findFirst({
+      where: { ...input },
+    });
   }
 }
