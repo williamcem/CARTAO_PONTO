@@ -234,8 +234,7 @@ export class CriarEventosPostgresRepository implements AdicionarEventos {
     }
 
     {
-      /*       eventos = await this.removerEventosNegativoIncorreto({ eventos });
-       */
+      eventos = await this.removerEventosNegativoIncorreto({ eventos });
     }
 
     //Cria eventos adicional nortuno
