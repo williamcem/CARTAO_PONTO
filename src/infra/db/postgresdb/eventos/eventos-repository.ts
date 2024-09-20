@@ -234,8 +234,9 @@ export class CriarEventosPostgresRepository implements AdicionarEventos {
     }
 
     {
-/*       eventos = await this.removerEventosNegativoIncorreto({ eventos });
- */    }
+      /*       eventos = await this.removerEventosNegativoIncorreto({ eventos });
+       */
+    }
 
     //Cria eventos adicional nortuno
     {
@@ -717,6 +718,7 @@ export class CriarEventosPostgresRepository implements AdicionarEventos {
   }
 
   private async aplicarTolerancia10Minutos(input: { eventos: any[] }) {
+    if (input.eventos.length === 0) return [];
     // Primeiro, buscar os lançamentos associados
     const lancamentos = await this.prisma.cartao_dia_lancamento.findMany({
       include: {
@@ -922,6 +924,7 @@ export class CriarEventosPostgresRepository implements AdicionarEventos {
   }
 
   private async removerEventosNegativoIncorreto(input: { eventos: any[] }) {
+    if (!input.eventos.length) return [];
     const eventosAgrupadosPorDia: {
       cartaoDiaId: number;
       funcionarioId: number;
@@ -982,6 +985,7 @@ export class CriarEventosPostgresRepository implements AdicionarEventos {
   }
 
   private async criarAdicionalNoturno(input: { eventos: any[] }) {
+    if (!input.eventos.length) return [];
     const eventosAgrupadosPorDia: {
       cartaoDiaId: number;
       funcionarioId: number;
