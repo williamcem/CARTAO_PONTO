@@ -541,7 +541,7 @@ export class CriarEventosPostgresRepository implements AdicionarEventos {
       const execenteDescanso = descanso - eventoIntervalo.minutos;
 
       // Verificar statusId de cartao_dia
-      if (lancamento.cartao_dia.statusId === 6 || lancamento.cartao_dia.statusId === 7 || lancamento.cartao_dia === 2) {
+      if (lancamento.cartao_dia.statusId === 6 || lancamento.cartao_dia.statusId === 7 || lancamento.cartao_dia.statusId === 2) {
         return;
       }
 
