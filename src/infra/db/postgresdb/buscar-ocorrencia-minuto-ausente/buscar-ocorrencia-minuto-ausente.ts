@@ -28,4 +28,67 @@ export class BuscarOcorrenciaMinutoAusentePostgresRepository {
       },
     });
   }
+
+  public async findManyDias(input: { cartaoId: number; date: { lte: Date } }) {
+    return await this.prisma.cartao_dia.findMany({
+      where: {
+        cartaoId: input.cartaoId,
+        data: { lte: input.date.lte },
+      },
+      select: {
+        id: true,
+        data: true,
+        cargaHor: true,
+        eventos: {
+          select: {
+            minutos: true,
+            tipoId: true,
+          },
+        },
+        cartao_dia_lancamentos: {
+          select: {
+            entrada: true,
+            saida: true,
+            periodoId: true,
+          },
+        },
+        cargaHorariaCompleta: true,
+        cargaHorPrimeiroPeriodo: true,
+        cargaHorSegundoPeriodo: true,
+        periodoDescanso: true,
+        statusId: true,
+      },
+      orderBy: {
+        data: "asc",
+      },
+    });
+  }
+
+  public async findManyAbonosAtestado(input: { cartaoDiaId: { in: number[] } }) {
+    return await this.prisma.atestado_abono.findMany({
+      where: {
+        cartaoDiaId: input.cartaoDiaId,
+      },
+      select: { cartaoDiaId: true, minutos: true },
+    });
+  }
+
+  public async findManyAtestado(input: { statusId?: number; funcionarioId: number }) {
+    return await this.prisma.atestado_funcionario.findMany({
+      where: {
+        statusId: input.statusId,
+        funcionarioId: input.funcionarioId,
+      },
+      select: { data: true, diasAusencia: true },
+    });
+  }
+
+  public async findManyEventos(input: { cartaoDiaId: number }) {
+    return await this.prisma.eventos.findMany({
+      where: {
+        cartaoDiaId: input.cartaoDiaId,
+      },
+      select: { inicio: true, fim: true, minutos: true },
+    });
+  }
 }
