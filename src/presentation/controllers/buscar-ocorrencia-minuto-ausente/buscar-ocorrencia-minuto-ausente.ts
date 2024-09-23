@@ -135,7 +135,9 @@ export class BuscarOcorrenciaMinutoAusenteController implements Controller {
             const contemMaisDe2Intervalos = eventos.filter((evento) => evento.tipoId === 8).length > 1;
 
             for (const evento of eventos) {
-              if (evento.tipoId !== 2 && contemMaisDe2Intervalos && evento.tipoId === 8) continue;
+              const eTipoIntervaloEContemMaisDe2 = evento.tipoId === 8 && contemMaisDe2Intervalos;
+
+              if (!eTipoIntervaloEContemMaisDe2 && evento.tipoId !== 2) continue;
 
               const existeEvento = eventosRepositorio.find(
                 (e) =>
