@@ -166,7 +166,7 @@ export class BuscarOcorrenciaMinutoAusenteController implements Controller {
           const eventosDeAusencia: {
             body: {
               data: {
-                cartaoDiaId: 162572;
+                cartaoDiaId: number;
                 funcionarioId: number;
                 hora: string;
                 minutos: number;
