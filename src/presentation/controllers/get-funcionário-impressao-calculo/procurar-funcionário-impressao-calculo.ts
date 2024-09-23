@@ -161,7 +161,7 @@ export class GetFuncionarioImpressaoCalculoController implements Controller {
           dia.atestado_abonos.map((abonoLocal) => (abono.minutos += abonoLocal.minutos));
 
           let resumo = this.calcularResumoPorDia({
-            dia: { id: dia.id, eventos, abono, cargaHorariaTotal: dia.cargaHor, contemAusencia },
+            dia: { id: dia.id, eventos, abono, cargaHorariaTotal: dia.cargaHor, contemAusencia: Boolean(contemAusencia) },
             resumoCartao,
           });
 
