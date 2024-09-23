@@ -42,6 +42,7 @@ export class ListarAtestadoRepsository {
         inicio: atestado.inicio,
         fim: atestado.fim,
         grupo_cid: atestado.grupo_cid,
+        grupo_sub_cid: atestado.grupo_sub_cid,
         acidente_trabalho: atestado.acidente_trabalho,
         descricao: atestado.descricao,
         userName: atestado.userName,

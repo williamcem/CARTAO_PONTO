@@ -4,6 +4,7 @@ export interface ListarAtestadosModel {
   inicio: Date;
   fim: Date;
   grupo_cid?: string;
+  grupo_sub_cid: string;
   descricao?: string;
   userName?: string;
   funcionarioId?: number;

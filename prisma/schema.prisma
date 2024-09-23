@@ -286,6 +286,7 @@ model atestado_funcionario {
   data                      DateTime?
   fim                       DateTime?
   grupo_cid                 String?
+  grupo_sub_cid             String?
   acidente_trabalho         Boolean
   tipoAcompanhanteId        Int?
   descricao                 String?
