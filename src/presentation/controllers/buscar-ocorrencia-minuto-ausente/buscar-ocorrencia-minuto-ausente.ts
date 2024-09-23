@@ -3,11 +3,13 @@ import { badRequestNovo, notFoundNovo, ok, serverError } from "../../helpers/htt
 import { Controller, HttpRequest, HttpResponse } from "./buscar-ocorrencia-minuto-ausente-protocols";
 import moment from "moment";
 import { CriarEventosPostgresRepository } from "@infra/db/postgresdb/eventos/eventos-repository";
+import { LancarFaltaController } from "../lancar-falta/lancar-falta";
 
 export class BuscarOcorrenciaMinutoAusenteController implements Controller {
   constructor(
     private readonly buscarOcorrenciaMinutoAusentePostgresRepository: BuscarOcorrenciaMinutoAusentePostgresRepository,
     private readonly criarEventosPostgresRepository: CriarEventosPostgresRepository,
+    private readonly lancarFaltaController: LancarFaltaController,
   ) {}
 
   async handle(httpRequest: HttpRequest): Promise<HttpResponse> {
@@ -159,6 +161,33 @@ export class BuscarOcorrenciaMinutoAusenteController implements Controller {
             }
           }
         }
+
+        try {
+          const eventosDeAusencia: {
+            body: {
+              data: {
+                cartaoDiaId: 162572;
+                funcionarioId: number;
+                hora: string;
+                minutos: number;
+                tipoId: number;
+                inicio: Date;
+                fim: Date;
+              }[];
+            };
+          } = await this.lancarFaltaController.handle({ body: { cartaoDiaId: dia.id, notSave: true } });
+          console.log(" eventosDeAusencia.body.data", eventosDeAusencia.body);
+          eventosDeAusencia.body?.data?.map((evento) => {
+            diasComAusenciaMinutos.push({
+              cartaoDiaId: evento.cartaoDiaId,
+              data: dia.data,
+              fim: evento.fim,
+              inicio: evento.inicio,
+              minutos: evento.minutos,
+              tipoId: evento.tipoId,
+            });
+          });
+        } catch (error) {}
       }
 
       return ok({ message: diasComAusenciaMinutos });
