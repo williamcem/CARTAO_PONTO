@@ -31,7 +31,6 @@ export class OcorrenciaGeralController implements Controller {
           },
         });
 
-        console.log("eventos", eventos?.body);
         if (eventos?.body?.message?.length)
           funcionarios.push({
             id: funcionario.id,
