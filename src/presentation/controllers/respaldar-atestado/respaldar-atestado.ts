@@ -34,6 +34,7 @@ export class RespaldarController implements Controller {
         observacao,
         data,
         grupo_cid,
+        grupo_sub_cid,
         acidente_trabalho,
         tipoAcompanhanteId,
         descricao,
@@ -59,6 +60,7 @@ export class RespaldarController implements Controller {
         inicio: Date;
         fim: Date;
         grupo_cid: string;
+        grupo_sub_cid: string;
         acidente_trabalho: boolean;
         tipoAcompanhanteId: number;
         descricao: string;
@@ -151,6 +153,7 @@ export class RespaldarController implements Controller {
               exame,
               funcao,
               grupo_cid,
+              grupo_sub_cid,
               horario_trabalhado_fim,
               horario_trabalhado_inicio,
               idade_paciente,
@@ -208,6 +211,7 @@ export class RespaldarController implements Controller {
                   exame,
                   funcao,
                   grupo_cid,
+                  grupo_sub_cid,
                   horario_trabalhado_fim,
                   horario_trabalhado_inicio,
                   idade_paciente,
@@ -292,6 +296,7 @@ export class RespaldarController implements Controller {
               exame,
               funcao,
               grupo_cid,
+              grupo_sub_cid,
               horario_trabalhado_fim,
               horario_trabalhado_inicio,
               idade_paciente,
@@ -463,6 +468,7 @@ export class RespaldarController implements Controller {
       observacao: string;
       statusId: number;
       grupo_cid?: string;
+      grupo_sub_cid: string;
       acidente_trabalho?: boolean;
       tipoAcompanhanteId?: number;
       descricao?: string;
@@ -572,6 +578,7 @@ export class RespaldarController implements Controller {
       exame: input.atestado.exame,
       funcao: input.atestado.funcao,
       grupo_cid: input.atestado.grupo_cid,
+      grupo_sub_cid: input.atestado.grupo_sub_cid,
       horario_trabalhado_fim: input.atestado.horario_trabalhado_fim,
       horario_trabalhado_inicio: input.atestado.horario_trabalhado_inicio,
       idade_paciente: input.atestado.idade_paciente,

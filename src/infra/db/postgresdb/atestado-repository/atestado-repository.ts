@@ -63,6 +63,7 @@ export class AtestadoRepository implements AddAtestado {
             acao: input.acao,
             idade_paciente: input.idade_paciente,
             grupo_cid: input.grupo_cid,
+            grupo_sub_cid: input.grupo_sub_cid,
             tipoAcompanhanteId: input.tipoAcompanhanteId,
             funcionarioId: input.funcionarioId,
             ocupacaoId: input.ocupacaoId,

@@ -63,6 +63,7 @@ export class RespaldarAtestadoPostgresRepository {
     observacao?: string;
     abonos: { cartaoDiaId: number; minutos: number }[];
     grupo_cid?: string;
+    grupo_sub_cid: string;
     acidente_trabalho?: boolean;
     tipoAcompanhanteId?: number;
     descricao?: string;
@@ -131,6 +132,7 @@ export class RespaldarAtestadoPostgresRepository {
           exame: input.exame,
           funcionarioFuncaoId: input.funcao,
           grupo_cid: input.grupo_cid,
+          grupo_sub_cid: input.grupo_sub_cid,
           horario_trabalhado_fim: input.horario_trabalhado_fim,
           horario_trabalhado_inicio: input.horario_trabalhado_inicio,
           idade_paciente: input.idade_paciente,
