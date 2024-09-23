@@ -1,5 +1,3 @@
-import { CalcularResumoPostgresRepository } from "@infra/db/postgresdb/calcular-resumo/calcular-resumo-repository";
-import { ResumoModel } from "@domain/models/calcular-resumo";
 import { OcorrenciaPostgresRepository } from "../../../infra/db/postgresdb/listar-ocorrencias/listar-ocorrencias-repository";
 import { FuncionarioParamError, OcorrenciasNull } from "../../errors/Funcionario-param-error";
 import { badRequest, notFoundRequest, ok, serverError } from "../../helpers/http-helpers";
@@ -98,6 +96,7 @@ export class OcorrenciaController implements Controller {
                   minutos: evento.minutos,
                   tipoId: evento.tipoId,
                   tratado: evento.tratado,
+                  atestadoFuncionarioId: evento.funcionarioId,
                 },
               };
             }),
