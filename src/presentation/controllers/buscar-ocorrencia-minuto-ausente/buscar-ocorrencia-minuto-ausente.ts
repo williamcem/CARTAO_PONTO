@@ -141,14 +141,28 @@ export class BuscarOcorrenciaMinutoAusenteController implements Controller {
 
               if (!eTipoIntervaloEContemMaisDe2 && evento.tipoId !== 2) continue;
 
-              const existeEvento = eventosRepositorio.find(
-                (e) =>
-                  -e.minutos === evento.minutos &&
-                  e.fim?.getTime() === evento.fim.getTime() &&
-                  e.inicio?.getTime() === evento.inicio.getTime(),
-              );
+              //Verifica se existe na tabela evento
+              {
+                const existeEvento = eventosRepositorio.find(
+                  (e) =>
+                    -e.minutos === evento.minutos &&
+                    e.fim?.getTime() === evento.fim.getTime() &&
+                    e.inicio?.getTime() === evento.inicio.getTime(),
+                );
+                if (existeEvento) continue;
+              }
 
-              if (existeEvento) continue;
+              //Verifica se existe na variavel local
+              {
+                const existeEvento = diasComAusenciaMinutos.find(
+                  (e) =>
+                    e.minutos === evento.minutos &&
+                    e.fim?.getTime() === evento.fim.getTime() &&
+                    e.inicio?.getTime() === evento.inicio.getTime(),
+                );
+
+                if (existeEvento) continue;
+              }
 
               diasComAusenciaMinutos.push({
                 minutos: evento.minutos,
@@ -178,14 +192,28 @@ export class BuscarOcorrenciaMinutoAusenteController implements Controller {
           } = await this.lancarFaltaController.handle({ body: { cartaoDiaId: dia.id, notSave: true } });
 
           eventosDeAusencia.body?.data?.map((evento) => {
-            const existeEvento = eventosRepositorio.find(
-              (e) =>
-                -e.minutos === evento.minutos &&
-                e.fim?.getTime() === evento.fim.getTime() &&
-                e.inicio?.getTime() === evento.inicio.getTime(),
-            );
+            //Verifica se existe na tabela evento
+            {
+              const existeEvento = eventosRepositorio.find(
+                (e) =>
+                  -e.minutos === evento.minutos &&
+                  e.fim?.getTime() === evento.fim.getTime() &&
+                  e.inicio?.getTime() === evento.inicio.getTime(),
+              );
+              if (existeEvento) return undefined;
+            }
 
-            if (existeEvento) return undefined;
+            //Verifica se existe na variavel local
+            {
+              const existeEvento = diasComAusenciaMinutos.find(
+                (e) =>
+                  e.minutos === evento.minutos &&
+                  e.fim?.getTime() === evento.fim.getTime() &&
+                  e.inicio?.getTime() === evento.inicio.getTime(),
+              );
+
+              if (existeEvento) return undefined;
+            }
 
             diasComAusenciaMinutos.push({
               cartaoDiaId: evento.cartaoDiaId,
