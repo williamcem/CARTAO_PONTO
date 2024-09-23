@@ -40,7 +40,8 @@ export class LancarFaltaController implements Controller {
           new FuncionarioParamError(`Não é possível criar falta com carga horária do dia de ${dia.cargaHor} minutos!`),
         );
 
-      if (!dia.validadoPeloOperador) return badRequest(new FuncionarioParamError(`Dia não validado!`));
+      if (!dia.validadoPeloOperador && dia.cartao_dia_lancamentos.length !== 0)
+        return badRequest(new FuncionarioParamError(`Dia não validado!`));
 
       const eventos: {
         cartaoDiaId: number;
