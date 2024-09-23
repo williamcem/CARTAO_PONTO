@@ -208,6 +208,7 @@ model cartao_dia {
   updateAt                    DateTime? @updatedAt
   userName                    String?
   funcionarioAlteracaoTurnoId Int?
+  validadoPeloOperador        Boolean   @default(false)
 
   cartao_dia_status           cartao_dia_status            @relation(fields: [statusId], references: [id], onDelete: Cascade)
   cartao                      cartao                       @relation(fields: [cartaoId], references: [id], onDelete: Cascade)
@@ -511,9 +512,10 @@ model funcionario_alteracao_turno {
 }
 
 model cid {
-  id        Int    @id @default(autoincrement())
-  codigo    String @unique
+  id        Int     @id @default(autoincrement())
+  codigo    String  @unique
   descricao String
+  grupo     String?
 }
 
 model grupo_localidade {

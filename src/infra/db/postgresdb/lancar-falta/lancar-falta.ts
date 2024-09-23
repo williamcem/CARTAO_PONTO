@@ -33,6 +33,9 @@ export class LancarFaltaPostgresRepository {
       funcionarioId: number;
       inicio: Date;
       fim: Date;
+      dia?: {
+        validadoOperador?: boolean;
+      };
     }[],
   ) {
     const queries: prismaPromise[] = [];
@@ -51,6 +54,16 @@ export class LancarFaltaPostgresRepository {
           },
         }),
       );
+
+      if (evento.dia?.validadoOperador)
+        queries.push(
+          this.prisma.cartao_dia.update({
+            where: { id: evento.cartaoDiaId },
+            data: {
+              validadoPeloOperador: evento.dia.validadoOperador,
+            },
+          }),
+        );
       return undefined;
     });
 

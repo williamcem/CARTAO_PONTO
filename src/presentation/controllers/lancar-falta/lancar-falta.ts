@@ -48,6 +48,9 @@ export class LancarFaltaController implements Controller {
         tipoId: number;
         inicio: Date;
         fim: Date;
+        dia?: {
+          validadoOperador?: boolean;
+        };
       }[] = [];
 
       //Se não houver eventos trabalhados, gerar evento da carga horaria completa como indefinido
@@ -75,6 +78,7 @@ export class LancarFaltaController implements Controller {
           tipoId: 2,
           inicio: inicio.toDate(),
           fim: fim.toDate(),
+          dia: { validadoOperador: true },
         });
       }
 
@@ -217,6 +221,9 @@ export class LancarFaltaController implements Controller {
       tipoId: number;
       inicio: Date;
       fim: Date;
+      dia?: {
+        validadoOperador?: boolean;
+      };
     }[],
   ) {
     for (const evento of input) {
