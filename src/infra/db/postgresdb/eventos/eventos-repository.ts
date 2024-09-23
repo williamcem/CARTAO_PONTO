@@ -99,7 +99,8 @@ export class CriarEventosPostgresRepository implements AdicionarEventos {
 
     newEventosData = validEventosData.filter((evento, index) => {
       const exist = indexParaRemover.some((i) => i === index);
-      if (!exist) return evento;
+      const eEventoTrabalhado = evento.tipoId === 1;
+      if (!exist && eEventoTrabalhado) return evento;
     });
 
     if (newEventosData.length === 0) {
