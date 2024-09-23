@@ -40,6 +40,8 @@ export class LancarFaltaController implements Controller {
           new FuncionarioParamError(`Não é possível criar falta com carga horária do dia de ${dia.cargaHor} minutos!`),
         );
 
+      if (!dia.validadoPeloOperador) return badRequest(new FuncionarioParamError(`Dia não validado!`));
+
       const eventos: {
         cartaoDiaId: number;
         funcionarioId: number;
@@ -193,7 +195,7 @@ export class LancarFaltaController implements Controller {
 
       const saved = await this.salvarEvento(eventos);
 
-      if (typeof saved === "boolean") return ok({ message: saved });
+      if (typeof saved === "boolean") return ok({ message: saved, data: eventos });
       else return badRequest(new FuncionarioParamError(saved));
     } catch (error) {
       console.error(error);

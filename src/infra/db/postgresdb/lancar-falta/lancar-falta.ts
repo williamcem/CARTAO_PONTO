@@ -41,7 +41,7 @@ export class LancarFaltaPostgresRepository {
     const queries: prismaPromise[] = [];
 
     input.map((evento) => {
-      queries.push(
+/*       queries.push(
         this.prisma.eventos.create({
           data: {
             hora: evento.hora,
@@ -53,7 +53,7 @@ export class LancarFaltaPostgresRepository {
             fim: evento.fim,
           },
         }),
-      );
+      ); */
 
       if (evento.dia?.validadoOperador)
         queries.push(
