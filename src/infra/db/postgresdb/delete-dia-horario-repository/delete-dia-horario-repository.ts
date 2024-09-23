@@ -44,6 +44,11 @@ export class DeletePostgresRepository implements DelDeleteRepository {
         where: { cartaoDiaId: cartao_dia_id },
       });
 
+      await this.prisma.cartao_dia.update({
+        data: { validadoPeloOperador: false },
+        where: { id: cartao_dia_id },
+      });
+
       return true; // Retorna true se a exclusão for bem-sucedida
     } catch (error) {
       console.error("Erro ao deletar registros associados ao dia do cartão:", error);
