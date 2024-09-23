@@ -63,11 +63,20 @@ export class BuscarOcorrenciaMinutoAusenteController implements Controller {
         }
       });
 
-      const diasComAusenciaMinutos: { cartaoDiaId: number; minutos: number; data: Date; inicio: Date; fim: Date }[] = [];
+      const diasComAusenciaMinutos: {
+        cartaoDiaId: number;
+        minutos: number;
+        data: Date;
+        inicio: Date;
+        fim: Date;
+        tipoId: number;
+      }[] = [];
 
       for (const dia of dias) {
         //Se dia não for trabalhado passa próximo dia
         if (dia.statusId !== 1) continue;
+
+        if (!dia.validadoPeloOperador) continue;
 
         //Se dia contêm atestado passa próximo dia
         const existAtestadoDia = diasAtestado.some((atestado) => atestado.data.getTime() === dia.data.getTime());
@@ -120,10 +129,13 @@ export class BuscarOcorrenciaMinutoAusenteController implements Controller {
               data: dia.data,
               fim: fim.toDate(),
               inicio: inicio.toDate(),
+              tipoId: 2,
             });
-          } else
+          } else {
+            const contemMaisDe2Intervalos = eventos.filter((evento) => evento.tipoId === 8).length > 1;
+
             for (const evento of eventos) {
-              if (evento.tipoId !== 2) continue;
+              if (evento.tipoId !== 2 && contemMaisDe2Intervalos && evento.tipoId === 8) continue;
 
               const existeEvento = eventosRepositorio.find(
                 (e) =>
@@ -140,8 +152,10 @@ export class BuscarOcorrenciaMinutoAusenteController implements Controller {
                 data: dia.data,
                 fim: evento.fim,
                 inicio: evento.inicio,
+                tipoId: evento.tipoId,
               });
             }
+          }
         }
       }
 

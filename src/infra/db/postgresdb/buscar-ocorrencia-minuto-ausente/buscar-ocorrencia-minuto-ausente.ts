@@ -1,6 +1,5 @@
 import { PrismaClient } from "@prisma/client";
 
-import { GetFuncionarioAtestado } from "../../../../data/usecase/procurar-funcionario/find-procurar-funcionario";
 import { prisma } from "../../../database/Prisma";
 
 export class BuscarOcorrenciaMinutoAusentePostgresRepository {
@@ -57,6 +56,7 @@ export class BuscarOcorrenciaMinutoAusentePostgresRepository {
         cargaHorSegundoPeriodo: true,
         periodoDescanso: true,
         statusId: true,
+        validadoPeloOperador: true,
       },
       orderBy: {
         data: "asc",
