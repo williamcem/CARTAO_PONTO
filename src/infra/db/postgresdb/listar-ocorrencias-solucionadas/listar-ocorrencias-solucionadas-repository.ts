@@ -34,9 +34,6 @@ export class OcorrenciaSolucionadasPostgresRepository {
     funcionarios: {
       identificacao: string;
       nome: string;
-      turno: { nome: string };
-      localidade: { codigo: string };
-      referencia: Date | null;
       dias: {
         data: Date;
         eventos: {
@@ -49,16 +46,15 @@ export class OcorrenciaSolucionadasPostgresRepository {
           tratado: boolean;
           solucaoDada: string;
         }[];
-        lancamentos: { periodoId: number; entrada: Date | null; saida: Date | null }[];
       }[];
-      Resumo: any;
     }[];
   }> {
     const funcionarios = await this.prisma.funcionario.findMany({
       where: {
         identificacao: identificacao,
         localidadeId: localidade,
-        cartao: { some: { cartao_dia: { some: { cartao_dia_lancamentos: { some: { validadoPeloOperador: true } } } } } },
+        cartao: { some: { cartao_dia: { some: { validadoPeloOperador: true } }, referencia } },
+        eventos: { some: { tipoId: { not: 1 } } },
       },
       include: {
         cartao: {
@@ -66,32 +62,12 @@ export class OcorrenciaSolucionadasPostgresRepository {
             referencia: true,
             cartao_dia: {
               include: {
-                eventos: {
-                  include: {
-                    atestado_funcionario: { select: { id: true, statusId: true } },
-                  },
-                },
-                cartao_dia_lancamentos: {
-                  select: {
-                    periodoId: true,
-                    entrada: true,
-                    saida: true,
-                  },
-                },
+                eventos: { include: { atestado_funcionario: true } },
               },
-              orderBy: { id: "asc" },
             },
           },
-          where: { referencia },
-          orderBy: { id: "asc" },
-        },
-        turno: true,
-        localidade: true,
-        afastamento: {
-          include: { funcionarios_afastados_status: true },
         },
       },
-      orderBy: { id: "asc" },
     });
 
     if (!funcionarios || funcionarios.length === 0) {
@@ -134,11 +110,6 @@ export class OcorrenciaSolucionadasPostgresRepository {
                 return {
                   data: cartao_dia.data,
                   eventos: eventosComSolucaoDada,
-                  lancamentos: cartao_dia.cartao_dia_lancamentos.map((lancamento) => ({
-                    periodoId: lancamento.periodoId,
-                    entrada: lancamento.entrada,
-                    saida: lancamento.saida,
-                  })),
                 };
               }),
             ),
@@ -150,8 +121,6 @@ export class OcorrenciaSolucionadasPostgresRepository {
         return {
           identificacao: funcionario.identificacao,
           nome: funcionario.nome,
-          turno: { nome: funcionario.turno.nome },
-          localidade: { codigo: funcionario.localidade.codigo },
           referencia: funcionario.cartao.length > 0 ? funcionario.cartao[0].referencia : null,
           dias: diasComEventos,
           Resumo: resumo,
@@ -160,5 +129,32 @@ export class OcorrenciaSolucionadasPostgresRepository {
     );
 
     return { funcionarios: funcionariosComEventos };
+  }
+
+  public async findFisrtFuncionario(identificacao: string, localidade: string) {
+    return await this.prisma.funcionario.findFirst({
+      where: {
+        identificacao,
+        localidadeId: localidade,
+      },
+    });
+  }
+
+  public async findManyEvento(input: { funcionarioId: number; referencia: Date; tipo: { notIn: number[] } }) {
+    return await this.prisma.eventos.findMany({
+      where: {
+        cartao_dia: { cartao: { funcionarioId: input.funcionarioId, referencia: input.referencia } },
+        tipoId: { notIn: input.tipo.notIn },
+      },
+      select: {
+        id: true,
+        hora: true,
+        minutos: true,
+        tipo_eventos: { select: { nome: true } },
+        inicio: true,
+        fim: true,
+        cartao_dia: { select: { data: true } },
+      },
+    });
   }
 }
