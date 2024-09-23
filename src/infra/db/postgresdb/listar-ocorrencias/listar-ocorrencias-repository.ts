@@ -72,9 +72,7 @@ export class OcorrenciaPostgresRepository {
           some: {
             cartao_dia: {
               some: {
-                eventos: {
-                  some: { tratado: false, cartao_dia: { cartao_dia_lancamentos: { some: { validadoPeloOperador: true } } } },
-                },
+                validadoPeloOperador: true,
               },
             },
           },
