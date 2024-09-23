@@ -35,4 +35,16 @@ export class RetornoSolucaoRepository implements RetornarSolucao {
 
     return !!eventoAtualizado;
   }
+
+  public async findFisrt(input: { id: number }) {
+    return await this.prisma.eventos.findFirst({
+      where: { id: input.id },
+    });
+  }
+
+  public async delete(input: { id: number }) {
+    return await this.prisma.eventos.delete({
+      where: { id: input.id },
+    });
+  }
 }
