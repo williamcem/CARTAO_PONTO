@@ -85,6 +85,15 @@ export class ConfirmarLancaDiaController implements Controller {
 
       if (!updated) serverError();
 
+      const lancamentos = await this.confirmarLancaDiaPostgresRepository.findManyLancamento({ cartaoDiaId: dia.id });
+
+      const existeLancamentoNaoValidado = lancamentos.some((lancamento) => !lancamento.validadoPeloOperador);
+
+      if (!existeLancamentoNaoValidado) {
+        const saved = await this.confirmarLancaDiaPostgresRepository.updateDia({ id: dia.id, validadoOperador: true });
+        if (!saved) serverError();
+      }
+
       return ok({ message: "Horários confirmados com sucesso" });
     } catch (error) {
       console.error(error);

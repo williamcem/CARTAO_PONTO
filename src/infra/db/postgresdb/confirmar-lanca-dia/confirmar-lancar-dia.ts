@@ -41,4 +41,20 @@ export class ConfirmarLancaDiaPostgresRepository implements ConfirmarLancaDia {
 
     return Boolean((await this.prisma.$transaction(query)).length);
   }
+
+  public async findManyLancamento(input: { cartaoDiaId: number }) {
+    return await this.prisma.cartao_dia_lancamento.findMany({
+      where: { cartao_dia_id: input.cartaoDiaId },
+      select: {
+        validadoPeloOperador: true,
+      },
+    });
+  }
+
+  public async updateDia(input: { id: number; validadoOperador: boolean }) {
+    return await this.prisma.cartao_dia.update({
+      where: { id: input.id },
+      data: { validadoPeloOperador: input.validadoOperador },
+    });
+  }
 }
