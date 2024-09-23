@@ -126,14 +126,14 @@ export class GetFuncionarioImpressaoCalculoController implements Controller {
 
           if (onlyDays) return { data: dia.data, dataFormatada, status: dia.cartao_dia_status, id: dia.id };
 
-          const contemAusencia = dia.eventos.some((evento) => evento.tipoId === 2);
+          const contemAusencia = dia.eventos.find((evento) => evento.tipoId !== 1);
 
           if (contemAusencia && dia.cargaHorPrimeiroPeriodo) {
             const existeLancamento = dia.cartao_dia_lancamentos.some((lancamento) => lancamento.periodoId === 1);
             if (!existeLancamento) {
               periodos.push({
-                entrada: "Ausência",
-                saida: "Ausência",
+                entrada: contemAusencia.tipo_eventos?.nome || "",
+                saida: contemAusencia.tipo_eventos?.nome || "",
                 periodoId: 1,
                 validadoPeloOperador: true,
               });
@@ -144,8 +144,8 @@ export class GetFuncionarioImpressaoCalculoController implements Controller {
             const existeLancamento = dia.cartao_dia_lancamentos.some((lancamento) => lancamento.periodoId === 2);
             if (!existeLancamento) {
               periodos.push({
-                entrada: "Ausência",
-                saida: "Ausência",
+                entrada: contemAusencia.tipo_eventos?.nome || "",
+                saida: contemAusencia.tipo_eventos?.nome || "",
                 periodoId: 2,
                 validadoPeloOperador: true,
               });
