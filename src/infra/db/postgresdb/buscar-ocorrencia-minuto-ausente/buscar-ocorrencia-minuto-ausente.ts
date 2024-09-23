@@ -40,8 +40,10 @@ export class BuscarOcorrenciaMinutoAusentePostgresRepository {
         cargaHor: true,
         eventos: {
           select: {
-            minutos: true,
+            inicio: true,
+            fim: true,
             tipoId: true,
+            minutos: true,
           },
         },
         cartao_dia_lancamentos: {
@@ -80,15 +82,6 @@ export class BuscarOcorrenciaMinutoAusentePostgresRepository {
         funcionarioId: input.funcionarioId,
       },
       select: { data: true, diasAusencia: true },
-    });
-  }
-
-  public async findManyEventos(input: { cartaoDiaId: number }) {
-    return await this.prisma.eventos.findMany({
-      where: {
-        cartaoDiaId: input.cartaoDiaId,
-      },
-      select: { inicio: true, fim: true, minutos: true },
     });
   }
 }

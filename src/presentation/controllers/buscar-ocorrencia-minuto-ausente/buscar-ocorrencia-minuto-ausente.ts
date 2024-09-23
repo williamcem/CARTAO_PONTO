@@ -72,6 +72,7 @@ export class BuscarOcorrenciaMinutoAusenteController implements Controller {
         inicio: Date;
         fim: Date;
         tipoId: number;
+        hora: string;
       }[] = [];
 
       for (const dia of dias) {
@@ -84,9 +85,7 @@ export class BuscarOcorrenciaMinutoAusenteController implements Controller {
         const existAtestadoDia = diasAtestado.some((atestado) => atestado.data.getTime() === dia.data.getTime());
         if (existAtestadoDia) continue;
 
-        const eventosRepositorio = await this.buscarOcorrenciaMinutoAusentePostgresRepository.findManyEventos({
-          cartaoDiaId: dia.id,
-        });
+        const eventosRepositorio = dia.eventos;
 
         const lancamentos: { entrada: Date; saida: Date; periodoId: number }[] = [];
         dia.cartao_dia_lancamentos.map(async (lanc) => {
@@ -125,6 +124,14 @@ export class BuscarOcorrenciaMinutoAusenteController implements Controller {
             const inicio = moment.utc(dia.data).hours(cargaCompleta[0].hora).minutes(cargaCompleta[0].minuto);
             let fim = moment(inicio).add(dia.cargaHor, "minutes").add(dia.periodoDescanso, "minutes");
 
+            //Verifica se existe na tabela evento
+            {
+              const existeEvento = eventosRepositorio.find(
+                (e) => e.inicio?.getTime() === inicio.toDate().getTime() && e.fim?.getTime() === fim.toDate().getTime(),
+              );
+              if (existeEvento) continue;
+            }
+
             diasComAusenciaMinutos.push({
               minutos: -dia.cargaHor,
               cartaoDiaId: dia.id,
@@ -132,6 +139,7 @@ export class BuscarOcorrenciaMinutoAusenteController implements Controller {
               fim: fim.toDate(),
               inicio: inicio.toDate(),
               tipoId: 2,
+              hora: `${inicio.format("HH:mm")} - ${fim.format("HH:mm")}`,
             });
           } else {
             const contemMaisDe2Intervalos = eventos.filter((evento) => evento.tipoId === 8).length > 1;
@@ -144,10 +152,7 @@ export class BuscarOcorrenciaMinutoAusenteController implements Controller {
               //Verifica se existe na tabela evento
               {
                 const existeEvento = eventosRepositorio.find(
-                  (e) =>
-                    -e.minutos === evento.minutos &&
-                    e.fim?.getTime() === evento.fim.getTime() &&
-                    e.inicio?.getTime() === evento.inicio.getTime(),
+                  (e) => e.inicio?.getTime() === evento.inicio.getTime() && e.fim?.getTime() === evento.fim.getTime(),
                 );
                 if (existeEvento) continue;
               }
@@ -155,10 +160,7 @@ export class BuscarOcorrenciaMinutoAusenteController implements Controller {
               //Verifica se existe na variavel local
               {
                 const existeEvento = diasComAusenciaMinutos.find(
-                  (e) =>
-                    e.minutos === evento.minutos &&
-                    e.fim?.getTime() === evento.fim.getTime() &&
-                    e.inicio?.getTime() === evento.inicio.getTime(),
+                  (e) => e.inicio?.getTime() === evento.inicio.getTime() && e.fim?.getTime() === evento.fim.getTime(),
                 );
 
                 if (existeEvento) continue;
@@ -171,6 +173,7 @@ export class BuscarOcorrenciaMinutoAusenteController implements Controller {
                 fim: evento.fim,
                 inicio: evento.inicio,
                 tipoId: evento.tipoId,
+                hora: evento.hora,
               });
             }
           }
@@ -195,21 +198,16 @@ export class BuscarOcorrenciaMinutoAusenteController implements Controller {
             //Verifica se existe na tabela evento
             {
               const existeEvento = eventosRepositorio.find(
-                (e) =>
-                  -e.minutos === evento.minutos &&
-                  e.fim?.getTime() === evento.fim.getTime() &&
-                  e.inicio?.getTime() === evento.inicio.getTime(),
+                (e) => e.inicio?.getTime() === evento.inicio.getTime() && e.fim?.getTime() === evento.fim.getTime(),
               );
+
               if (existeEvento) return undefined;
             }
 
             //Verifica se existe na variavel local
             {
               const existeEvento = diasComAusenciaMinutos.find(
-                (e) =>
-                  e.minutos === evento.minutos &&
-                  e.fim?.getTime() === evento.fim.getTime() &&
-                  e.inicio?.getTime() === evento.inicio.getTime(),
+                (e) => e.inicio?.getTime() === evento.inicio.getTime() && e.fim?.getTime() === evento.fim.getTime(),
               );
 
               if (existeEvento) return undefined;
@@ -222,6 +220,7 @@ export class BuscarOcorrenciaMinutoAusenteController implements Controller {
               inicio: evento.inicio,
               minutos: evento.minutos,
               tipoId: evento.tipoId,
+              hora: evento.hora,
             });
           });
         } catch (error) {}
