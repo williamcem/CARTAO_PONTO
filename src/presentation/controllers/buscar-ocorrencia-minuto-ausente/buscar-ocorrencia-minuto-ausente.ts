@@ -176,8 +176,17 @@ export class BuscarOcorrenciaMinutoAusenteController implements Controller {
               }[];
             };
           } = await this.lancarFaltaController.handle({ body: { cartaoDiaId: dia.id, notSave: true } });
-          console.log(" eventosDeAusencia.body.data", eventosDeAusencia.body);
+
           eventosDeAusencia.body?.data?.map((evento) => {
+            const existeEvento = eventosRepositorio.find(
+              (e) =>
+                -e.minutos === evento.minutos &&
+                e.fim?.getTime() === evento.fim.getTime() &&
+                e.inicio?.getTime() === evento.inicio.getTime(),
+            );
+
+            if (existeEvento) return undefined;
+
             diasComAusenciaMinutos.push({
               cartaoDiaId: evento.cartaoDiaId,
               data: dia.data,
