@@ -572,6 +572,8 @@ export class GetFuncionarioImpressaoCalculoController implements Controller {
       //Se os minutos for positivo irá manter
       output.diurno.ext1 = input.minutosDiurnos;
     else if (input.minutosDiurnos < 0) {
+      if (input.existeFaltaNoturna) input.minutosDiurnos = Number((input.minutosDiurnos * 1.14).toFixed());
+
       //Se o Saldo atual for negativo mantem o valor dos minutos
       if (minutosTotaisSaldo < 0) output.diurno.ext1 = input.minutosDiurnos;
       else {
