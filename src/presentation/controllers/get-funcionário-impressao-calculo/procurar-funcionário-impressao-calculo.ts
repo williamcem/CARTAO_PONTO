@@ -244,6 +244,23 @@ export class GetFuncionarioImpressaoCalculoController implements Controller {
               if (typeof resumo.noturno.ext2 === "number") resumoCartao.atual.noturno.ext2 += resumo.noturno.ext2;
               if (typeof resumo.noturno.ext3 === "number") resumoCartao.atual.noturno.ext3 += resumo.noturno.ext3;
             }
+
+            //Mostra minutos especiais no resumo
+            {
+              if (typeof resumo.especial?.diurno.ext1 === "number")
+                resumoCartao.especial.diurno.ext1 += resumo.especial?.diurno.ext1;
+              if (typeof resumo.especial?.diurno.ext2 === "number")
+                resumoCartao.especial.diurno.ext2 += resumo.especial?.diurno.ext2;
+              if (typeof resumo.especial?.diurno.ext3 === "number")
+                resumoCartao.especial.diurno.ext3 += resumo.especial?.diurno.ext3;
+
+              if (typeof resumo.especial?.noturno.ext1 === "number")
+                resumoCartao.especial.noturno.ext1 += resumo.especial?.noturno.ext1;
+              if (typeof resumo.especial?.noturno.ext2 === "number")
+                resumoCartao.especial.noturno.ext2 += resumo.especial?.noturno.ext2;
+              if (typeof resumo.especial?.noturno.ext3 === "number")
+                resumoCartao.especial.noturno.ext3 += resumo.especial?.noturno.ext3;
+            }
           }
 
           dia.cartao_dia_lancamentos.map((lancamento) => {
