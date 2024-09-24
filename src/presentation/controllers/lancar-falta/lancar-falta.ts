@@ -110,6 +110,11 @@ export class LancarFaltaController implements Controller {
 
         fim.subtract(saldoDia, "minutes");
 
+        const formattedFim = {
+          hora: fim.hours(), // Pegar Hora
+          minuto: fim.minutes(), // Pegar Minuto
+        };
+
         if (existeMinutosNoturno.minutos !== 0) {
           eventos.push({
             cartaoDiaId,
@@ -124,7 +129,7 @@ export class LancarFaltaController implements Controller {
         eventos.push({
           cartaoDiaId,
           funcionarioId: dia.cartao.funcionarioId,
-          hora: `${this.formatoHoraMinuto(horariosDia[0])} - ${this.formatoHoraMinuto(horariosDia[1])}`,
+          hora: `${this.formatoHoraMinuto(horariosDia[0])} - ${this.formatoHoraMinuto(formattedFim)}`,
           minutos: saldoDia,
           tipoId: 2,
           inicio: inicio.toDate(),
@@ -158,6 +163,11 @@ export class LancarFaltaController implements Controller {
 
         inicio.add(saldoDia, "minutes");
 
+        const formattedInicio = {
+          hora: inicio.hours(), // Pegar Hora
+          minuto: inicio.minutes(), // Pegar Minuto
+        };
+
         if (existeMinutosNoturno.minutos !== 0) {
           eventos.push({
             cartaoDiaId,
@@ -173,7 +183,7 @@ export class LancarFaltaController implements Controller {
         eventos.push({
           cartaoDiaId,
           funcionarioId: dia.cartao.funcionarioId,
-          hora: `${this.formatoHoraMinuto(horariosDia[2])} - ${this.formatoHoraMinuto(horariosDia[3])}`,
+          hora: `${this.formatoHoraMinuto(formattedInicio)} - ${this.formatoHoraMinuto(horariosDia[3])}`,
           minutos: saldoDia,
           tipoId: 2,
           inicio: inicio.toDate(),
