@@ -139,6 +139,7 @@ export class GetFuncionarioImpressaoCalculoController implements Controller {
 
         const dias = cartao.cartao_dia.map((dia) => {
           const periodos: { entrada: string; saida: string; periodoId: number; validadoPeloOperador: boolean }[] = [];
+          const naoTrabalha = dia.statusId === 2 || dia.statusId === 6 || dia.statusId === 7;
 
           let resumoLegado = {
             diurno: "",
@@ -150,7 +151,7 @@ export class GetFuncionarioImpressaoCalculoController implements Controller {
 
           const contemAusencia = dia.eventos.some((evento) => evento.tipoId === 2);
 
-          if (contemAusencia && dia.cargaHorPrimeiroPeriodo) {
+          if (contemAusencia && dia.cargaHorPrimeiroPeriodo && !naoTrabalha) {
             const existeLancamento = dia.cartao_dia_lancamentos.some((lancamento) => lancamento.periodoId === 1);
             if (!existeLancamento) {
               periodos.push({
@@ -162,7 +163,7 @@ export class GetFuncionarioImpressaoCalculoController implements Controller {
             }
           }
 
-          if (contemAusencia && dia.cargaHorSegundoPeriodo) {
+          if (contemAusencia && dia.cargaHorSegundoPeriodo && !naoTrabalha) {
             const existeLancamento = dia.cartao_dia_lancamentos.some((lancamento) => lancamento.periodoId === 2);
             if (!existeLancamento) {
               periodos.push({
