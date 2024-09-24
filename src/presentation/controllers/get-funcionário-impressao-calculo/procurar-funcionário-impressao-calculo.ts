@@ -413,6 +413,10 @@ export class GetFuncionarioImpressaoCalculoController implements Controller {
     let existeFaltaNoturna = false;
     let minutosNoturnosAntesJornada = 0;
 
+    if (input.dia.id === 140299) {
+      console.log("safsa");
+    }
+
     input.dia.eventos.filter((evento) => {
       if (
         evento.tipoId !== 8 &&
@@ -437,9 +441,19 @@ export class GetFuncionarioImpressaoCalculoController implements Controller {
     if (input.dia.statusId === 2 || input.dia.statusId === 6 || input.dia.statusId === 7) {
       input.dia.cargaHorariaTotal = 0; //Zerar carga horaria
 
+      let minutosNoturnoLocal = 0;
       //Localizar minutos noturnos pela hora do evento
       input.dia.eventos.map((evento) => {
         if (evento.tipoId === 1) {
+          let existeEventoNoturnoAntesDaJornadaEntreMinutosTrabalhado = false;
+
+          existeEventoNoturnoAntesDaJornadaEntreMinutosTrabalhado = input.dia.eventos.some(
+            (eve) => eve.tipoId === 14 && eve.hora === evento.hora,
+          );
+
+          //Se houver zera os minutos antes da jornada
+          if (existeEventoNoturnoAntesDaJornadaEntreMinutosTrabalhado) minutosNoturnosAntesJornada = 0;
+
           const [inicio] = evento.hora.split("-");
           const [inicioHora, inicioMinuto] = inicio.trim().split(":");
 
@@ -452,9 +466,11 @@ export class GetFuncionarioImpressaoCalculoController implements Controller {
             fim: fimData.toDate(),
           });
 
-          minutosNoturnos += Number((resultado.minutos * 1.14).toFixed());
+          minutosNoturnoLocal += resultado.minutos;
         }
       });
+
+      if (minutosNoturnoLocal) minutosNoturnos += Number((minutosNoturnoLocal * 1.14).toFixed());
     }
 
     existeFaltaNoturna = input.dia.eventos.some((evento) => evento.tipoId === 13);
