@@ -4,19 +4,26 @@ import { badRequest, notFoundRequest, ok, serverError } from "../../helpers/http
 import { Controller, HttpRequest, HttpResponse } from "./procurra-funcionario-impressao-calculoprotocols";
 import moment from "moment";
 import "moment/locale/pt-br";
+import { RecalcularTurnoController } from "../recalcular-turno/recalcular-turno";
 
 interface ResumoDoDiaOutput {
   diurno: { ext1: number | string; ext2: number | string; ext3: number | string };
   noturno: { ext1: number | string; ext2: number | string; ext3: number | string };
+  especial?: {
+    diurno: { ext1: number | string; ext2: number | string; ext3: number | string };
+    noturno: { ext1: number | string; ext2: number | string; ext3: number | string };
+  };
 }
 
 interface ResumoDoDiaInput {
   dia: {
     id: number;
     cargaHorariaTotal: number;
-    eventos: { tipoId: number; minutos: number; tratado: boolean }[];
+    eventos: { tipoId: number; minutos: number; tratado: boolean; hora: string }[];
     abono: { minutos: number };
     contemAusencia: boolean;
+    statusId: number;
+    data: Date;
   };
   resumoCartao: {
     atual: {
@@ -35,7 +42,10 @@ interface ResumoDoDiaInput {
 }
 
 export class GetFuncionarioImpressaoCalculoController implements Controller {
-  constructor(private readonly funcionarioImpressaoCalculoPostgresRepository: FuncionarioImpressaoCalculoPostgresRepository) {}
+  constructor(
+    private readonly funcionarioImpressaoCalculoPostgresRepository: FuncionarioImpressaoCalculoPostgresRepository,
+    private readonly recalcularTurnoController: RecalcularTurnoController,
+  ) {}
 
   async handle(httpRequest: HttpRequest): Promise<HttpResponse> {
     try {
@@ -113,10 +123,23 @@ export class GetFuncionarioImpressaoCalculoController implements Controller {
               ext3: minutosNoturnosCompesados?.ext3 || 0,
             },
           },
+          especial: {
+            diurno: {
+              ext1: minutosDiurnosCompesados?.ext1 || 0,
+              ext2: minutosDiurnosCompesados?.ext2 || 0,
+              ext3: minutosDiurnosCompesados?.ext3 || 0,
+            },
+            noturno: {
+              ext1: minutosNoturnosCompesados?.ext1 || 0,
+              ext2: minutosNoturnosCompesados?.ext2 || 0,
+              ext3: minutosNoturnosCompesados?.ext3 || 0,
+            },
+          },
         };
 
         const dias = cartao.cartao_dia.map((dia) => {
           const periodos: { entrada: string; saida: string; periodoId: number; validadoPeloOperador: boolean }[] = [];
+          const naoTrabalha = dia.statusId === 2 || dia.statusId === 6 || dia.statusId === 7;
 
           let resumoLegado = {
             diurno: "",
@@ -128,7 +151,7 @@ export class GetFuncionarioImpressaoCalculoController implements Controller {
 
           const contemAusencia = dia.eventos.some((evento) => evento.tipoId === 2);
 
-          if (contemAusencia && dia.cargaHorPrimeiroPeriodo) {
+          if (contemAusencia && dia.cargaHorPrimeiroPeriodo && !naoTrabalha) {
             const existeLancamento = dia.cartao_dia_lancamentos.some((lancamento) => lancamento.periodoId === 1);
             if (!existeLancamento) {
               periodos.push({
@@ -140,7 +163,7 @@ export class GetFuncionarioImpressaoCalculoController implements Controller {
             }
           }
 
-          if (contemAusencia && dia.cargaHorSegundoPeriodo) {
+          if (contemAusencia && dia.cargaHorSegundoPeriodo && !naoTrabalha) {
             const existeLancamento = dia.cartao_dia_lancamentos.some((lancamento) => lancamento.periodoId === 2);
             if (!existeLancamento) {
               periodos.push({
@@ -153,7 +176,7 @@ export class GetFuncionarioImpressaoCalculoController implements Controller {
           }
 
           const eventos = dia.eventos.map((evento) => {
-            return { minutos: evento.minutos, tipoId: evento.tipoId || 0, tratado: evento.tratado };
+            return { minutos: evento.minutos, tipoId: evento.tipoId || 0, tratado: evento.tratado, hora: evento.hora };
           });
 
           const abono = { minutos: 0 };
@@ -161,7 +184,15 @@ export class GetFuncionarioImpressaoCalculoController implements Controller {
           dia.atestado_abonos.map((abonoLocal) => (abono.minutos += abonoLocal.minutos));
 
           let resumo = this.calcularResumoPorDia({
-            dia: { id: dia.id, eventos, abono, cargaHorariaTotal: dia.cargaHor, contemAusencia },
+            dia: {
+              id: dia.id,
+              eventos,
+              abono,
+              cargaHorariaTotal: dia.cargaHor,
+              contemAusencia,
+              statusId: dia.statusId,
+              data: dia.data,
+            },
             resumoCartao,
           });
 
@@ -213,6 +244,23 @@ export class GetFuncionarioImpressaoCalculoController implements Controller {
               if (typeof resumo.noturno.ext1 === "number") resumoCartao.atual.noturno.ext1 += resumo.noturno.ext1;
               if (typeof resumo.noturno.ext2 === "number") resumoCartao.atual.noturno.ext2 += resumo.noturno.ext2;
               if (typeof resumo.noturno.ext3 === "number") resumoCartao.atual.noturno.ext3 += resumo.noturno.ext3;
+            }
+
+            //Mostra minutos especiais no resumo
+            {
+              if (typeof resumo.especial?.diurno.ext1 === "number")
+                resumoCartao.especial.diurno.ext1 += resumo.especial?.diurno.ext1;
+              if (typeof resumo.especial?.diurno.ext2 === "number")
+                resumoCartao.especial.diurno.ext2 += resumo.especial?.diurno.ext2;
+              if (typeof resumo.especial?.diurno.ext3 === "number")
+                resumoCartao.especial.diurno.ext3 += resumo.especial?.diurno.ext3;
+
+              if (typeof resumo.especial?.noturno.ext1 === "number")
+                resumoCartao.especial.noturno.ext1 += resumo.especial?.noturno.ext1;
+              if (typeof resumo.especial?.noturno.ext2 === "number")
+                resumoCartao.especial.noturno.ext2 += resumo.especial?.noturno.ext2;
+              if (typeof resumo.especial?.noturno.ext3 === "number")
+                resumoCartao.especial.noturno.ext3 += resumo.especial?.noturno.ext3;
             }
           }
 
@@ -385,6 +433,30 @@ export class GetFuncionarioImpressaoCalculoController implements Controller {
       if (evento.tipoId === 14) minutosNoturnosAntesJornada += evento.minutos;
     });
 
+    //Quando for folga, feriado ou compensado
+    if (input.dia.statusId === 2 || input.dia.statusId === 6 || input.dia.statusId === 7) {
+      input.dia.cargaHorariaTotal = 0; //Zerar carga horaria
+
+      //Localizar minutos noturnos pela hora do evento
+      input.dia.eventos.map((evento) => {
+        if (evento.tipoId === 1) {
+          const [inicio] = evento.hora.split("-");
+          const [inicioHora, inicioMinuto] = inicio.trim().split(":");
+
+          const inicioData = moment.utc(input.dia.data).hours(Number(inicioHora)).minutes(Number(inicioMinuto));
+          const fimData = moment.utc(inicioData).add(evento.minutos, "minutes");
+
+          const resultado = this.recalcularTurnoController.localizarMinutosNoturno({
+            data: input.dia.data,
+            inicio: inicioData.toDate(),
+            fim: fimData.toDate(),
+          });
+
+          minutosNoturnos += Number((resultado.minutos * 1.14).toFixed());
+        }
+      });
+    }
+
     existeFaltaNoturna = input.dia.eventos.some((evento) => evento.tipoId === 13);
 
     if (minutosDiurnos == 0 && minutosNoturnos == 0 && !input.dia.contemAusencia) return output;
@@ -464,6 +536,14 @@ export class GetFuncionarioImpressaoCalculoController implements Controller {
             minutosIniciado: [Number(output.diurno.ext1), Number(output.diurno.ext2), Number(output.diurno.ext3)],
           });
           output.noturno = { ext1, ext2, ext3 };
+        }
+        if (minutos > 0 && !minutosNoturnosAntesJornadaSemAcrescimo && !minutosTotalExtraDiruno) {
+          const [ext1, ext2, ext3] = this.inserirRegraPorHoraExtra({
+            minutos: Number((minutos * 1.14).toFixed()),
+            parametros: [60, 60, 9999],
+            minutosIniciado: [Number(output.diurno.ext1), Number(output.diurno.ext2), Number(output.diurno.ext3)],
+          });
+          output.noturno = { ext1, ext2, ext3 };
         } else {
           const [ext1, ext2, ext3] = this.inserirRegraPorHoraExtra({
             minutos: minutosNoturnos + minutosNoturnosAntesJornada,
@@ -474,6 +554,25 @@ export class GetFuncionarioImpressaoCalculoController implements Controller {
         }
       }
     } else if (minutosNoturnos < 0) output.noturno = { ext1: minutosNoturnos, ext2: 0, ext3: 0 };
+
+    if (input.dia.statusId === 6 || input.dia.statusId === 7) {
+      output = {
+        especial: {
+          diurno: {
+            ext1: 0,
+            ext2: 0,
+            ext3: Number(output.diurno.ext1) + Number(output.diurno.ext2) + Number(output.diurno.ext3),
+          },
+          noturno: {
+            ext1: 0,
+            ext2: 0,
+            ext3: Number(output.noturno.ext1) + Number(output.noturno.ext2) + Number(output.noturno.ext3),
+          },
+        },
+        diurno: { ext1: 0, ext2: 0, ext3: 0 },
+        noturno: { ext1: 0, ext2: 0, ext3: 0 },
+      };
+    }
 
     return output;
   }
@@ -562,6 +661,8 @@ export class GetFuncionarioImpressaoCalculoController implements Controller {
       //Se os minutos for positivo irá manter
       output.diurno.ext1 = input.minutosDiurnos;
     else if (input.minutosDiurnos < 0) {
+      if (input.existeFaltaNoturna) input.minutosDiurnos = Number((input.minutosDiurnos * 1.14).toFixed());
+
       //Se o Saldo atual for negativo mantem o valor dos minutos
       if (minutosTotaisSaldo < 0) output.diurno.ext1 = input.minutosDiurnos;
       else {

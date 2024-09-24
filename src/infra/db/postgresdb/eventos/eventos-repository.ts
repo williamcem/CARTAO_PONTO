@@ -363,6 +363,24 @@ export class CriarEventosPostgresRepository implements AdicionarEventos {
         fim: horarioSaidaEsperado.toDate(),
       };
 
+      const contemMinutosNoturnoAusente = Boolean(
+        this.recalcularTurnoController.localizarMinutosNoturno({
+          data: lancamento.cartao_dia.data,
+          inicio: saida.toDate(),
+          fim: horarioSaidaEsperado.toDate(),
+        }).minutos,
+      );
+
+      if (contemMinutosNoturnoAusente) {
+        eventos.push({
+          cartaoDiaId: lancamento.cartao_dia.id,
+          hora: this.ordenarHorario({ inicio: saida, fim: horarioSaidaEsperado }),
+          tipoId: 13,
+          funcionarioId: lancamento.cartao_dia.cartao.funcionario.id,
+          minutos: 0,
+        });
+      }
+
       // Se os minutos forem negativos (sinal de saída antecipada), adicione o evento
       if (eventoSaidaAntecipada.minutos < 0) {
         eventosExcendentes.push({ ...eventoSaidaAntecipada, periodoId: 1 });
@@ -449,6 +467,24 @@ export class CriarEventosPostgresRepository implements AdicionarEventos {
         inicio: entradaOrdenada.toDate(),
         fim: saidaOrdenada.toDate(),
       };
+
+      const contemMinutosNoturnoAusente = Boolean(
+        this.recalcularTurnoController.localizarMinutosNoturno({
+          data: lancamento.cartao_dia.data,
+          inicio: horarioSaidaEsperado.toDate(),
+          fim: saida.toDate(),
+        }).minutos,
+      );
+
+      if (contemMinutosNoturnoAusente) {
+        eventos.push({
+          cartaoDiaId: lancamento.cartao_dia.id,
+          hora: this.ordenarHorario({ inicio: horarioSaidaEsperado, fim: saida }),
+          tipoId: 13,
+          funcionarioId: lancamento.cartao_dia.cartao.funcionario.id,
+          minutos: 0,
+        });
+      }
 
       if (Math.abs(eventoExcedentePositivo.minutos) > 5) {
         excedeu = true;
@@ -585,6 +621,24 @@ export class CriarEventosPostgresRepository implements AdicionarEventos {
           inicio: horarioSaidaPeriodoAtual.toDate(),
           fim: horarioEntradaProximoPeriodo.toDate(),
         });
+
+        const contemMinutosNoturnoAusente = Boolean(
+          this.recalcularTurnoController.localizarMinutosNoturno({
+            data: lancamento.cartao_dia.data,
+            inicio: horarioSaidaPeriodoAtual.toDate(),
+            fim: horarioEntradaProximoPeriodo.toDate(),
+          }).minutos,
+        );
+
+        if (contemMinutosNoturnoAusente) {
+          eventos.push({
+            cartaoDiaId: lancamento.cartao_dia.id,
+            hora: this.ordenarHorario({ inicio: horarioSaidaPeriodoAtual, fim: horarioEntradaProximoPeriodo }),
+            tipoId: 13,
+            funcionarioId: lancamento.cartao_dia.cartao.funcionario.id,
+            minutos: 0,
+          });
+        }
       }
     }
   }
