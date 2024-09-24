@@ -215,6 +215,7 @@ model cartao_dia {
   eventos                     eventos[]
   atestado_abonos             atestado_abono[]
   funcionario_alteracao_turno funcionario_alteracao_turno? @relation(fields: [funcionarioAlteracaoTurnoId], references: [id], onDelete: Cascade)
+  evento_atraso_onibus        evento_atraso_onibus[]
 
   @@unique([cartaoId, data])
 }
@@ -408,6 +409,17 @@ model descricaco_cid {
   atestadoId Int
   grupo_cid  String
   descricaco String
+}
+
+model evento_atraso_onibus {
+  id          Int      @id @default(autoincrement())
+  cartaoDiaId Int      @unique
+  hora        String
+  minutos     Int
+  inicio      DateTime
+  fim         DateTime
+
+  cartao_dia cartao_dia @relation(fields: [cartaoDiaId], references: [id], onDelete: Cascade)
 }
 
 model eventos {
