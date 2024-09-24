@@ -4,6 +4,7 @@ import { badRequest, notFoundRequest, ok, serverError } from "../../helpers/http
 import { Controller, HttpRequest, HttpResponse } from "./procurra-funcionario-impressao-calculoprotocols";
 import moment from "moment";
 import "moment/locale/pt-br";
+import { RecalcularTurnoController } from "../recalcular-turno/recalcular-turno";
 
 interface ResumoDoDiaOutput {
   diurno: { ext1: number | string; ext2: number | string; ext3: number | string };
@@ -14,10 +15,11 @@ interface ResumoDoDiaInput {
   dia: {
     id: number;
     cargaHorariaTotal: number;
-    eventos: { tipoId: number; minutos: number; tratado: boolean }[];
+    eventos: { tipoId: number; minutos: number; tratado: boolean; hora: string }[];
     abono: { minutos: number };
     contemAusencia: boolean;
     statusId: number;
+    data: Date;
   };
   resumoCartao: {
     atual: {
@@ -36,7 +38,10 @@ interface ResumoDoDiaInput {
 }
 
 export class GetFuncionarioImpressaoCalculoController implements Controller {
-  constructor(private readonly funcionarioImpressaoCalculoPostgresRepository: FuncionarioImpressaoCalculoPostgresRepository) {}
+  constructor(
+    private readonly funcionarioImpressaoCalculoPostgresRepository: FuncionarioImpressaoCalculoPostgresRepository,
+    private readonly recalcularTurnoController: RecalcularTurnoController,
+  ) {}
 
   async handle(httpRequest: HttpRequest): Promise<HttpResponse> {
     try {
@@ -154,7 +159,7 @@ export class GetFuncionarioImpressaoCalculoController implements Controller {
           }
 
           const eventos = dia.eventos.map((evento) => {
-            return { minutos: evento.minutos, tipoId: evento.tipoId || 0, tratado: evento.tratado };
+            return { minutos: evento.minutos, tipoId: evento.tipoId || 0, tratado: evento.tratado, hora: evento.hora };
           });
 
           const abono = { minutos: 0 };
@@ -162,7 +167,15 @@ export class GetFuncionarioImpressaoCalculoController implements Controller {
           dia.atestado_abonos.map((abonoLocal) => (abono.minutos += abonoLocal.minutos));
 
           let resumo = this.calcularResumoPorDia({
-            dia: { id: dia.id, eventos, abono, cargaHorariaTotal: dia.cargaHor, contemAusencia, statusId: dia.statusId },
+            dia: {
+              id: dia.id,
+              eventos,
+              abono,
+              cargaHorariaTotal: dia.cargaHor,
+              contemAusencia,
+              statusId: dia.statusId,
+              data: dia.data,
+            },
             resumoCartao,
           });
 
@@ -361,8 +374,6 @@ export class GetFuncionarioImpressaoCalculoController implements Controller {
       noturno: { ext1: 0, ext2: 0, ext3: 0 },
     };
 
-    if (input.dia.statusId === 2 || input.dia.statusId === 6 || input.dia.statusId === 7) input.dia.cargaHorariaTotal = 0;
-
     let minutosDiurnos = 0;
     let minutosNoturnos = 0;
     let existeFaltaNoturna = false;
@@ -387,6 +398,30 @@ export class GetFuncionarioImpressaoCalculoController implements Controller {
     input.dia.eventos.filter((evento) => {
       if (evento.tipoId === 14) minutosNoturnosAntesJornada += evento.minutos;
     });
+
+    //Quando for folga, feriado ou compensado
+    if (input.dia.statusId === 2 || input.dia.statusId === 6 || input.dia.statusId === 7) {
+      input.dia.cargaHorariaTotal = 0; //Zerar carga horaria
+
+      //Localizar minutos noturnos pela hora do evento
+      input.dia.eventos.map((evento) => {
+        if (evento.tipoId === 1) {
+          const [inicio] = evento.hora.split("-");
+          const [inicioHora, inicioMinuto] = inicio.trim().split(":");
+
+          const inicioData = moment.utc(input.dia.data).hours(Number(inicioHora)).minutes(Number(inicioMinuto));
+          const fimData = moment.utc(inicioData).add(evento.minutos, "minutes");
+
+          const resultado = this.recalcularTurnoController.localizarMinutosNoturno({
+            data: input.dia.data,
+            inicio: inicioData.toDate(),
+            fim: fimData.toDate(),
+          });
+
+          minutosNoturnos += Number((resultado.minutos * 1.14).toFixed());
+        }
+      });
+    }
 
     existeFaltaNoturna = input.dia.eventos.some((evento) => evento.tipoId === 13);
 
