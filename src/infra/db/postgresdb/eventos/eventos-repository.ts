@@ -316,6 +316,7 @@ export class CriarEventosPostgresRepository implements AdicionarEventos {
     const horariosRelevantes = cargaHorariaCompletaArray.filter((horario) => horario.hora !== 0 || horario.minuto !== 0);
 
     const isFolga = horariosRelevantes.length === 0;
+    const isUmPeriodo = horariosRelevantes.length === 2;
 
     // Verifica se o horário de saída esperado é antes da entrada (possível troca de dia)
     if (horarioSaidaEsperado.isBefore(horarioEntradaEsperado1)) {
@@ -351,7 +352,7 @@ export class CriarEventosPostgresRepository implements AdicionarEventos {
     const qtdeLancamento = lancamentos?.filter((lanc: any) => lanc.cartao_dia.id === lancamento.cartao_dia.id).length;
 
     // Verifica se a pessoa saiu mais cedo do que o horário esperado e se tem apenas um período no dia
-    if (qtdeLancamento === 1) {
+    if (qtdeLancamento === 1 && isUmPeriodo) {
       const eventoSaidaAntecipada = {
         cartaoDiaId: lancamento.cartao_dia.id,
         hora: this.ordenarHorario({ inicio: saida, fim: horarioSaidaEsperado }),
