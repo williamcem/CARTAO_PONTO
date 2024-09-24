@@ -413,10 +413,6 @@ export class GetFuncionarioImpressaoCalculoController implements Controller {
     let existeFaltaNoturna = false;
     let minutosNoturnosAntesJornada = 0;
 
-    if (input.dia.id === 140299) {
-      console.log("safsa");
-    }
-
     input.dia.eventos.filter((evento) => {
       if (
         evento.tipoId !== 8 &&
@@ -451,7 +447,7 @@ export class GetFuncionarioImpressaoCalculoController implements Controller {
             (eve) => eve.tipoId === 14 && eve.hora === evento.hora,
           );
 
-          //Se houver zera os minutos antes da jornada
+          //Se houver evento noturno antes da jornada entre os minutos trabalho, zera os minutos antes da jornada
           if (existeEventoNoturnoAntesDaJornadaEntreMinutosTrabalhado) minutosNoturnosAntesJornada = 0;
 
           const [inicio] = evento.hora.split("-");
