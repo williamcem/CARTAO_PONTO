@@ -9,6 +9,10 @@ import { RecalcularTurnoController } from "../recalcular-turno/recalcular-turno"
 interface ResumoDoDiaOutput {
   diurno: { ext1: number | string; ext2: number | string; ext3: number | string };
   noturno: { ext1: number | string; ext2: number | string; ext3: number | string };
+  especial?: {
+    diurno: { ext1: number | string; ext2: number | string; ext3: number | string };
+    noturno: { ext1: number | string; ext2: number | string; ext3: number | string };
+  };
 }
 
 interface ResumoDoDiaInput {
@@ -108,6 +112,18 @@ export class GetFuncionarioImpressaoCalculoController implements Controller {
             },
           },
           compensado: {
+            diurno: {
+              ext1: minutosDiurnosCompesados?.ext1 || 0,
+              ext2: minutosDiurnosCompesados?.ext2 || 0,
+              ext3: minutosDiurnosCompesados?.ext3 || 0,
+            },
+            noturno: {
+              ext1: minutosNoturnosCompesados?.ext1 || 0,
+              ext2: minutosNoturnosCompesados?.ext2 || 0,
+              ext3: minutosNoturnosCompesados?.ext3 || 0,
+            },
+          },
+          especial: {
             diurno: {
               ext1: minutosDiurnosCompesados?.ext1 || 0,
               ext2: minutosDiurnosCompesados?.ext2 || 0,
@@ -520,6 +536,25 @@ export class GetFuncionarioImpressaoCalculoController implements Controller {
         }
       }
     } else if (minutosNoturnos < 0) output.noturno = { ext1: minutosNoturnos, ext2: 0, ext3: 0 };
+
+    if (input.dia.statusId === 6 || input.dia.statusId === 7) {
+      output = {
+        especial: {
+          diurno: {
+            ext1: 0,
+            ext2: 0,
+            ext3: Number(output.diurno.ext1) + Number(output.diurno.ext2) + Number(output.diurno.ext3),
+          },
+          noturno: {
+            ext1: 0,
+            ext2: 0,
+            ext3: Number(output.noturno.ext1) + Number(output.noturno.ext2) + Number(output.noturno.ext3),
+          },
+        },
+        diurno: { ext1: 0, ext2: 0, ext3: 0 },
+        noturno: { ext1: 0, ext2: 0, ext3: 0 },
+      };
+    }
 
     return output;
   }
