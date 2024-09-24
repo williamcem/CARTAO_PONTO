@@ -466,6 +466,14 @@ export class GetFuncionarioImpressaoCalculoController implements Controller {
             minutosIniciado: [Number(output.diurno.ext1), Number(output.diurno.ext2), Number(output.diurno.ext3)],
           });
           output.noturno = { ext1, ext2, ext3 };
+        }
+        if (minutos > 0 && !minutosNoturnosAntesJornadaSemAcrescimo && !minutosTotalExtraDiruno) {
+          const [ext1, ext2, ext3] = this.inserirRegraPorHoraExtra({
+            minutos: Number((minutos * 1.14).toFixed()),
+            parametros: [60, 60, 9999],
+            minutosIniciado: [Number(output.diurno.ext1), Number(output.diurno.ext2), Number(output.diurno.ext3)],
+          });
+          output.noturno = { ext1, ext2, ext3 };
         } else {
           const [ext1, ext2, ext3] = this.inserirRegraPorHoraExtra({
             minutos: minutosNoturnos + minutosNoturnosAntesJornada,
