@@ -112,7 +112,7 @@ export class AlterarLocalidadeController implements Controller {
 
       if (!saved) serverError();
 
-      await this.criarEventosController.handle({ query: { identificacao: funcionario.identificacao } });
+      for (const dia of dias) await this.criarEventosController.handle({ body: { cartao_dia_id: dia.id } });
 
       return ok({ message: "Funcionário alterado com sucesso!" });
     } catch (error) {
