@@ -301,7 +301,7 @@ export class FinalizarCartaoController implements Controller {
     if (input.cartao.statusId === 3) return { diasSemLancamento, lancamentosNaoValidado, ocorrenciasNaoTratada };
 
     input.cartao.dias.map((dia) => {
-      if (dia.cargaHor === 0 || dia.statusId === 11) return;
+      if (dia.statusId !== 1) return;
 
       if (!dia.eventos.length) {
         diasSemLancamento.push({ data: dia.data, id: dia.id });
