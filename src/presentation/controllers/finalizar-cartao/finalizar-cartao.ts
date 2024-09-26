@@ -149,6 +149,10 @@ export class FinalizarCartaoController implements Controller {
                   diurno: { ext1: number | string; ext2: number | string; ext3: number | string };
                   noturno: { ext1: number | string; ext2: number | string; ext3: number | string };
                 };
+                especial?: {
+                  diurno: { ext1: number | string; ext2: number | string; ext3: number | string };
+                  noturno: { ext1: number | string; ext2: number | string; ext3: number | string };
+                };
               };
             },
           ];
@@ -160,13 +164,13 @@ export class FinalizarCartaoController implements Controller {
       if (result.statusCode !== 200)
         return serverErrorNovo({ message: "Erro ao calcular resumo\nEntrar em contato com o suporte!" });
 
-      const { atual } = result.body.data[0].resumo;
+      const { atual, especial } = result.body.data[0].resumo;
 
       errors.diurno.ext1 = this.mensagemMinutosDivergente({
         nome: "extra 1",
         periodo: "diurno",
         somaDoInformado: pago.diurno.ext1 + compensado.diurno.ext1,
-        resumoSistema: Number(atual.diurno.ext1),
+        resumoSistema: Number(atual.diurno.ext1) + (Number(especial?.diurno.ext1) || 0),
       });
       if (errors.diurno.ext1) sendError = true;
 
@@ -174,7 +178,7 @@ export class FinalizarCartaoController implements Controller {
         nome: "extra 2",
         periodo: "diurno",
         somaDoInformado: pago.diurno.ext2 + compensado.diurno.ext2,
-        resumoSistema: Number(atual.diurno.ext2),
+        resumoSistema: Number(atual.diurno.ext2) + (Number(especial?.diurno.ext2) || 0),
       });
       if (errors.diurno.ext2) sendError = true;
 
@@ -182,7 +186,7 @@ export class FinalizarCartaoController implements Controller {
         nome: "extra 3",
         periodo: "diurno",
         somaDoInformado: pago.diurno.ext3 + compensado.diurno.ext3,
-        resumoSistema: Number(atual.diurno.ext3),
+        resumoSistema: Number(atual.diurno.ext3) + (Number(especial?.diurno.ext3) || 0),
       });
       if (errors.diurno.ext3) sendError = true;
 
@@ -190,7 +194,7 @@ export class FinalizarCartaoController implements Controller {
         nome: "extra 1",
         periodo: "noturno",
         somaDoInformado: pago.noturno.ext1 + compensado.noturno.ext1,
-        resumoSistema: Number(atual.noturno.ext1),
+        resumoSistema: Number(atual.noturno.ext1) + (Number(especial?.noturno.ext1) || 0),
       });
       if (errors.noturno.ext1) sendError = true;
 
@@ -198,7 +202,7 @@ export class FinalizarCartaoController implements Controller {
         nome: "extra 2",
         periodo: "noturno",
         somaDoInformado: pago.noturno.ext2 + compensado.noturno.ext2,
-        resumoSistema: Number(atual.noturno.ext2),
+        resumoSistema: Number(atual.noturno.ext2) + (Number(especial?.noturno.ext2) || 0),
       });
       if (errors.noturno.ext2) sendError = true;
 
@@ -206,7 +210,7 @@ export class FinalizarCartaoController implements Controller {
         nome: "extra 3",
         periodo: "noturno",
         somaDoInformado: pago.noturno.ext3 + compensado.noturno.ext3,
-        resumoSistema: Number(atual.noturno.ext3),
+        resumoSistema: Number(atual.noturno.ext3) + (Number(especial?.noturno.ext3) || 0),
       });
       if (errors.noturno.ext3) sendError = true;
 
