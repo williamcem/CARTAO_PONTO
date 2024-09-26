@@ -810,7 +810,16 @@ export class GetFuncionarioImpressaoCalculoController implements Controller {
       if (saldoTotal > 0) {
         const restoSaldoTotal = saldoTotalComPorcentagem - saldoTotal;
         movimentacao.diurno.ext1 = Number((saldoMinutos + restoSaldoTotal).toFixed());
-        saldo.diurno.ext1 = movimentacao.diurno.ext1;
+
+        //Se tiver saldo só no extra 1 todo valor negativo atribui a ele
+        if (saldo.diurno.ext1 && !saldo.diurno.ext2 && !saldo.diurno.ext3) {
+          saldo.diurno.ext1 = movimentacao.diurno.ext1;
+        } else {
+          //Se houver nos outros extras, dividir o valores entre eles
+          movimentacao.diurno.ext1 = movimentacao.diurno.ext1 + saldo.diurno.ext2 + saldo.diurno.ext3;
+          movimentacao.diurno.ext2 = -saldo.diurno.ext2;
+          movimentacao.diurno.ext3 = -saldo.diurno.ext3;
+        }
         saldoMinutos = 0;
       } else {
         movimentacao.diurno.ext1 = saldoMinutos;
