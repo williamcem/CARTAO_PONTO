@@ -482,7 +482,7 @@ export class GetFuncionarioImpressaoCalculoController implements Controller {
     });
 
     const somaTodosMinutos = minutos + minutosNoturnos;
-    if (somaTodosMinutos > -10 && somaTodosMinutos < 10 && minutosDiurnos > -10 && minutosDiurnos < 10) {
+    if (somaTodosMinutos >= -10 && somaTodosMinutos <= 10 && minutosDiurnos >= -10 && minutosDiurnos <= 10) {
       minutos = 0;
       minutosNoturnos = 0;
       minutosNoturnosAntesJornada = 0;
