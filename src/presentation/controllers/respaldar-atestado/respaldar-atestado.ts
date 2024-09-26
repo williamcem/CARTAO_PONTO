@@ -422,7 +422,7 @@ export class RespaldarController implements Controller {
           moment(itervalo.inicio).isSameOrAfter(horariosTrabalho[0]) &&
           moment(itervalo.fim).isSameOrBefore(horariosTrabalho[3])
         ) {
-          minutos = moment(itervalo.fim).diff(itervalo.inicio, "minutes") - dia.descanso;
+          minutos = moment(itervalo.fim).diff(itervalo.inicio, "minutes") /* - dia.descanso */; //Será verificado se removerá o descanso
         }
         //Quando o atestado inicou no segundo periodo e o fim é após termino do dia
         else if (
