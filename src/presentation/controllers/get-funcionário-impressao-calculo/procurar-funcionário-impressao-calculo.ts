@@ -633,7 +633,9 @@ export class GetFuncionarioImpressaoCalculoController implements Controller {
       if (input.saldoAtual < 0) minutos = input.minutosDiurnos;
       else {
         const saldoAtualComPorcentagem = Number((input.saldoAtual * 1.6).toFixed());
-        if (saldoAtualComPorcentagem < Math.abs(input.minutosDiurnos)) {
+        if (saldoAtualComPorcentagem === Math.abs(input.minutosDiurnos)) {
+          minutos = Number((input.minutosDiurnos * 1.6).toFixed());
+        } else if (saldoAtualComPorcentagem < Math.abs(input.minutosDiurnos)) {
           const saldoDia = saldoAtualComPorcentagem + input.minutosDiurnos;
           minutos = saldoDia + -input.saldoAtual;
         } else {
