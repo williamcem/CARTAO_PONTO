@@ -422,7 +422,11 @@ export class GetFuncionarioImpressaoCalculoController implements Controller {
         evento.tipoId !== 13 &&
         evento.tipoId !== 14
       )
-        minutosDiurnos += evento.minutos;
+        if (evento.tipoId === 12) {
+          if (input.dia.statusId !== 2 && input.dia.statusId !== 6 && input.dia.statusId !== 7) {
+            minutosDiurnos += evento.minutos;
+          }
+        } else minutosDiurnos += evento.minutos;
     });
 
     input.dia.eventos.filter((evento) => {
@@ -435,6 +439,8 @@ export class GetFuncionarioImpressaoCalculoController implements Controller {
 
     //Quando for folga, feriado ou compensado
     if (input.dia.statusId === 2 || input.dia.statusId === 6 || input.dia.statusId === 7) {
+      let minutosDeAbono = 0;
+      input.dia.eventos.map((evento) => {});
       input.dia.cargaHorariaTotal = 0; //Zerar carga horaria
 
       let minutosNoturnoLocal = 0;
