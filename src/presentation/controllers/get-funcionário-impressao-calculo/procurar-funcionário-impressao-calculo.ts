@@ -439,6 +439,8 @@ export class GetFuncionarioImpressaoCalculoController implements Controller {
 
     //Quando for folga, feriado ou compensado
     if (input.dia.statusId === 2 || input.dia.statusId === 6 || input.dia.statusId === 7) {
+      let minutosDeAbono = 0;
+      input.dia.eventos.map((evento) => {});
       input.dia.cargaHorariaTotal = 0; //Zerar carga horaria
 
       let minutosNoturnoLocal = 0;
