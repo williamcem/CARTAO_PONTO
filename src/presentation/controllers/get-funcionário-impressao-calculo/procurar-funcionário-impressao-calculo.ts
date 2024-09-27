@@ -480,7 +480,7 @@ export class GetFuncionarioImpressaoCalculoController implements Controller {
 
     if (minutosDiurnos == 0 && minutosNoturnos == 0 && !input.dia.contemAusencia) return output;
 
-    if (!input.dia.eventos.some((evento) => evento.tipoId === 1) && input.dia.minutosNoturno) {
+    if (!input.dia.eventos.some((evento) => evento.tipoId === 1) && !input.dia.abono.minutos && input.dia.minutosNoturno) {
       input.dia.cargaHorariaTotal += Number((input.dia.minutosNoturno * 0.14).toFixed());
       minutosNoturnos = input.dia.minutosNoturno;
     }
