@@ -24,6 +24,7 @@ interface ResumoDoDiaInput {
     contemAusencia: boolean;
     statusId: number;
     data: Date;
+    minutosNoturno: number;
   };
   resumoCartao: {
     atual: {
@@ -192,6 +193,7 @@ export class GetFuncionarioImpressaoCalculoController implements Controller {
               contemAusencia,
               statusId: dia.statusId,
               data: dia.data,
+              minutosNoturno: dia.cargaHorariaNoturna,
             },
             resumoCartao,
           });
@@ -439,7 +441,6 @@ export class GetFuncionarioImpressaoCalculoController implements Controller {
 
     //Quando for folga, feriado ou compensado
     if (input.dia.statusId === 2 || input.dia.statusId === 6 || input.dia.statusId === 7) {
-      let minutosDeAbono = 0;
       input.dia.eventos.map((evento) => {});
       input.dia.cargaHorariaTotal = 0; //Zerar carga horaria
 
@@ -478,6 +479,11 @@ export class GetFuncionarioImpressaoCalculoController implements Controller {
     existeFaltaNoturna = input.dia.eventos.some((evento) => evento.tipoId === 13);
 
     if (minutosDiurnos == 0 && minutosNoturnos == 0 && !input.dia.contemAusencia) return output;
+
+    if (!input.dia.eventos.some((evento) => evento.tipoId === 1) && input.dia.minutosNoturno) {
+      input.dia.cargaHorariaTotal += Number((input.dia.minutosNoturno * 0.14).toFixed());
+      minutosNoturnos = input.dia.minutosNoturno;
+    }
 
     minutosDiurnos = minutosDiurnos - input.dia.cargaHorariaTotal + input.dia.abono.minutos;
 
