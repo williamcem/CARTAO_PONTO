@@ -1113,14 +1113,16 @@ export class CriarEventosPostgresRepository implements AdicionarEventos {
               if (minutos > 0) {
                 minutos = Number((minutos * 1.14).toFixed());
                 //Abona os minutos não trabalhados na jornada
-                input.eventos.push({
-                  funcionarioId: eventoAgrupado.funcionarioId,
-                  cartaoDiaId: eventoAgrupado.cartaoDiaId,
-                  minutos: Math.abs(diferencaComCargaHoraria),
-                  tipoId: 12,
-                  hora: this.ordenarHorario({ inicio: moment.utc(noturno.inicio), fim: moment.utc(noturno.final) }),
-                  periodoId: lancamento.periodoId,
-                });
+                if (diferencaComCargaHoraria >= -10)
+                  //Abona os minutos não trabalhados na jornada
+                  input.eventos.push({
+                    funcionarioId: eventoAgrupado.funcionarioId,
+                    cartaoDiaId: eventoAgrupado.cartaoDiaId,
+                    minutos: Math.abs(diferencaComCargaHoraria),
+                    tipoId: 12,
+                    hora: this.ordenarHorario({ inicio: moment.utc(noturno.inicio), fim: moment.utc(noturno.final) }),
+                    periodoId: lancamento.periodoId,
+                  });
 
                 //Gera evento adicional noturno
                 input.eventos.push({
