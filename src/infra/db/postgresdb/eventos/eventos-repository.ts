@@ -294,7 +294,7 @@ export class CriarEventosPostgresRepository implements AdicionarEventos {
         horarioEntradaSegundoPeriodo,
       );
       if (resultado2) excedeu = true;
-    } else if (periodoId === 3) this.criarEventoPeriodo3(lancamento, entrada, saida, eventos);
+    } else if (periodoId === 3) this.criarEventoPeriodo3(lancamento, entrada, saida, horarioSaidaEsperado, eventos);
 
     return excedeu;
   }
@@ -439,31 +439,34 @@ export class CriarEventosPostgresRepository implements AdicionarEventos {
 
       const entradaOrdenada = horarioSaidaEsperado.isBefore(saida) ? horarioSaidaEsperado : saida;
       const saidaOrdenada = horarioSaidaEsperado.isAfter(saida) ? horarioSaidaEsperado : saida;
+      const qtdeLancamento = lancamentos?.filter((lanc: any) => lanc.cartao_dia.id === lancamento.cartao_dia.id).length;
 
-      const eventoExcedentePositivo = {
-        cartaoDiaId: lancamento.cartao_dia.id,
-        hora: this.ordenarHorario({ inicio: horarioSaidaEsperado, fim: saida }),
-        tipoId: 2,
-        funcionarioId: lancamento.cartao_dia.cartao.funcionario.id,
-        minutos: saida.diff(horarioSaidaEsperado, "minutes"),
-        inicio: entradaOrdenada.toDate(),
-        fim: saidaOrdenada.toDate(),
-      };
+      if (qtdeLancamento < 3) {
+        const eventoExcedentePositivo = {
+          cartaoDiaId: lancamento.cartao_dia.id,
+          hora: this.ordenarHorario({ inicio: horarioSaidaEsperado, fim: saida }),
+          tipoId: 2,
+          funcionarioId: lancamento.cartao_dia.cartao.funcionario.id,
+          minutos: saida.diff(horarioSaidaEsperado, "minutes"),
+          inicio: entradaOrdenada.toDate(),
+          fim: saidaOrdenada.toDate(),
+        };
 
-      if (Math.abs(eventoExcedentePositivo.minutos) > 5) {
-        excedeu = true;
-      }
+        if (Math.abs(eventoExcedentePositivo.minutos) > 5) {
+          excedeu = true;
+        }
 
-      if (Math.abs(eventoExcedentePositivo.minutos) > 0 && !(isFolga && eventoExcedentePositivo.minutos < 0)) {
-        eventosExcendentes.push({ ...eventoExcedentePositivo, ...{ periodoId: 2 } });
-      }
+        if (Math.abs(eventoExcedentePositivo.minutos) > 0 && !(isFolga && eventoExcedentePositivo.minutos < 0)) {
+          eventosExcendentes.push({ ...eventoExcedentePositivo, ...{ periodoId: 2 } });
+        }
 
-      if (eventoExcedentePositivo.minutos < 0) {
-        eventoExcedentePositivo.hora = this.ordenarHorario({ inicio: saida, fim: horarioSaidaEsperado });
-      }
+        if (eventoExcedentePositivo.minutos < 0) {
+          eventoExcedentePositivo.hora = this.ordenarHorario({ inicio: saida, fim: horarioSaidaEsperado });
+        }
 
-      if (excedeu) {
-      } else if (eventoExcedentePositivo.minutos < 0 && !isFolga) {
+        if (excedeu) {
+        } else if (eventoExcedentePositivo.minutos < 0 && !isFolga) {
+        }
       }
     } else {
       if (!temApenasUmPeriodo) {
@@ -518,7 +521,13 @@ export class CriarEventosPostgresRepository implements AdicionarEventos {
     return excedeu;
   }
 
-  private criarEventoPeriodo3(lancamento: any, entrada: moment.Moment, saida: moment.Moment, eventos: any[]) {
+  private criarEventoPeriodo3(
+    lancamento: any,
+    entrada: moment.Moment,
+    saida: moment.Moment,
+    horarioSaidaEsperado: moment.Moment,
+    eventos: any[],
+  ) {
     const minutos = saida.diff(entrada, "minutes");
 
     const eventoTrabalhado = {
@@ -531,7 +540,21 @@ export class CriarEventosPostgresRepository implements AdicionarEventos {
       fim: saida.toDate(),
     };
 
-    eventos.push(eventoTrabalhado);
+    if (saida.isBefore(horarioSaidaEsperado)) {
+      console.log("Entrou");
+      const excdenteTerceiro = {
+        cartaoDiaId: lancamento.cartao_dia.id,
+        hora: this.ordenarHorario({ inicio: saida, fim: horarioSaidaEsperado }),
+        tipoId: 2,
+        funcionarioId: lancamento.cartao_dia.cartao.funcionario.id,
+        minutos: saida.diff(horarioSaidaEsperado, "minutes"),
+        inicio: saida.toDate(),
+        fim: horarioSaidaEsperado.toDate(),
+      };
+
+      eventos.push({ ...excdenteTerceiro, ...{ periodoId: 3 } });
+    }
+    eventos.push({ ...eventoTrabalhado, ...{ periodoId: 3 } });
   }
 
   public extrairIntervalosEntrePeriodos(
