@@ -44,6 +44,11 @@ export class DeletePostgresRepository implements DelDeleteRepository {
         where: { cartaoDiaId: cartao_dia_id },
       });
 
+      //Deletar os eventos de atraso onibus se exitri
+      await this.prisma.evento_atraso_onibus.delete({
+        where: { cartaoDiaId: cartao_dia_id },
+      });
+
       return true; // Retorna true se a exclusão for bem-sucedida
     } catch (error) {
       console.error("Erro ao deletar registros associados ao dia do cartão:", error);
