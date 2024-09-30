@@ -247,6 +247,25 @@ export class CriarEventosPostgresRepository implements AdicionarEventos {
       eventos = await this.aplicarTolerancia10Minutos({ eventos });
     }
 
+    // Buscar eventos de atraso de ônibus para o cartaoDiaId
+    const eventosOnibus = await this.prisma.evento_atraso_onibus.findMany({
+      where: {
+        cartaoDiaId: input.lancamentos[0].cartao_dia.id,
+      },
+    });
+
+    // Adicionar os eventos de atraso de ônibus à lista de eventos
+    eventos = [
+      ...eventos,
+      ...eventosOnibus.map((evento) => ({
+        cartaoDiaId: evento.cartaoDiaId,
+        hora: evento.hora,
+        minutos: evento.minutos,
+        inicio: evento.inicio,
+        fim: evento.fim,
+      })),
+    ];
+
     return eventos;
   }
 
