@@ -857,9 +857,10 @@ export class CriarEventosPostgresRepository implements AdicionarEventos {
           const dataLancamento = moment.utc(dia.data);
           const inicio = moment.utc(`${dataLancamento.format("YYYY-MM-DD")} ${primeiroHorario}`, "YYYY-MM-DD HH:mm");
           const fim = moment.utc(`${dataLancamento.format("YYYY-MM-DD")} ${ultimoHorarioValido}`, "YYYY-MM-DD HH:mm");
+          const isFeriado = dia?.statusId === 7;
 
-          // Criar evento de abono com horários corretamente formatados
-          if (diferencaComCargaHoraria !== 0) {
+          // Criar evento de abono com horários corretamente formatados e se for feriado não criar
+          if (diferencaComCargaHoraria !== 0 && !isFeriado) {
             input.eventos.push({
               funcionarioId: eventoAgrupado.funcionarioId,
               cartaoDiaId: eventoAgrupado.cartaoDiaId,
