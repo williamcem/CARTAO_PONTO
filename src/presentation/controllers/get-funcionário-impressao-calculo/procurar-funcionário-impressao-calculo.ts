@@ -126,13 +126,13 @@ export class GetFuncionarioImpressaoCalculoController implements Controller {
           },
           especial: {
             diurno: {
-              ext1: minutosDiurnosCompesados?.ext1 || 0,
-              ext2: minutosDiurnosCompesados?.ext2 || 0,
+              ext1: 0, //Analisar depois
+              ext2: 0, //Analisar depois
               ext3: minutosDiurnosCompesados?.ext3 || 0,
             },
             noturno: {
-              ext1: minutosNoturnosCompesados?.ext1 || 0,
-              ext2: minutosNoturnosCompesados?.ext2 || 0,
+              ext1: 0, //Analisar depois
+              ext2: 0, //Analisar depois
               ext3: minutosNoturnosCompesados?.ext3 || 0,
             },
           },
