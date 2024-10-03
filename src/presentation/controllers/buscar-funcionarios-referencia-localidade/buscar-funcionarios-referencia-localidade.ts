@@ -158,11 +158,15 @@ export class BuscarFuncionarioReferenciaLocalidadeAgrupadaController implements 
             statusId: 1,
           });
 
-          const atestadosEmAnalise = atestados.map((atestado) => ({
+          let atestadosEmAnalise = atestados.map((atestado) => ({
             id: atestado.id,
             data: atestado.data,
             tipo: atestado.tipos_documentos.nome,
           }));
+
+          atestadosEmAnalise = atestadosEmAnalise.filter((atestado) =>
+            funcionario.cartao[0].cartao_dia.some((dia) => dia.data.getTime() === atestado.data?.getTime()),
+          );
 
           pendencias = { ...pendencias, ...{ atestadosEmAnalise } };
         }
